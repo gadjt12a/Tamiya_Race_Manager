@@ -1,0 +1,2634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tamiya Race Manager</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏁</text></svg>">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080b0f;
+  --bg2:#0d1117;
+  --surface:#111822;
+  --surface2:#182030;
+  --surface3:#1e2a3c;
+  --border:#2e3d52;
+  --border2:#3a5068;
+  --text:#eef4ff;
+  --muted:#8aa8c4;
+  --muted2:#a8c0d8;
+  --accent:#e8a020;
+  --accent2:#f0c060;
+  --accentdim:rgba(232,160,32,0.12);
+  --green:#3dd68c;
+  --greendim:rgba(61,214,140,0.12);
+  --red:#e05555;
+  --reddim:rgba(224,85,85,0.12);
+  --blue:#4090e0;
+  --bluedim:rgba(64,144,224,0.12);
+  --purple:#9060e0;
+  --purpledim:rgba(144,96,224,0.12);
+  --gold:#ffd700;
+  --silver:#c0c8d0;
+  --bronze:#cd7f32;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe UI','Barlow',sans-serif;font-size:14px;font-weight:400;overflow:hidden}
+
+/* ── NOISE TEXTURE OVERLAY ─────────────────────────────── */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:0.4;
+}
+
+/* ── SCREENS ───────────────────────────────────────────── */
+.screen{display:none;position:relative;z-index:1}
+.screen.active{display:flex;flex-direction:column;height:100vh}
+
+/* ── TOP BAR ───────────────────────────────────────────── */
+.topbar{
+  display:flex;align-items:center;gap:12px;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 20px;height:52px;flex-shrink:0;
+}
+.topbar-logo{
+  font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:20px;font-weight:800;
+  color:var(--accent);letter-spacing:.08em;text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;
+}
+.topbar-logo span{color:var(--muted2);font-weight:400}
+.topbar-sep{width:1px;height:24px;background:var(--border);margin:0 4px}
+.topbar-nav{display:flex;gap:4px;flex:1}
+.tnav{
+  background:none;border:none;color:var(--muted);font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;
+  font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:6px 12px;border-radius:6px;cursor:pointer;transition:all .15s;
+}
+.tnav:hover{color:var(--text);background:var(--surface2)}
+.tnav.active{color:var(--accent);background:var(--accentdim)}
+.topbar-right{display:flex;gap:8px;margin-left:auto}
+.icon-btn{
+  background:var(--surface2);border:1px solid var(--border);color:var(--muted2);
+  padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer;
+  font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-weight:600;letter-spacing:.04em;
+  transition:all .15s;display:flex;align-items:center;gap:5px;
+}
+.icon-btn:hover{color:var(--text);border-color:var(--border2)}
+
+/* ── PANELS / CARDS ────────────────────────────────────── */
+.panel{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;
+}
+.panel-hdr{
+  padding:10px 14px;border-bottom:1px solid var(--border);
+  font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--text);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.panel-body{padding:12px 14px}
+
+/* ── BUTTONS ───────────────────────────────────────────── */
+button{cursor:pointer;border:none;transition:all .15s}
+.btn{
+  padding:8px 16px;border-radius:7px;font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;
+  font-size:14px;font-weight:600;letter-spacing:.04em;
+}
+.btn-primary{background:var(--accent);color:#080b0f}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--border2);background:var(--surface3)}
+.btn-danger{background:var(--reddim);color:var(--red);border:1px solid rgba(224,85,85,.2)}
+.btn-danger:hover{background:rgba(224,85,85,.2)}
+.btn-green{background:var(--greendim);color:var(--green);border:1px solid rgba(61,214,140,.2)}
+.btn-green:hover{background:rgba(61,214,140,.22)}
+.btn-full{width:100%}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+
+/* ── INPUTS ────────────────────────────────────────────── */
+input[type=text],select,textarea{
+  background:var(--surface2);border:1px solid var(--border);border-radius:7px;
+  color:var(--text);font-family:'Segoe UI','Barlow',sans-serif;font-size:14px;font-weight:500;
+  padding:8px 12px;outline:none;transition:border-color .15s;width:100%;
+}
+input[type=text]:focus,select:focus{border-color:var(--accent)}
+select option{background:var(--surface2)}
+
+/* ── TOGGLE / CHIP ─────────────────────────────────────── */
+.toggle{
+  display:inline-flex;align-items:center;gap:6px;cursor:pointer;
+  font-size:12px;font-weight:600;font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;
+  letter-spacing:.04em;user-select:none;
+}
+.toggle-track{
+  width:34px;height:18px;border-radius:9px;background:var(--surface3);
+  border:1px solid var(--border2);position:relative;transition:all .2s;flex-shrink:0;
+}
+.toggle-thumb{
+  position:absolute;top:2px;left:2px;width:12px;height:12px;
+  border-radius:50%;background:var(--muted2);transition:all .2s;
+}
+.toggle.on .toggle-track{background:rgba(64,144,224,.25);border-color:var(--blue)}
+.toggle.on .toggle-thumb{left:18px;background:var(--blue)}
+.toggle.junior-on .toggle-track{background:rgba(144,96,224,.25);border-color:var(--purple)}
+.toggle.junior-on .toggle-thumb{background:var(--purple)}
+
+.chip{
+  display:inline-flex;align-items:center;gap:4px;padding:2px 8px;
+  border-radius:10px;font-size:11px;font-weight:700;
+  font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;letter-spacing:.04em;
+}
+.chip-main{background:var(--bluedim);color:var(--blue)}
+.chip-2nd{background:var(--accentdim);color:var(--accent)}
+.chip-final{background:rgba(255,215,0,.15);color:var(--gold)}
+.chip-elim{background:var(--reddim);color:var(--red)}
+.chip-champ{background:var(--greendim);color:var(--green)}
+.chip-junior{background:var(--purpledim);color:var(--purple)}
+.chip-bye{background:var(--purpledim);color:var(--purple);border:1px solid rgba(144,96,224,.3)}
+
+/* ── PILL BADGES ───────────────────────────────────────── */
+.pill{
+  padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;
+  font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;letter-spacing:.05em;
+}
+.pill-box{background:rgba(64,144,224,.15);color:#60b0ff;border:1px solid rgba(64,144,224,.2)}
+.pill-evo{background:rgba(61,214,140,.15);color:#3dd68c;border:1px solid rgba(61,214,140,.2)}
+.pill-pro{background:rgba(232,160,32,.15);color:var(--accent);border:1px solid rgba(232,160,32,.2)}
+.pill-special{background:var(--purpledim);color:#b080ff;border:1px solid rgba(144,96,224,.2)}
+.pill-test{background:var(--reddim);color:var(--red);border:1px solid rgba(224,85,85,.2)}
+
+/* ════════════════════════════════════════════════════════
+   HOME / SEASON SCREEN
+═══════════════════════════════════════════════════════ */
+#homeScreen .content{
+  flex:1;overflow-y:auto;padding:20px;
+  display:grid;grid-template-columns:320px 1fr;gap:16px;align-content:start;
+}
+.season-hero{
+  background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);
+  border:1px solid var(--border);border-radius:12px;padding:24px;
+  grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;
+  position:relative;overflow:hidden;
+}
+.season-hero::before{
+  content:'🏁';position:absolute;right:20px;top:50%;transform:translateY(-50%);
+  font-size:80px;opacity:.06;pointer-events:none;
+}
+.season-hero-info h2{
+  font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:28px;font-weight:800;
+  color:var(--accent);letter-spacing:.04em;margin-bottom:4px;
+}
+.season-hero-info p{color:var(--muted2);font-size:13px}
+.season-hero-actions{display:flex;gap:8px}
+
+/* ════════════════════════════════════════════════════════
+   SETUP / RACE NIGHT SCREEN
+═══════════════════════════════════════════════════════ */
+#setupScreen .content{
+  flex:1;overflow-y:auto;padding:16px;
+  display:grid;grid-template-columns:300px 1fr;gap:14px;align-content:start;
+}
+.class-tabs{display:flex;gap:6px;padding:14px 16px 0;flex-shrink:0}
+.class-tab{
+  padding:7px 18px;border-radius:8px 8px 0 0;border:1px solid var(--border);
+  border-bottom:none;background:var(--surface);color:var(--muted2);
+  font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:14px;font-weight:700;
+  letter-spacing:.06em;cursor:pointer;transition:all .15s;
+}
+.class-tab:hover{color:var(--text);background:var(--surface2)}
+.class-tab.active{background:var(--surface2);color:var(--text);border-color:var(--border2)}
+.class-tab[data-class=box].active{color:#7cc4ff}
+.class-tab[data-class=evo].active{color:#4de89e}
+.class-tab[data-class=pro].active{color:var(--accent2)}
+.class-tab[data-class=special].active{color:#c090ff}
+.class-tab[data-class=test].active{color:var(--muted2)}
+
+/* racer list items */
+.racer-item{
+  display:flex;align-items:center;gap:8px;padding:7px 10px;
+  border-radius:7px;background:var(--surface2);border:1px solid var(--border);
+  margin-bottom:5px;
+}
+.racer-num{
+  font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-weight:700;font-size:12px;
+  color:var(--muted);min-width:22px;text-align:center;
+}
+.racer-name{flex:1;font-size:14px;font-weight:600;color:var(--text)}
+.racer-del{background:none;color:var(--muted);font-size:16px;padding:2px 6px;border-radius:4px}
+.racer-del:hover{color:var(--red)}
+
+/* roster panel (left side) */
+.roster-item{
+  display:flex;align-items:center;gap:8px;padding:6px 8px;
+  border-radius:6px;cursor:pointer;transition:all .12s;
+}
+.roster-item:hover{background:var(--surface2)}
+.roster-check{
+  width:16px;height:16px;border-radius:4px;border:1px solid var(--border2);
+  background:var(--surface3);flex-shrink:0;display:flex;align-items:center;
+  justify-content:center;font-size:10px;transition:all .12s;
+}
+.roster-item.checked .roster-check{background:var(--accent);border-color:var(--accent);color:#000}
+.roster-name{flex:1;font-size:13px;font-weight:500;color:var(--text)}
+.roster-tags{display:flex;gap:3px}
+
+/* ════════════════════════════════════════════════════════
+   RACE COORDINATOR SCREEN
+═══════════════════════════════════════════════════════ */
+#raceScreen{overflow:hidden}
+#raceScreen .content{
+  flex:1;display:grid;
+  grid-template-columns:380px 1fr 260px;
+  gap:0;min-height:0;overflow:hidden;
+}
+.race-col{
+  display:flex;flex-direction:column;gap:0;
+  border-right:1px solid var(--border);overflow:hidden;
+}
+.race-col:last-child{border-right:none}
+.race-col-inner{flex:1;overflow-y:auto;padding:12px}
+
+/* current race card */
+.current-race-card{
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:10px;overflow:hidden;margin-bottom:10px;
+}
+.crc-header{
+  padding:10px 14px;display:flex;align-items:center;gap:8px;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(135deg,var(--surface2),var(--surface3));
+}
+.crc-body{padding:10px 12px}
+
+/* racer place buttons */
+.racer-row{
+  display:flex;align-items:center;gap:8px;padding:8px 10px;
+  border-radius:8px;background:var(--surface);border:1px solid var(--border);
+  margin-bottom:5px;
+}
+.racer-row .nm{flex:1;font-size:15px;font-weight:600;font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif}
+.place-btns{display:flex;gap:4px}
+.pb{
+  padding:5px 8px;border-radius:5px;font-size:11px;font-weight:700;
+  font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;letter-spacing:.04em;
+  background:var(--surface2);border:1px solid var(--border);color:var(--muted);
+  transition:all .12s;
+}
+.pb:hover{color:var(--text);border-color:var(--border2)}
+.pb.p1.on{background:rgba(255,215,0,.15);border-color:var(--gold);color:var(--gold)}
+.pb.p2.on{background:rgba(192,200,208,.1);border-color:var(--silver);color:var(--silver)}
+.pb.p3.on{background:rgba(205,127,50,.12);border-color:var(--bronze);color:var(--bronze)}
+
+.confirm-btn{
+  width:100%;padding:11px;border-radius:8px;font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;
+  font-size:15px;font-weight:700;letter-spacing:.06em;
+  background:var(--green);color:#051a0d;margin-top:8px;
+}
+.confirm-btn:disabled{opacity:.25;cursor:not-allowed}
+
+/* queue items */
+.q-item{
+  padding:8px 10px;border-radius:7px;background:var(--surface2);
+  border:1px solid var(--border);margin-bottom:5px;cursor:pointer;
+  transition:all .12s;
+}
+.q-item:hover{border-color:var(--accent);background:var(--accentdim)}
+.q-item.active-swap{border-color:var(--accent);background:var(--accentdim)}
+.q-lbl{font-size:11px;color:var(--muted);margin-bottom:2px;font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-weight:600;letter-spacing:.05em}
+.q-names{font-size:13px;font-weight:600;color:var(--text)}
+.q-swap-hint{font-size:10px;color:var(--accent);margin-top:2px}
+
+/* standings rows */
+.s-row{
+  display:flex;align-items:center;gap:6px;padding:5px 8px;
+  border-radius:6px;transition:background .1s;
+}
+.s-row:hover{background:var(--surface2)}
+.s-pos{font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-weight:700;font-size:13px;color:var(--muted);min-width:20px}
+.s-name{flex:1;font-size:13px;font-weight:600;color:var(--text)}
+.s-stat{font-size:11px;font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-weight:600}
+
+/* history items */
+.h-item{
+  padding:7px 10px;border-radius:7px;background:var(--surface2);
+  border-left:2px solid var(--border2);margin-bottom:4px;font-size:12px;
+}
+.h-item.bracket-main{border-left-color:var(--blue)}
+.h-item.bracket-second{border-left-color:var(--accent)}
+.h-item.bracket-final{border-left-color:var(--gold)}
+
+/* ════════════════════════════════════════════════════════
+   POINTS / STANDINGS SCREEN
+═══════════════════════════════════════════════════════ */
+#pointsScreen .content{flex:1;overflow-y:auto;padding:16px}
+.points-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;
+}
+.points-table-wrap{overflow-x:auto}
+table.pts-table{width:100%;border-collapse:collapse;font-size:13px}
+table.pts-table th{
+  padding:7px 10px;text-align:left;border-bottom:1px solid var(--border);
+  font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:11px;font-weight:700;
+  letter-spacing:.08em;color:var(--muted2);text-transform:uppercase;
+}
+table.pts-table td{padding:6px 10px;border-bottom:1px solid var(--border)}
+table.pts-table tr:last-child td{border-bottom:none}
+table.pts-table tr:hover td{background:var(--surface2)}
+.pts-pos{font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-weight:700;font-size:14px}
+.pts-name{font-weight:500}
+.pts-val{font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-weight:700;font-size:15px;color:var(--accent)}
+.pos-1{color:var(--gold)} .pos-2{color:var(--silver)} .pos-3{color:var(--bronze)}
+
+/* ════════════════════════════════════════════════════════
+   SEASONS ARCHIVE SCREEN
+═══════════════════════════════════════════════════════ */
+#seasonsScreen .content{flex:1;overflow-y:auto;padding:16px}
+
+/* ════════════════════════════════════════════════════════
+   MODALS
+═══════════════════════════════════════════════════════ */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);
+}
+.modal{
+  background:var(--surface);border:1px solid var(--border2);border-radius:14px;
+  padding:24px;width:480px;max-width:95vw;max-height:85vh;overflow-y:auto;
+  position:relative;
+}
+.modal h2{font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:20px;font-weight:700;margin-bottom:4px}
+.modal-sub{color:var(--muted2);font-size:13px;margin-bottom:18px}
+.modal-actions{display:flex;gap:8px;margin-top:18px}
+.modal-actions .btn{flex:1;padding:10px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--muted2);margin-bottom:5px;font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase}
+
+/* podium display */
+.podium-wrap{text-align:center;padding:10px 0}
+.podium-title{font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--green);letter-spacing:.08em;margin-bottom:16px}
+.podium-row{
+  display:flex;align-items:center;gap:12px;border-radius:10px;
+  padding:12px 16px;margin-bottom:8px;
+}
+.pod1{background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.2)}
+.pod2{background:rgba(192,200,208,.06);border:1px solid rgba(192,200,208,.15)}
+.pod3{background:rgba(205,127,50,.06);border:1px solid rgba(205,127,50,.15)}
+.pod-emoji{font-size:24px}
+.pod-name{font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:22px;font-weight:800}
+.pod1 .pod-name{color:var(--gold)} .pod2 .pod-name{color:var(--silver)} .pod3 .pod-name{color:var(--bronze)}
+
+/* scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+
+/* section headings */
+.sec-title{
+  font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);
+  padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:10px;
+}
+
+/* empty state */
+.empty{
+  text-align:center;padding:32px 16px;color:var(--muted2);
+  font-size:13px;
+}
+.empty-icon{font-size:32px;margin-bottom:8px}
+
+/* notification toast */
+#toast{
+  position:fixed;bottom:20px;right:20px;z-index:999;
+  background:var(--surface3);border:1px solid var(--border2);
+  border-radius:8px;padding:10px 16px;font-size:13px;font-weight:500;
+  transform:translateY(60px);opacity:0;transition:all .25s;pointer-events:none;
+}
+#toast.show{transform:translateY(0);opacity:1}
+#toast.success{border-color:rgba(61,214,140,.4);color:var(--green)}
+#toast.error{border-color:rgba(224,85,85,.4);color:var(--red)}
+
+/* race mode indicator */
+.mode-badge{
+  padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;
+  font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;letter-spacing:.06em;
+}
+.mode-normal{background:var(--greendim);color:var(--green);border:1px solid rgba(61,214,140,.2)}
+.mode-test{background:var(--reddim);color:var(--red);border:1px solid rgba(224,85,85,.2)}
+.mode-special{background:var(--purpledim);color:#b080ff;border:1px solid rgba(144,96,224,.2)}
+
+/* col headers */
+.col-hdr{
+  padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--surface);
+}
+.col-hdr-title{
+  font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:13px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--text);
+}
+
+/* junior toggle row */
+.junior-row{display:flex;align-items:center;gap:8px;margin-top:4px}
+
+/* warning banner */
+.warn-banner{
+  background:rgba(232,160,32,.08);border:1px solid rgba(232,160,32,.2);
+  border-radius:8px;padding:10px 14px;font-size:13px;color:var(--accent);
+  margin-bottom:10px;
+}
+
+/* round indicator */
+.round-indicator{
+  background:var(--surface3);border-radius:6px;padding:4px 10px;
+  font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:12px;font-weight:700;
+  color:var(--muted2);letter-spacing:.04em;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     HOME SCREEN
+═══════════════════════════════════════════════════════ -->
+<div id="homeScreen" class="screen active">
+  <div class="topbar">
+    <div class="topbar-logo">🏁 <span>Tamiya</span> Race Manager</div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-right">
+      <button class="icon-btn" onclick="exportData()">⬆ Export Data</button>
+      <label class="icon-btn" style="cursor:pointer">⬇ Import Data<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
+    </div>
+  </div>
+  <div class="content" id="homeContent">
+    <!-- filled by renderHome() -->
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SETUP SCREEN
+═══════════════════════════════════════════════════════ -->
+<div id="setupScreen" class="screen">
+  <div class="topbar">
+    <div class="topbar-logo">🏁 <span>Tamiya</span> Race Manager</div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-nav">
+      <button class="tnav" onclick="goHome()">← Home</button>
+    </div>
+    <div class="topbar-right">
+      <span id="setupSeasonLabel" style="color:var(--muted2);font-size:13px"></span>
+    </div>
+  </div>
+  <!-- class tabs -->
+  <div class="class-tabs">
+    <button class="class-tab active" data-class="box" onclick="selectClass('box')">📦 Box Class</button>
+    <button class="class-tab" data-class="evo" onclick="selectClass('evo')">⚡ EVO Class</button>
+    <button class="class-tab" data-class="pro" onclick="selectClass('pro')">🏆 Pro Class</button>
+    <button class="class-tab" data-class="special" onclick="selectClass('special')" style="margin-left:auto">★ Special Event</button>
+    <button class="class-tab" data-class="test" onclick="selectClass('test')" style="color:var(--muted)">🧪 Test Race</button>
+  </div>
+  <div class="content" id="setupContent">
+    <!-- filled by renderSetup() -->
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     RACE COORDINATOR SCREEN
+═══════════════════════════════════════════════════════ -->
+<div id="raceScreen" class="screen">
+  <div class="topbar">
+    <div class="topbar-logo">🏁 <span>Tamiya</span> Race Manager</div>
+    <div class="topbar-sep"></div>
+    <div id="raceTopInfo" style="display:flex;align-items:center;gap:10px;flex:1"></div>
+    <div class="topbar-right">
+      <button class="icon-btn" id="swapHint" onclick="toggleSwapMode()" style="display:none">🔄 Swap Race</button>
+      <button class="icon-btn" onclick="editLastResult()" id="editLastBtn" style="display:none">✏️ Edit Last</button>
+      <button class="icon-btn" onclick="openDisplay()">📺 Display</button>
+      <button class="icon-btn" onclick="openEditNames()">✏️ Names</button>
+      <button class="icon-btn" id="showResultsBtn" onclick="showPodiumModal()" style="display:none">🏆 Show Results</button>
+      <button class="icon-btn btn-danger" onclick="confirmAbortRace()">✕ End Race</button>
+    </div>
+  </div>
+  <div class="content" id="raceContent">
+    <div class="race-col">
+      <div class="col-hdr">
+        <span class="col-hdr-title">Current Race</span>
+        <span id="raceNumLabel" style="color:var(--muted);font-size:12px"></span>
+      </div>
+      <div class="race-col-inner" id="currentPanel"></div>
+    </div>
+    <div class="race-col">
+      <div class="col-hdr">
+        <span class="col-hdr-title">Queue</span>
+        <span id="swapModeLabel" style="font-size:11px;color:var(--accent);display:none">Tap a race to swap ↓</span>
+      </div>
+      <div class="race-col-inner" id="queuePanel"></div>
+    </div>
+    <div class="race-col">
+      <div class="col-hdr"><span class="col-hdr-title">Standings</span></div>
+      <div class="race-col-inner">
+        <div id="standingsPanel"></div>
+        <div style="margin-top:10px">
+          <div class="sec-title">Race History</div>
+          <div id="historyPanel"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     POINTS SCREEN
+═══════════════════════════════════════════════════════ -->
+<div id="pointsScreen" class="screen">
+  <div class="topbar">
+    <div class="topbar-logo">🏁 <span>Tamiya</span> Race Manager</div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-nav">
+      <button class="tnav" onclick="goHome()">← Home</button>
+    </div>
+    <div class="topbar-right">
+      <span id="pointsSeasonLabel" style="color:var(--muted2);font-size:13px"></span>
+      <button class="icon-btn" onclick="exportSeasonHTML()" title="Save as HTML file">💾 HTML</button>
+      <button class="icon-btn" onclick="exportSeasonCSV()" title="Save as spreadsheet">📊 CSV</button>
+      <button class="icon-btn" onclick="exportSeasonPrint()" title="Print / Save as PDF">🖨 Print</button>
+    </div>
+  </div>
+  <div class="content">
+    <div id="pointsContent" style="padding:16px"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SEASONS ARCHIVE SCREEN
+═══════════════════════════════════════════════════════ -->
+<div id="seasonsScreen" class="screen">
+  <div class="topbar">
+    <div class="topbar-logo">🏁 <span>Tamiya</span> Race Manager</div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-nav">
+      <button class="tnav" onclick="goHome()">← Home</button>
+    </div>
+  </div>
+  <div class="content">
+    <div id="seasonsContent" style="padding:16px"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODALS
+═══════════════════════════════════════════════════════ -->
+<div id="modalOverlay" class="modal-overlay" style="display:none" onclick="closeModalIfBg(event)">
+
+  <!-- New Season Modal -->
+  <div class="modal" id="newSeasonModal" style="display:none">
+    <h2>Start New Season</h2>
+    <p class="modal-sub">This will begin recording race results and points for the new season.</p>
+    <div class="form-group">
+      <label>Season Name</label>
+      <input type="text" id="newSeasonName" placeholder="e.g. 2025 Season">
+    </div>
+    <div class="form-group">
+      <label>Start Date</label>
+      <input type="text" id="newSeasonStart" placeholder="e.g. 01/01/2025">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="createSeason()">Start Season</button>
+    </div>
+  </div>
+
+  <!-- Close Season Modal -->
+  <div class="modal" id="closeSeasonModal" style="display:none">
+    <h2>Close Current Season</h2>
+    <p class="modal-sub">This will archive the season as read-only. You can view it but not add results.</p>
+    <div class="form-group">
+      <label>End Date</label>
+      <input type="text" id="closeSeasonEnd" placeholder="e.g. 31/12/2025">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="closeSeason()">Close Season</button>
+    </div>
+  </div>
+
+  <!-- Special Event Modal -->
+  <div class="modal" id="specialEventModal" style="display:none">
+    <h2>★ Special Event Setup</h2>
+    <p class="modal-sub">Results are recorded under the event name with their own separate points table. Does not affect season standings. You can run multiple classes under the same event name.</p>
+    <div class="form-group">
+      <label>Event Name</label>
+      <input type="text" id="specialEventName" placeholder="e.g. Club Championship 2025">
+    </div>
+    <div class="form-group">
+      <label>Class</label>
+      <select id="specialEventClass">
+        <option value="box">📦 Box Class</option>
+        <option value="evo">⚡ EVO Class</option>
+        <option value="pro">🏆 Pro Class</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Points Scheme</label>
+      <select id="specialEventPoints">
+        <option value="standard">Standard (10, 9, 8 ... 1 for top 10)</option>
+        <option value="double">Double Points (20, 18, 16 ... 2 for top 10)</option>
+        <option value="podium">Podium Only (3, 2, 1)</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmSpecialEvent()">Continue to Setup →</button>
+    </div>
+  </div>
+
+  <!-- Edit Names Modal -->
+  <div class="modal" id="editNamesModal" style="display:none">
+    <h2>✏️ Edit Racer Names</h2>
+    <p class="modal-sub">Changes apply immediately and don't affect race logic.</p>
+    <div id="editNamesList"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditNames()">Save</button>
+    </div>
+  </div>
+
+  <!-- Edit Last Result Modal -->
+  <div class="modal" id="editResultModal" style="display:none">
+    <h2>✏️ Edit Last Race Result</h2>
+    <p class="modal-sub">Correct the finishing positions from the most recent race.</p>
+    <div id="editResultBody"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditResult()">Save Result</button>
+    </div>
+  </div>
+
+  <!-- Manage Roster Modal -->
+  <div class="modal" id="manageRosterModal" style="display:none;max-width:520px">
+    <h2>✏️ Manage Roster</h2>
+    <p class="modal-sub">Edit names, toggle Junior/Adult, or remove racers from the database.</p>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <input type="text" id="rosterSearchInput" placeholder="Search..." style="flex:1"
+        oninput="renderManageRoster()">
+      <button class="btn btn-secondary" style="font-size:12px;white-space:nowrap" onclick="markAllJunior(true)">All Junior</button>
+      <button class="btn btn-secondary" style="font-size:12px;white-space:nowrap" onclick="markAllJunior(false)">All Adult</button>
+    </div>
+    <div id="manageRosterList" style="max-height:55vh;overflow-y:auto"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+      <button class="btn btn-primary" onclick="saveManageRoster()">Save Changes</button>
+    </div>
+  </div>
+
+  <!-- Generic Confirm Modal -->
+  <div class="modal" id="confirmModal" style="display:none;max-width:380px">
+    <h2 id="confirmTitle">Confirm</h2>
+    <p class="modal-sub" id="confirmMsg"></p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" id="confirmOkBtn">Confirm</button>
+    </div>
+  </div>
+
+  <!-- Podium / End of Class Modal -->
+  <div class="modal" id="podiumModal" style="display:none;max-width:520px">
+    <div id="podiumBody"></div>
+    <div class="modal-actions" style="flex-wrap:wrap;gap:6px">
+      <button class="btn btn-secondary" onclick="exportNightHTML()" title="Save as HTML file">💾 Export HTML</button>
+      <button class="btn btn-secondary" onclick="exportNightCSV()" title="Save as spreadsheet">📊 Export CSV</button>
+      <button class="btn btn-secondary" onclick="exportNightPrint()" title="Print / Save as PDF">🖨 Print / PDF</button>
+      <button class="btn btn-primary btn-full" id="podiumFinishBtn" onclick="finishClass()">Save Results & Return Home</button>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  DATA LAYER — read/write JSON via fetch (local server mode)
+//  falls back to localStorage if no server
+// ═══════════════════════════════════════════════════════════════
+const DATA_PATH = 'data/racedata.json';
+let DB = { version:1, seasons:[], racers:[], currentSeason:null };
+let serverMode = false;
+
+async function loadDB(){
+  try {
+    const r = await fetch(DATA_PATH+'?t='+Date.now());
+    if(r.ok){ DB = await r.json(); serverMode = true; return; }
+  } catch(e){}
+  // fallback: localStorage
+  const raw = localStorage.getItem('tamiya_race_db');
+  if(raw) try{ DB = JSON.parse(raw); }catch(e){}
+  serverMode = false;
+}
+
+async function saveDB(){
+  if(serverMode){
+    try{
+      await fetch('/save', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(DB, null, 2)
+      });
+      return;
+    }catch(e){}
+  }
+  localStorage.setItem('tamiya_race_db', JSON.stringify(DB));
+}
+
+function exportData(){
+  const blob = new Blob([JSON.stringify(DB, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'racedata_backup_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  toast('Data exported!','success');
+}
+
+function importData(event){
+  const file = event.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try{
+      DB = JSON.parse(e.target.result);
+      await saveDB();
+      toast('Data imported successfully!','success');
+      renderHome();
+    }catch(err){ toast('Invalid file format','error'); }
+  };
+  reader.readAsText(file);
+  event.target.value='';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════════
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function shuffle(a){ let b=[...a]; for(let i=b.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]; } return b; }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function toast(msg, type=''){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'show '+(type||'');
+  clearTimeout(el._t); el._t = setTimeout(()=>el.className='',2800);
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goHome(){ showScreen('homeScreen'); renderHome(); }
+
+// Points scheme: position (1-indexed) → points
+const POINTS_SCHEME = [10,9,8,7,6,5,4,3,2,1]; // top 10, rest 0
+const POINTS_SCHEMES = {
+  standard: [10,9,8,7,6,5,4,3,2,1],
+  double:   [20,18,16,14,12,10,8,6,4,2],
+  podium:   [3,2,1],
+};
+
+function posPoints(pos, scheme){
+  const s = POINTS_SCHEMES[scheme||'standard'] || POINTS_SCHEMES.standard;
+  return pos>=1&&pos<=s.length ? s[pos-1] : 0;
+}
+
+function classPill(cls){
+  const map={box:'pill-box',evo:'pill-evo',pro:'pill-pro',special:'pill-special',test:'pill-test'};
+  const label={box:'Box',evo:'EVO',pro:'Pro',special:'Special',test:'Test'};
+  return `<span class="pill ${map[cls]||''}">${label[cls]||cls}</span>`;
+}
+
+function makeBatches(ids){
+  const a=[...ids], n=a.length;
+  if(n<2) return n===1?[[a[0]]]:[];
+  if(n<=3) return [a];
+  const twos = n%3===0?0:n%3===2?1:2;
+  const threes = (n-twos*2)/3;
+  const out=[]; let i=0;
+  for(let t=0;t<threes;t++){ out.push(a.slice(i,i+3)); i+=3; }
+  for(let t=0;t<twos;t++){   out.push(a.slice(i,i+2)); i+=2; }
+  return out;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SEASON MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+function getCurrentSeason(){
+  if(!DB.currentSeason) return null;
+  return DB.seasons.find(s=>s.id===DB.currentSeason)||null;
+}
+
+function openNewSeasonModal(){
+  const y = new Date().getFullYear();
+  document.getElementById('newSeasonName').value = y+' Season';
+  document.getElementById('newSeasonStart').value = '01/01/'+y;
+  showModal('newSeasonModal');
+}
+
+async function createSeason(){
+  const name = document.getElementById('newSeasonName').value.trim();
+  const start = document.getElementById('newSeasonStart').value.trim();
+  if(!name){ toast('Please enter a season name','error'); return; }
+  const season = {
+    id: uid(), name, startDate: start, endDate:null, closed:false,
+    events:[], // [{id,date,classes:{box,evo,pro},specialName,type}]
+  };
+  DB.seasons.push(season);
+  DB.currentSeason = season.id;
+  await saveDB();
+  closeModal();
+  toast('Season started: '+name,'success');
+  renderHome();
+}
+
+async function closeSeason(){
+  const s = getCurrentSeason(); if(!s) return;
+  s.endDate = document.getElementById('closeSeasonEnd').value.trim();
+  s.closed = true;
+  DB.currentSeason = null;
+  await saveDB();
+  closeModal();
+  toast('Season closed','success');
+  renderHome();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  RACER DATABASE
+// ═══════════════════════════════════════════════════════════════
+function getRacerById(id){ return DB.racers.find(r=>r.id===id)||{name:'?',id}; }
+function getRacerName(id){ return getRacerById(id).name; }
+
+function ensureRacer(name, isJunior){
+  // find existing by name (case-insensitive)
+  let r = DB.racers.find(r=>r.name.toLowerCase()===name.toLowerCase());
+  if(!r){ r={id:uid(),name,isJunior:!!isJunior,classes:{}}; DB.racers.push(r); }
+  if(isJunior!==undefined) r.isJunior=!!isJunior;
+  return r;
+}
+
+function getRacerSeasonPoints(racerId, seasonId, classKey){
+  const season = DB.seasons.find(s=>s.id===seasonId); if(!season) return 0;
+  let pts=0;
+  for(const ev of season.events){
+    if(ev.type==='test') continue;
+    if(ev.type==='special') continue;
+    const cls = ev.classes && ev.classes[classKey];
+    if(!cls || !cls.results) continue;
+    const res = cls.results.find(r=>r.racerId===racerId);
+    if(res) pts += (res.points||0);
+  }
+  return pts;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  HOME SCREEN
+// ═══════════════════════════════════════════════════════════════
+function renderHome(){
+  const season = getCurrentSeason();
+  const el = document.getElementById('homeContent');
+
+  let heroHTML = season
+    ? `<div class="season-hero">
+        <div class="season-hero-info">
+          <h2>${esc(season.name)}</h2>
+          <p>Active season · Started ${esc(season.startDate||'')} · ${season.events.filter(e=>e.type!=='test').length} events recorded</p>
+        </div>
+        <div class="season-hero-actions">
+          <button class="btn btn-secondary" onclick="showScreen('pointsScreen');renderPoints('${season.id}')">📊 Season Standings</button>
+          <button class="btn btn-secondary btn-danger" onclick="showModal('closeSeasonModal')">Close Season</button>
+        </div>
+      </div>`
+    : `<div class="season-hero">
+        <div class="season-hero-info">
+          <h2>No Active Season</h2>
+          <p>Start a new season to begin recording race results and points</p>
+        </div>
+        <div class="season-hero-actions">
+          <button class="btn btn-primary" onclick="openNewSeasonModal()">+ Start New Season</button>
+        </div>
+      </div>`;
+
+  // Race night cards
+  let raceCardsHTML = `
+    <div>
+      <div class="sec-title" style="margin-bottom:12px">Race Tonight</div>
+      ${season ? `
+      <div style="display:grid;gap:8px">
+        ${['box','evo','pro'].map(cls=>{
+          const icon={box:'📦',evo:'⚡',pro:'🏆'}[cls];
+          const label={box:'Box Class',evo:'EVO Class',pro:'Pro Class'}[cls];
+          // Last event for this class tonight
+          return `<div class="panel" style="cursor:pointer" onclick="startClassSetup('${cls}','normal')">
+            <div style="padding:14px 16px;display:flex;align-items:center;gap:12px">
+              <div style="font-size:28px">${icon}</div>
+              <div style="flex:1">
+                <div style="font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:16px;font-weight:700">${label}</div>
+                <div style="color:var(--muted);font-size:12px">Double-elimination bracket</div>
+              </div>
+              <div style="color:var(--accent);font-size:20px">→</div>
+            </div>
+          </div>`;
+        }).join('')}
+        <div class="panel" style="cursor:pointer;opacity:.8" onclick="openSpecialEventModal()">
+          <div style="padding:12px 16px;display:flex;align-items:center;gap:12px">
+            <div style="font-size:24px">★</div>
+            <div style="flex:1">
+              <div style="font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:#b080ff">Special Event</div>
+              <div style="color:var(--muted);font-size:12px">Separate points table</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="cursor:pointer;opacity:.7" onclick="startClassSetup('box','test')">
+          <div style="padding:12px 16px;display:flex;align-items:center;gap:12px">
+            <div style="font-size:24px">🧪</div>
+            <div style="flex:1">
+              <div style="font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--muted2)">Test Race</div>
+              <div style="color:var(--muted);font-size:12px">No recording, no points</div>
+            </div>
+          </div>
+        </div>
+      </div>` : `<div class="warn-banner">Start a season first to run official race events.</div>
+      <button class="btn btn-secondary" onclick="startClassSetup('box','test')">🧪 Run Test Race (No Season Needed)</button>`}
+    </div>`;
+
+  // Past events this season
+  let pastHTML = `<div>
+    <div class="sec-title" style="margin-bottom:12px">Recent Events</div>`;
+  if(season && season.events.length>0){
+    const recent = [...season.events].reverse().slice(0,8);
+    pastHTML += recent.map(ev=>{
+      const typeLabel = ev.type==='test'?'Test':ev.type==='special'?(ev.specialName||'Special'):ev.classLabel||ev.classKey||'';
+      return `<div class="panel" style="margin-bottom:6px">
+        <div style="padding:10px 14px;display:flex;align-items:center;gap:10px">
+          ${classPill(ev.type==='special'?'special':ev.type==='test'?'test':ev.classKey||'box')}
+          <span style="flex:1;font-size:13px;font-weight:500">${esc(ev.specialName||ev.classLabel||typeLabel)}${ev.doublePoints?' <span class="chip" style="background:rgba(232,160,32,.15);color:var(--accent);font-size:10px">×2</span>':''}</span>
+          <span style="color:var(--muted);font-size:12px">${esc(ev.date||'')}</span>
+          <span style="color:var(--green);font-size:12px">✓ Complete</span>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    pastHTML += `<div class="empty"><div class="empty-icon">📋</div>No events yet this season</div>`;
+  }
+  pastHTML += `<div style="margin-top:10px"><button class="btn btn-secondary" onclick="showScreen('seasonsScreen');renderSeasons()">📁 View All Seasons</button></div></div>`;
+
+  el.innerHTML = heroHTML + raceCardsHTML + pastHTML;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SETUP SCREEN
+// ═══════════════════════════════════════════════════════════════
+let setupState = {
+  classKey: 'box',
+  mode: 'normal', // normal | test | special
+  specialName: '',
+  specialClass: '',
+  specialPoints: 'standard',
+  doublePoints: false,  // double points for this class event
+  racerEntries: [], // [{id(temp), name, isJunior, rosterId}]
+  rosterFilter: '',
+};
+
+function startClassSetup(classKey, mode){
+  setupState.classKey = classKey;
+  setupState.mode = mode;
+  setupState.specialName = '';
+  setupState.specialClass = '';
+  setupState.doublePoints = false;
+  setupState.racerEntries = [];
+  setupState.rosterFilter = '';
+  showScreen('setupScreen');
+  document.getElementById('setupSeasonLabel').textContent =
+    mode==='test' ? '🧪 Test Race (no recording)' :
+    mode==='special' ? '★ '+setupState.specialName :
+    (getCurrentSeason()||{name:''}).name || '';
+  // Set active tab
+  document.querySelectorAll('.class-tab').forEach(t=>{
+    t.classList.toggle('active', t.dataset.class===classKey);
+  });
+  renderSetupContent();
+}
+
+function selectClass(cls){
+  if(cls==='special'){ openSpecialEventModal(); return; }
+  if(cls==='test'){ startClassSetup('box','test'); return; }
+  startClassSetup(cls,'normal');
+}
+
+function toggleDoublePoints(){
+  if(setupState.mode!=='normal') return;
+  setupState.doublePoints = !setupState.doublePoints;
+  renderSetupContent();
+  if(setupState.doublePoints) toast('Double Points enabled for this event','success');
+}
+
+function openSpecialEventModal(){
+  showModal('specialEventModal');
+}
+
+function confirmSpecialEvent(){
+  setupState.specialName = document.getElementById('specialEventName').value.trim()||'Special Event';
+  setupState.specialClass = document.getElementById('specialEventClass').value;
+  setupState.specialPoints = document.getElementById('specialEventPoints').value || 'standard';
+  closeModal();
+  startClassSetup(setupState.specialClass, 'special');
+  document.getElementById('setupSeasonLabel').textContent = '★ '+setupState.specialName;
+}
+
+function renderSetupContent(){
+  const el = document.getElementById('setupContent');
+  const isEvo = setupState.classKey==='evo' && setupState.mode!=='test';
+
+  // Build roster list for left panel
+  const season = getCurrentSeason();
+  const rosterRacers = setupState.mode==='test' ? [] : DB.racers.filter(r=>{
+    if(setupState.rosterFilter){
+      return r.name.toLowerCase().includes(setupState.rosterFilter.toLowerCase());
+    }
+    return true;
+  });
+  const addedIds = new Set(setupState.racerEntries.map(r=>r.rosterId).filter(Boolean));
+
+  const rosterHTML = setupState.mode==='test'
+    ? `<div class="empty"><div class="empty-icon">🧪</div>Test mode — no roster tracking</div>`
+    : `<div style="margin-bottom:8px">
+        <input type="text" placeholder="Search roster..." value="${esc(setupState.rosterFilter)}"
+          oninput="setupState.rosterFilter=this.value;renderSetupContent()" style="margin-bottom:6px">
+      </div>
+      <div style="max-height:calc(100vh - 280px);overflow-y:auto">
+      ${rosterRacers.length===0
+        ? `<div class="empty" style="padding:16px">No racers in database yet</div>`
+        : rosterRacers.map(r=>{
+            const checked = addedIds.has(r.id);
+            return `<div class="roster-item${checked?' checked':''}" style="gap:6px">
+              <div class="roster-check" onclick="toggleRosterRacer('${r.id}')">${checked?'✓':''}</div>
+              <span class="roster-name" onclick="toggleRosterRacer('${r.id}')" style="cursor:pointer">${esc(r.name)}</span>
+              <div class="toggle${r.isJunior?' junior-on':''}" onclick="toggleRosterJunior('${r.id}')" title="Toggle Junior/Adult" style="flex-shrink:0">
+                <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                <span style="color:${r.isJunior?'var(--purple)':'var(--text)'};font-size:10px">${r.isJunior?'JNR':'ADL'}</span>
+              </div>
+            </div>`;
+          }).join('')}
+      </div>
+      <div style="margin-top:10px;display:flex;gap:6px">
+        <button class="btn btn-secondary" style="flex:1;font-size:12px" onclick="addAllRoster()">Add All</button>
+        <button class="btn btn-secondary" style="flex:1;font-size:12px" onclick="clearRosterSelection()">Clear</button>
+      </div>`;
+
+  // Entry list (right side top)
+  const entryHTML = setupState.racerEntries.map((r,i)=>`
+    <div class="racer-item">
+      <span class="racer-num">${i+1}</span>
+      <span class="racer-name">${esc(r.name)}${r.isJunior?` <span class="chip chip-junior" style="font-size:10px">JNR</span>`:''}</span>
+      ${isEvo?`<div class="junior-row">
+        <div class="toggle${r.isJunior?' junior-on':''}" onclick="toggleJunior(${i})" title="Toggle Junior">
+          <div class="toggle-track"><div class="toggle-thumb"></div></div>
+          <span style="color:${r.isJunior?'var(--purple)':'var(--text)'}">${r.isJunior?'JNR':'ADL'}</span>
+        </div>
+      </div>`:''}
+      <button class="racer-del" onclick="removeRacerEntry(${i})">✕</button>
+    </div>`).join('');
+
+  const canStart = setupState.racerEntries.length >= 3;
+
+  el.innerHTML = `
+    <div class="panel" style="overflow-y:auto">
+      <div class="panel-hdr">
+        <span>Season Roster</span>
+        <button class="btn btn-secondary" style="font-size:11px;padding:3px 8px" onclick="openManageRoster()">✏️ Manage</button>
+      </div>
+      <div class="panel-body">${rosterHTML}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="panel" style="flex:1">
+        <div class="panel-hdr">
+          <span>Tonight's Racers ${setupState.mode==='test'?'<span class="mode-badge mode-test" style="margin-left:8px">TEST</span>':setupState.mode==='special'?'<span class="mode-badge mode-special" style="margin-left:8px">SPECIAL</span>':''}</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            ${setupState.mode==='normal'?`
+            <div class="toggle${setupState.doublePoints?' on':''}" onclick="toggleDoublePoints()" title="Double Points Round — top 10 points doubled for this event" style="flex-shrink:0">
+              <div class="toggle-track"><div class="toggle-thumb"></div></div>
+              <span style="color:${setupState.doublePoints?'var(--accent)':'var(--text)'};font-size:11px;white-space:nowrap">×2 PTS</span>
+            </div>`:''}
+            <span style="color:var(--text);font-size:11px;text-transform:uppercase;letter-spacing:.04em">${setupState.racerEntries.length} Added</span>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <input type="text" id="newRacerInput" placeholder="Add new racer name..." maxlength="30"
+              onkeydown="if(event.key==='Enter')addNewRacer()">
+            <div class="toggle" id="newRacerJuniorToggle" onclick="toggleNewRacerJunior()" title="Toggle Junior/Adult">
+              <div class="toggle-track"><div class="toggle-thumb"></div></div>
+              <span id="newRacerJuniorLabel" style="color:var(--text);font-size:11px">ADL</span>
+            </div>
+            <button class="btn btn-secondary" onclick="addNewRacer()">+ Add</button>
+          </div>
+          <div class="hint" style="color:var(--muted);font-size:12px;margin-bottom:10px">
+            Paste multiple names (one per line) to bulk add · JNR/ADL tag is saved to the racer's profile and affects Junior standings in EVO class only
+          </div>
+          <div id="entryList">${entryHTML}</div>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-full" style="padding:13px;font-size:16px"
+        onclick="startRaceNight()" ${canStart?'':'disabled'}>
+        🏁 Start Race${!canStart?' (min 3 racers)':''}
+      </button>
+    </div>`;
+
+  // Paste listener
+  const inp = document.getElementById('newRacerInput');
+  if(inp){
+    inp.addEventListener('paste', e=>{
+      e.preventDefault();
+      const txt = (e.clipboardData||window.clipboardData).getData('text');
+      const names = txt.split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean);
+      names.forEach(n=>addRacerEntry(n, false));
+      renderSetupContent();
+    });
+  }
+}
+
+let newRacerIsJunior = false;
+function toggleNewRacerJunior(){
+  newRacerIsJunior = !newRacerIsJunior;
+  const tog = document.getElementById('newRacerJuniorToggle');
+  const lbl = document.getElementById('newRacerJuniorLabel');
+  if(tog) tog.className = 'toggle'+(newRacerIsJunior?' junior-on':'');
+  if(lbl){ lbl.textContent = newRacerIsJunior?'JNR':'ADL'; lbl.style.color=newRacerIsJunior?'var(--purple)':'var(--text)'; }
+}
+
+function addNewRacer(){
+  const inp = document.getElementById('newRacerInput');
+  if(!inp) return;
+  const name = inp.value.trim(); if(!name) return;
+  addRacerEntry(name, newRacerIsJunior);
+  inp.value=''; newRacerIsJunior=false;
+  renderSetupContent();
+}
+
+function addRacerEntry(name, isJunior){
+  // Check if already in list
+  if(setupState.racerEntries.find(r=>r.name.toLowerCase()===name.toLowerCase())) return;
+  setupState.racerEntries.push({id:uid(), name, isJunior:!!isJunior, rosterId:null});
+}
+
+function toggleRosterRacer(rosterId){
+  const racer = DB.racers.find(r=>r.id===rosterId); if(!racer) return;
+  const idx = setupState.racerEntries.findIndex(r=>r.rosterId===rosterId);
+  if(idx>=0){ setupState.racerEntries.splice(idx,1); }
+  else {
+    if(setupState.racerEntries.find(r=>r.name.toLowerCase()===racer.name.toLowerCase())) return;
+    setupState.racerEntries.push({id:uid(), name:racer.name, isJunior:racer.isJunior, rosterId:racer.id});
+  }
+  renderSetupContent();
+}
+
+function addAllRoster(){
+  DB.racers.forEach(r=>{
+    if(!setupState.racerEntries.find(e=>e.rosterId===r.id||e.name.toLowerCase()===r.name.toLowerCase())){
+      setupState.racerEntries.push({id:uid(), name:r.name, isJunior:r.isJunior, rosterId:r.id});
+    }
+  });
+  renderSetupContent();
+}
+
+function clearRosterSelection(){
+  setupState.racerEntries=[];
+  renderSetupContent();
+}
+
+function removeRacerEntry(i){
+  setupState.racerEntries.splice(i,1);
+  renderSetupContent();
+}
+
+function toggleJunior(i){
+  setupState.racerEntries[i].isJunior = !setupState.racerEntries[i].isJunior;
+  // Also update the roster DB entry if this racer came from the roster
+  const entry = setupState.racerEntries[i];
+  if(entry.rosterId){
+    const dbr = DB.racers.find(r=>r.id===entry.rosterId);
+    if(dbr) dbr.isJunior = entry.isJunior;
+  }
+  renderSetupContent();
+}
+
+// ── Roster junior toggle (from left panel) ────────────────────
+async function toggleRosterJunior(rosterId){
+  const r = DB.racers.find(r=>r.id===rosterId); if(!r) return;
+  r.isJunior = !r.isJunior;
+  // Also update any entry already added to tonight's list
+  const entry = setupState.racerEntries.find(e=>e.rosterId===rosterId);
+  if(entry) entry.isJunior = r.isJunior;
+  await saveDB();
+  renderSetupContent();
+}
+
+// ── Manage Roster modal ───────────────────────────────────────
+let rosterEdits = {}; // id → {name, isJunior, deleted}
+
+function openManageRoster(){
+  rosterEdits = {};
+  DB.racers.forEach(r=>{ rosterEdits[r.id]={name:r.name, isJunior:r.isJunior, deleted:false}; });
+  document.getElementById('rosterSearchInput').value='';
+  renderManageRoster();
+  showModal('manageRosterModal');
+}
+
+function renderManageRoster(){
+  const search = (document.getElementById('rosterSearchInput')?.value||'').toLowerCase().trim();
+  const racers = DB.racers.filter(r=>
+    !rosterEdits[r.id]?.deleted &&
+    (!search || rosterEdits[r.id]?.name.toLowerCase().includes(search))
+  );
+  const el = document.getElementById('manageRosterList');
+  if(!el) return;
+  if(!racers.length){
+    el.innerHTML=`<div class="empty" style="padding:16px">No racers found</div>`; return;
+  }
+  el.innerHTML = racers.map(r=>{
+    const ed = rosterEdits[r.id];
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--border)">
+      <input type="text" value="${esc(ed.name)}" maxlength="30" style="flex:1;font-size:13px;padding:5px 8px"
+        oninput="rosterEdits['${r.id}'].name=this.value">
+      <div class="toggle${ed.isJunior?' junior-on':''}" onclick="rosterEditToggleJunior('${r.id}')" title="Toggle Junior/Adult" style="flex-shrink:0">
+        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+        <span style="color:${ed.isJunior?'var(--purple)':'var(--text)'};font-size:10px">${ed.isJunior?'JNR':'ADL'}</span>
+      </div>
+      <button class="racer-del" onclick="rosterEditDelete('${r.id}')" title="Remove from roster">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function rosterEditToggleJunior(id){
+  if(!rosterEdits[id]) return;
+  rosterEdits[id].isJunior = !rosterEdits[id].isJunior;
+  renderManageRoster();
+}
+
+function rosterEditDelete(id){
+  if(!rosterEdits[id]) return;
+  rosterEdits[id].deleted = true;
+  renderManageRoster();
+}
+
+function markAllJunior(isJunior){
+  const search = (document.getElementById('rosterSearchInput')?.value||'').toLowerCase().trim();
+  DB.racers.forEach(r=>{
+    if(rosterEdits[r.id] && !rosterEdits[r.id].deleted){
+      if(!search || rosterEdits[r.id].name.toLowerCase().includes(search)){
+        rosterEdits[r.id].isJunior = isJunior;
+      }
+    }
+  });
+  renderManageRoster();
+}
+
+async function saveManageRoster(){
+  // Apply edits to DB
+  for(const [id, ed] of Object.entries(rosterEdits)){
+    if(ed.deleted){
+      DB.racers = DB.racers.filter(r=>r.id!==id);
+    } else {
+      const r = DB.racers.find(r=>r.id===id);
+      if(r){ r.name=ed.name.trim()||r.name; r.isJunior=ed.isJunior; }
+    }
+  }
+  await saveDB();
+  closeModal();
+  toast('Roster updated','success');
+  renderSetupContent();
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+//  RACE ENGINE STATE
+// ═══════════════════════════════════════════════════════════════
+let R = {}; // active race state
+
+// ═══════════════════════════════════════════════════════════════
+//  RACE ENGINE
+//
+//  THREE TABLES:
+//    Main:      everyone starts here. Winner stays in Main. Losers go to 2nd Chance.
+//    2nd Chance: losers from Main race here. Winner stays in 2nd Chance. Loser eliminated.
+//    Final:     1 undefeated racer from Main + 2 survivors from 2nd Chance = 3 racers.
+//
+//  Round alternation: All Main races → All 2nd Chance races → All Main → All 2nd → Final
+//  A complete round is built and queued ALL AT ONCE before any races in it run.
+//  confirmResult() ONLY routes racers into pools. It never builds rounds.
+//  startNextRound() is called ONLY when roundQueue empties (full round done).
+// ═══════════════════════════════════════════════════════════════
+
+function initRaceState(entries, classKey, mode, specialName, specialClass, specialPoints, doublePoints){
+  const racers = entries.map(e=>({
+    id:e.id, name:e.name, isJunior:!!e.isJunior, rosterId:e.rosterId||null
+  }));
+  R = {
+    racers, classKey, mode,
+    specialName:specialName||'', specialClass:specialClass||classKey, specialPoints:specialPoints||'standard',
+    doublePoints:!!doublePoints,
+    wins:{}, losses:{},
+    bracket:{},      // id → 'main' | 'second' | 'elim' | 'champ'
+    eliminated:[],
+    raceNum:0, history:[], podium:null, juniorPodium:null,
+    mainPool:[],     // undefeated racers waiting for next Main round
+    secondPool:[],   // 1-loss racers waiting for next 2nd Chance round
+    roundQueue:[],   // current round's races [{racers:[id,...], bracket:'main'|'second'|'final'}]
+    roundType:null,  // bracket type of the current round being served: 'main'|'second'|'final'
+    currentRace:null,
+    lastCompletedRace:null,
+    swapMode:false, eventId:uid(),
+  };
+  racers.forEach(r=>{ R.wins[r.id]=0; R.losses[r.id]=0; R.bracket[r.id]='main'; });
+  R.mainPool = racers.map(r=>r.id);
+  startNextRound();
+}
+
+function getActive(){ return R.racers.filter(r=>!R.eliminated.includes(r.id)); }
+function getName(id){ return (R.racers.find(r=>r.id===id)||{name:'?'}).name; }
+function isJunior(id){ return !!(R.racers.find(r=>r.id===id)||{}).isJunior; }
+function checkIsFinal(){ return !!(R.currentRace && R.currentRace.bracket==='final'); }
+
+// ── startNextRound ────────────────────────────────────────────
+// Called ONLY when roundQueue is empty (end of a complete round).
+// Decides what the next full round is and queues ALL its races at once.
+// roundType tracks what the CURRENT queue contains so we know what ran last.
+function startNextRound(){
+
+  // Sole survivor — only 1 active, no 2nd chance pending
+  if(R.mainPool.length===1 && R.secondPool.length===0){
+    finishWithChampion(R.mainPool[0]); return;
+  }
+
+  // ── Final assembly ────────────────────────────────────────────
+  // Need exactly 1 from mainPool + 2 from secondPool = 3 in the final.
+  // Trigger only when secondPool has been reduced to 2.
+  if(R.mainPool.length===1 && R.secondPool.length===2){
+    const finalRacers = shuffle([...R.mainPool, ...R.secondPool]);
+    R.mainPool=[]; R.secondPool=[];
+    R.roundType='final';
+    R.roundQueue=[{racers:finalRacers, bracket:'final'}];
+    serveNextRace(); return;
+  }
+
+  // Edge: only 1 left in 2nd Chance — run a 2-person final (unusual but valid)
+  if(R.mainPool.length===1 && R.secondPool.length===1){
+    const finalRacers = shuffle([...R.mainPool, ...R.secondPool]);
+    R.mainPool=[]; R.secondPool=[];
+    R.roundType='final';
+    R.roundQueue=[{racers:finalRacers, bracket:'final'}];
+    serveNextRace(); return;
+  }
+
+  // ── Special case: mainPool===1, secondPool===3 ────────────────
+  // makeBatches(3) produces ONE 3-person race → only 1 winner.
+  // We need 2 winners from 2nd Chance for the final.
+  // Fix: give the best-performing racer a bye to the Final,
+  // race the other 2 to determine the second finalist.
+  // Result: 1 bye + 1 race winner = 2 finalists from 2nd Chance. ✓
+  if(R.mainPool.length===1 && R.secondPool.length===3){
+    const sorted = [...R.secondPool].sort((a,b)=>
+      (R.wins[b]||0)-(R.wins[a]||0) || (R.losses[a]||0)-(R.losses[b]||0)
+    );
+    const byeId = sorted[0]; // best performer gets the bye
+    const raceTwo = sorted.slice(1); // the other 2 race each other
+
+    // Log the bye in race history so it's visible on screen
+    R.raceNum++;
+    const byeEntry = {
+      num: R.raceNum,
+      bracket: 'bye',
+      names: [getName(byeId)],
+      places: [getName(byeId)],
+      placeIds: [byeId],
+      isFinal: false,
+      isBye: true,
+    };
+    R.history.unshift(byeEntry);
+    R.wins[byeId]++; // bye counts as a win for standings purposes
+
+    R.secondPool = [byeId]; // bye racer waits in secondPool
+    R.roundType = 'second';
+    R.roundQueue = [{racers:raceTwo, bracket:'second'}];
+    toast(`🎫 ${getName(byeId)} receives a BYE to the Final — odd number in 2nd Chance`,'');
+    renderRace(); // update history display before next race
+    serveNextRace(); return;
+  }
+
+  // ── Normal round alternation ──────────────────────────────────
+  // After Main  → run 2nd Chance (if ≥2 waiting), else another Main
+  // After 2nd   → run Main (if ≥2 waiting), else another 2nd Chance
+  if(R.roundType === 'main' || R.roundType === null){
+    if(R.secondPool.length >= 2){
+      const ids = shuffle([...R.secondPool]); R.secondPool=[];
+      R.roundType = 'second';
+      R.roundQueue = makeBatches(ids).map(b=>({racers:b, bracket:'second'}));
+    } else if(R.mainPool.length >= 2){
+      const ids = shuffle([...R.mainPool]); R.mainPool=[];
+      R.roundType = 'main';
+      R.roundQueue = makeBatches(ids).map(b=>({racers:b, bracket:'main'}));
+    } else {
+      renderRace(); return;
+    }
+
+  } else if(R.roundType === 'second'){
+    if(R.mainPool.length >= 2){
+      const ids = shuffle([...R.mainPool]); R.mainPool=[];
+      R.roundType = 'main';
+      R.roundQueue = makeBatches(ids).map(b=>({racers:b, bracket:'main'}));
+    } else if(R.secondPool.length >= 2){
+      const ids = shuffle([...R.secondPool]); R.secondPool=[];
+      R.roundQueue = makeBatches(ids).map(b=>({racers:b, bracket:'second'}));
+    } else {
+      renderRace(); return;
+    }
+  }
+
+  serveNextRace();
+}
+
+// ── serveNextRace ─────────────────────────────────────────────
+// Pull the next race from the current round queue and make it current.
+// If the queue is empty, the round is done — start the next one.
+function serveNextRace(){
+  if(R.roundQueue.length > 0){
+    const next = R.roundQueue.shift();
+    R.raceNum++;
+    R.currentRace = {racers:next.racers, bracket:next.bracket, num:R.raceNum, p1:null, p2:null, p3:null};
+    renderRace();
+  } else {
+    startNextRound();
+  }
+}
+
+// ── confirmResult ─────────────────────────────────────────────
+// Called when coordinator clicks Confirm. Routes racers into pools.
+// Does NOT touch roundQueue — that's startNextRound's job.
+function confirmResult(){
+  if(!R.currentRace) return;
+  const cr = R.currentRace;
+  const count = cr.racers.length;
+  if(!cr.p1||!cr.p2) return;
+  if(count===3 && !cr.p3) return;
+
+  const first=cr.p1, second=cr.p2, third=cr.p3||null;
+  const losers = third ? [second,third] : [second];
+  const wasFinal = checkIsFinal();
+
+  R.wins[first]++;
+  losers.forEach(id=>R.losses[id]++);
+
+  const histEntry = {
+    num:cr.num, bracket:cr.bracket,
+    names:cr.racers.map(getName),
+    places:[getName(first),getName(second),...(third?[getName(third)]:[])],
+    placeIds:[first,second,...(third?[third]:[])],
+    isFinal:wasFinal
+  };
+  R.history.unshift(histEntry);
+
+  // Snapshot full state before applying this result — used by edit last result
+  R.lastCompletedRace = {
+    entry: histEntry,
+    cr: {...cr, racers:[...cr.racers]},
+    // Deep copy all mutable state so we can fully rewind if needed
+    snapshot: {
+      wins:        {...R.wins},
+      losses:      {...R.losses},
+      bracket:     {...R.bracket},
+      eliminated:  [...R.eliminated],
+      mainPool:    [...R.mainPool],
+      secondPool:  [...R.secondPool],
+      roundQueue:  R.roundQueue.map(r=>({...r, racers:[...r.racers]})),
+      roundType:   R.roundType,
+      history:     R.history.slice(1), // history before this race
+    }
+  };
+
+  if(wasFinal){
+    R.podium={first,second,third};
+    R.bracket[first]='champ';
+    R.currentRace=null;
+    computeJuniorPodium();
+    renderRace();
+    showPodiumModal();
+    return;
+  }
+
+  if(cr.bracket==='main'){
+    // Main winner: stays undefeated → mainPool
+    R.bracket[first]='main';
+    R.mainPool.push(first);
+    // Main losers: first loss → secondPool (NOT eliminated)
+    losers.forEach(id=>{
+      R.bracket[id]='second';
+      R.secondPool.push(id);
+    });
+  } else {
+    // 2nd Chance winner: stays in 2nd Chance → secondPool (NEVER back to main)
+    R.bracket[first]='second';
+    R.secondPool.push(first);
+    // 2nd Chance losers: second loss → eliminated
+    losers.forEach(id=>{
+      R.bracket[id]='elim';
+      R.eliminated.push(id);
+    });
+  }
+
+  R.currentRace=null;
+  serveNextRace();
+}
+
+function computeJuniorPodium(){
+  if(R.classKey!=='evo'&&R.mode!=='special'){ R.juniorPodium=null; return; }
+  const juniors = R.racers.filter(r=>r.isJunior);
+  if(!juniors.length){ R.juniorPodium=null; return; }
+  const podOrder=[R.podium?.first,R.podium?.second,R.podium?.third].filter(Boolean);
+  const jSorted=[...juniors].sort((a,b)=>{
+    const ai=podOrder.indexOf(a.id), bi=podOrder.indexOf(b.id);
+    if(ai>=0&&bi>=0) return ai-bi;
+    if(ai>=0) return -1; if(bi>=0) return 1;
+    return (R.wins[b.id]-R.wins[a.id])||(R.losses[a.id]-R.losses[b.id]);
+  });
+  R.juniorPodium={
+    first:jSorted[0]?.id||null,
+    second:jSorted[1]?.id||null,
+    third:jSorted[2]?.id||null
+  };
+}
+
+function finishWithChampion(id){
+  R.podium={first:id,second:null,third:null};
+  R.bracket[id]='champ';
+  computeJuniorPodium();
+  renderRace();
+  showPodiumModal();
+}
+
+// ── SET PLACE ─────────────────────────────────────────────────
+function setPlace(place,id){
+  if(!R.currentRace) return;
+  const cr=R.currentRace;
+  // Clear racer from any slot
+  if(cr.p1===id) cr.p1=null;
+  if(cr.p2===id) cr.p2=null;
+  if(cr.p3===id) cr.p3=null;
+  // Clear whoever was in target slot
+  if(place===1) cr.p1=null;
+  if(place===2) cr.p2=null;
+  if(place===3) cr.p3=null;
+  // Assign
+  if(place===1) cr.p1=id;
+  if(place===2) cr.p2=id;
+  if(place===3) cr.p3=id;
+  renderCurrent();
+}
+
+// ── SWAP MODE ─────────────────────────────────────────────────
+function toggleSwapMode(){
+  R.swapMode = !R.swapMode;
+  const lbl = document.getElementById('swapModeLabel');
+  const btn = document.getElementById('swapHint');
+  if(lbl) lbl.style.display = R.swapMode?'inline':'none';
+  if(btn) btn.style.background = R.swapMode?'var(--accentdim)':'';
+  renderQueue();
+}
+
+function swapToRace(idx){
+  if(!R.swapMode||!R.currentRace) return;
+  // Put current race back at front of queue, swap with selected
+  const swapRace = R.roundQueue.splice(idx,1)[0];
+  R.roundQueue.unshift({racers:R.currentRace.racers, bracket:R.currentRace.bracket, num:R.currentRace.num-1});
+  R.raceNum--;
+  R.raceNum++;
+  R.currentRace={racers:swapRace.racers, bracket:swapRace.bracket, num:R.raceNum, p1:null,p2:null,p3:null};
+  R.swapMode=false;
+  const btn=document.getElementById('swapHint');
+  if(btn) btn.style.background='';
+  renderRace();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  RENDER — RACE SCREEN
+// ═══════════════════════════════════════════════════════════════
+function renderRace(){ renderCurrent(); renderQueue(); renderStandings(); renderHistory(); updateRaceTopBar(); if(dispWin&&!dispWin.closed) writeDisplay(); }
+
+function updateRaceTopBar(){
+  const el = document.getElementById('raceTopInfo');
+  const classLabel = {box:'📦 Box Class',evo:'⚡ EVO Class',pro:'🏆 Pro Class'}[R.classKey]||R.classKey;
+  const modeBadge = R.mode==='test'?'<span class="mode-badge mode-test">TEST</span>':R.mode==='special'?`<span class="mode-badge mode-special">★ ${esc(R.specialName)}</span>`:'<span class="mode-badge mode-normal">LIVE</span>';
+  const active=getActive().length, total=R.racers.length;
+  el.innerHTML=`<span style="font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-weight:700;font-size:15px">${classLabel}</span>${modeBadge}<span style="color:var(--muted);font-size:13px">${active} of ${total} active · Race #${R.raceNum}</span>`;
+  document.getElementById('raceNumLabel').textContent='Race #'+R.raceNum;
+  document.getElementById('editLastBtn').style.display=R.lastCompletedRace?'flex':'none';
+  document.getElementById('swapHint').style.display=R.roundQueue.length>0?'flex':'none';
+  const srBtn=document.getElementById('showResultsBtn');
+  if(srBtn) srBtn.style.display=R.podium?'flex':'none';
+}
+
+function renderCurrent(){
+  const el=document.getElementById('currentPanel');
+  if(!el) return;
+  if(!R.currentRace){ el.innerHTML=`<div class="norace" style="padding:32px;text-align:center;color:var(--muted)">Calculating next race…</div>`; return; }
+  const cr=R.currentRace, count=cr.racers.length;
+  const isFinal=R.currentRace&&R.currentRace.bracket==='final';
+  const bracketLabel = isFinal?'🏆 Final Race':cr.bracket==='main'?'Main Round':'2nd Chance';
+  const bracketChip = isFinal?'chip-final':cr.bracket==='main'?'chip-main':'chip-2nd';
+  const complete = count===2?!!(cr.p1&&cr.p2):!!(cr.p1&&cr.p2&&cr.p3);
+  const numPlaces=count;
+  const placeLabels=['1st','2nd','3rd'];
+  const placeKeys=['p1','p2','p3'];
+  const pbClass=['p1','p2','p3'];
+
+  let cardsHTML='';
+  for(let i=0;i<count;i++){
+    const id=cr.racers[i];
+    let btnsHTML='';
+    for(let p=0;p<numPlaces;p++){
+      const isOn=cr[placeKeys[p]]===id;
+      btnsHTML+=`<button class="pb ${pbClass[p]}${isOn?' on':''}" onclick="setPlace(${p+1},'${id}')">${placeLabels[p]}</button>`;
+    }
+    const jr=R.classKey==='evo'&&isJunior(id)?`<span class="chip chip-junior" style="font-size:10px;margin-left:4px">J</span>`:'';
+    cardsHTML+=`<div class="racer-row"><span class="nm">${esc(getName(id))}${jr}</span><div class="place-btns">${btnsHTML}</div></div>`;
+  }
+
+  el.innerHTML=`
+    <div class="current-race-card">
+      <div class="crc-header">
+        <span class="chip ${bracketChip}">${bracketLabel}</span>
+        <span style="color:var(--muted);font-size:12px">Race #${cr.num}${count===2?' · Head-to-head':''}</span>
+      </div>
+      <div class="crc-body">
+        ${cardsHTML}
+        <button class="confirm-btn" onclick="confirmResult()" ${complete?'':'disabled'}>
+          ${complete?'✓ Confirm Result & Next Race':'Assign all places to continue'}
+        </button>
+      </div>
+    </div>`;
+}
+
+function renderQueue(){
+  const el=document.getElementById('queuePanel'); if(!el) return;
+  if(!R.roundQueue||R.roundQueue.length===0){
+    // Check if someone is sitting on a bye waiting for the final
+    const byeRacer = (R.secondPool.length===1 && R.mainPool.length===1) ? R.secondPool[0] : null;
+    el.innerHTML=`<div style="color:var(--muted);font-size:13px;padding:8px">No more races queued this round</div>
+      ${byeRacer?`<div style="margin-top:8px;padding:8px 10px;background:var(--purpledim);border:1px solid rgba(144,96,224,.3);border-radius:7px;font-size:12px;color:var(--purple)">
+        🎫 <strong>${esc(getName(byeRacer))}</strong> has a BYE — waiting for the Final
+      </div>`:''}
+      <div style="margin-top:8px;color:var(--muted);font-size:12px">
+        ${R.mainPool.length?`Main pool: ${R.mainPool.map(getName).join(', ')}<br>`:''}
+        ${R.secondPool.length&&!byeRacer?`2nd chance pool: ${R.secondPool.map(getName).join(', ')}`:''}
+      </div>`; return;
+  }
+  el.innerHTML=R.roundQueue.map((race,i)=>{
+    const isBye = race.bracket==='bye';
+    const label = isBye?'🎫 BYE':race.bracket==='main'?'Main Round':'2nd Chance';
+    const chip  = isBye?'chip-bye':race.bracket==='main'?'chip-main':'chip-2nd';
+    return `<div class="q-item${R.swapMode&&!isBye?' active-swap':''}" onclick="${R.swapMode&&!isBye?`swapToRace(${i})`:''}" >
+      <div class="q-lbl"><span class="chip ${chip}" style="font-size:10px">${label}</span></div>
+      <div class="q-names">${race.racers.map(id=>esc(getName(id))).join(' · ')}</div>
+      ${R.swapMode&&!isBye?'<div class="q-swap-hint">Tap to swap this race in now</div>':''}
+    </div>`;
+  }).join('');
+}
+
+function renderStandings(){
+  const el=document.getElementById('standingsPanel'); if(!el) return;
+  const sorted=[...R.racers].sort((a,b)=>{
+    const ac=R.bracket[a.id]==='champ', bc=R.bracket[b.id]==='champ';
+    if(ac) return -1; if(bc) return 1;
+    const ae=R.eliminated.includes(a.id),be=R.eliminated.includes(b.id);
+    if(ae&&!be) return 1; if(!ae&&be) return -1;
+    return (R.wins[b.id]-R.wins[a.id])||(R.losses[a.id]-R.losses[b.id]);
+  });
+  let pos=0;
+  el.innerHTML=`<div class="sec-title">Standings</div>`+sorted.map(r=>{
+    const br=R.bracket[r.id], isElim=R.eliminated.includes(r.id);
+    if(!isElim) pos++;
+    // Check if this racer is the bye racer (in secondPool alone waiting for final)
+    const isByeRacer = !isElim && br==='second' && R.secondPool.length===1 && R.secondPool.includes(r.id) && R.mainPool.length===1;
+    const tagClass=br==='champ'?'chip-champ':isElim?'chip-elim':isByeRacer?'chip-bye':br==='main'?'chip-main':'chip-2nd';
+    const tagLabel=br==='champ'?'Champion':isElim?'Eliminated':isByeRacer?'🎫 BYE → Final':br==='main'?'Main':'2nd Chance';
+    const jr=r.isJunior&&R.classKey==='evo'?`<span class="chip chip-junior" style="font-size:10px">J</span>`:'';
+    return `<div class="s-row">
+      <span class="s-pos" style="${isElim?'color:var(--muted)':''}">${isElim?'–':pos}</span>
+      <span class="s-name" style="${isElim?'opacity:.4':br==='champ'?'color:var(--green)':''}">${esc(r.name)}${jr}</span>
+      <span class="chip ${tagClass}" style="font-size:10px">${tagLabel}</span>
+      <span class="s-stat" style="color:var(--green)">W${R.wins[r.id]}</span>
+      <span class="s-stat" style="color:var(--red)">L${R.losses[r.id]}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderHistory(){
+  const el=document.getElementById('historyPanel'); if(!el) return;
+  if(!R.history||!R.history.length){el.innerHTML=`<div style="color:var(--muted);font-size:12px">No races yet</div>`;return;}
+  el.innerHTML=R.history.slice(0,50).map(h=>{
+    if(h.isBye) return `
+      <div class="h-item" style="border-left:2px solid var(--purple);background:var(--purpledim)">
+        <span style="color:var(--purple);font-size:11px;font-weight:700">#${h.num} 🎫 BYE — 2nd Chance</span>
+        <div style="font-size:12px;margin-top:2px;color:var(--purple)">${esc(h.places[0])} advances to Final automatically</div>
+      </div>`;
+    const bracketLabel = h.isFinal||h.bracket==='final'?'Final':h.bracket==='main'?'Main':'2nd Chance';
+    return `
+      <div class="h-item bracket-${h.isFinal||h.bracket==='final'?'final':h.bracket}">
+        <span style="color:var(--muted2);font-size:11px">#${h.num} ${bracketLabel}</span>
+        <div style="font-size:12px;margin-top:2px">🥇${esc(h.places[0])} ${h.places[1]?'🥈'+esc(h.places[1]):''}${h.places[2]?' 🥉'+esc(h.places[2]):''}</div>
+      </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PODIUM & FINISH
+// ═══════════════════════════════════════════════════════════════
+function showPodiumModal(){
+  const p=R.podium, jp=R.juniorPodium;
+  const classLabel={box:'📦 Box Class',evo:'⚡ EVO Class',pro:'🏆 Pro Class'}[R.classKey]||R.specialName||R.classKey;
+  const isEvo=R.classKey==='evo';
+
+  // Compute final standings for all racers (for points)
+  let standings=[];
+  try{ standings=computeFinalStandings(); }catch(e){ console.error('standings error',e); }
+
+  // Build points label safely outside template literal
+  let pointsLabel='Season Points';
+  if(R.mode==='test') pointsLabel='TEST — NOT RECORDED';
+  else if(R.mode==='special'){
+    const scheme={standard:'Standard',double:'Double Points',podium:'Podium Only'};
+    pointsLabel='Special Event — '+(scheme[R.specialPoints]||'Standard');
+  } else if(R.doublePoints){
+    pointsLabel='<span style="color:var(--accent)">✕2 DOUBLE POINTS</span>';
+  }
+
+  let html=`
+    <div class="podium-wrap">
+      <div class="podium-title">🏆 ${esc(classLabel)} — Final Results</div>
+      ${p.first?`<div class="podium-row pod1"><span class="pod-emoji">🥇</span><span class="pod-name">${esc(getName(p.first))}</span></div>`:''}
+      ${p.second?`<div class="podium-row pod2"><span class="pod-emoji">🥈</span><span class="pod-name">${esc(getName(p.second))}</span></div>`:''}
+      ${p.third?`<div class="podium-row pod3"><span class="pod-emoji">🥉</span><span class="pod-name">${esc(getName(p.third))}</span></div>`:''}
+    </div>`;
+
+  if(isEvo && jp && (jp.first||jp.second||jp.third)){
+    html+=`<div style="margin:16px 0 8px;border-top:1px solid var(--border);padding-top:14px">
+      <div class="podium-title" style="font-size:16px;color:var(--purple)">👾 Junior Podium</div>
+      ${jp.first?`<div class="podium-row" style="background:var(--purpledim);border:1px solid rgba(144,96,224,.2)"><span class="pod-emoji">🥇</span><span class="pod-name" style="color:var(--purple)">${esc(getName(jp.first))}</span></div>`:''}
+      ${jp.second?`<div class="podium-row" style="background:var(--purpledim);border:1px solid rgba(144,96,224,.2)"><span class="pod-emoji">🥈</span><span class="pod-name" style="color:var(--purple)">${esc(getName(jp.second))}</span></div>`:''}
+      ${jp.third?`<div class="podium-row" style="background:var(--purpledim);border:1px solid rgba(144,96,224,.2)"><span class="pod-emoji">🥉</span><span class="pod-name" style="color:var(--purple)">${esc(getName(jp.third))}</span></div>`:''}
+    </div>`;
+  }
+
+  html+=`<div style="margin:14px 0 0;border-top:1px solid var(--border);padding-top:12px">
+    <div class="sec-title">Points Awarded Tonight (${pointsLabel})</div>
+    <table class="pts-table" style="margin-top:8px">
+      <tr><th>#</th><th>Racer</th><th>Points</th></tr>
+      ${standings.slice(0,10).map((s,i)=>`<tr>
+        <td class="pts-pos ${i===0?'pos-1':i===1?'pos-2':i===2?'pos-3':''}">${i+1}</td>
+        <td class="pts-name">${esc(s.name)}${s.isJunior&&isEvo?` <span class="chip chip-junior" style="font-size:10px">J</span>`:''}</td>
+        <td class="pts-val">${s.points}</td>
+      </tr>`).join('')}
+    </table>
+  </div>`;
+
+  document.getElementById('podiumBody').innerHTML=html;
+  const finBtn=document.getElementById('podiumFinishBtn');
+  if(finBtn) finBtn.textContent = R.mode==='test' ? '← Return Home (Test — nothing saved)' : 'Save Results & Return Home';
+  showModal('podiumModal');
+}
+
+function computeFinalStandings(){
+  // Sort all racers by: champion > 2nd > 3rd > then by wins desc, losses asc
+  const podOrder=[R.podium?.first,R.podium?.second,R.podium?.third].filter(Boolean);
+  const sorted=[...R.racers].sort((a,b)=>{
+    const ai=podOrder.indexOf(a.id),bi=podOrder.indexOf(b.id);
+    if(ai>=0&&bi>=0) return ai-bi;
+    if(ai>=0) return -1; if(bi>=0) return 1;
+    const ae=R.eliminated.includes(a.id),be=R.eliminated.includes(b.id);
+    if(!ae&&be) return -1; if(ae&&!be) return 1;
+    return (R.wins[b.id]-R.wins[a.id])||(R.losses[a.id]-R.losses[b.id]);
+  });
+  return sorted.map((r,i)=>({
+    racerId:r.id, rosterId:r.rosterId, name:r.name, isJunior:r.isJunior,
+    position:i+1, points:posPoints(i+1, R.mode==='special'?R.specialPoints:(R.doublePoints?'double':'standard')),
+    wins:R.wins[r.id], losses:R.losses[r.id]
+  }));
+}
+
+async function finishClass(){
+  closeModal();
+
+  // Save results to DB (skip for test mode)
+  if(R.mode!=='test'){
+    let season=getCurrentSeason();
+    // Special events can run without an active season — store in a standalone bucket
+    if(!season && R.mode==='special'){
+      if(!DB.specialEvents) DB.specialEvents=[];
+      // handled below
+    }
+    if(season){
+      const standings=computeFinalStandings();
+      const scheme = R.mode==='special'?R.specialPoints:(R.doublePoints?'double':'standard');
+
+      // Per-race breakdown for manual audit if needed
+      const raceBreakdown = R.history.map(h=>({
+        raceNum: h.num,
+        bracket: h.bracket,
+        racers: h.names,
+        places: h.places,
+        isFinal: !!h.isFinal,
+      })).reverse(); // chronological order
+
+      // Per-racer summary for easy reading in JSON
+      const racerSummary = standings.map(s=>({
+        position: s.position,
+        name: s.name,
+        isJunior: s.isJunior,
+        wins: s.wins,
+        losses: s.losses,
+        points: s.points,
+        pointsScheme: scheme,
+      }));
+
+      const eventData={
+        // ── Event metadata ──────────────────────────────────────
+        id: R.eventId,
+        date: new Date().toLocaleDateString('en-NZ'),
+        type: R.mode,             // "normal" | "special" | "test"
+        classKey: R.classKey,     // "box" | "evo" | "pro"
+        classLabel: {box:'Box Class',evo:'EVO Class',pro:'Pro Class'}[R.classKey]||R.classKey,
+        specialName: R.specialName||'',
+        // ── Points ─────────────────────────────────────────────
+        doublePoints: R.doublePoints||false,
+        pointsScheme: scheme,     // "standard" | "double" | "podium"
+        // ── Summary results (used by standings view) ────────────
+        racerCount: R.racers.length,
+        results: standings,       // [{racerId, name, position, points, wins, losses, isJunior}]
+        podium: R.podium,         // {first, second, third} — racer IDs
+        juniorPodium: R.juniorPodium||null,
+        // ── Audit trail (for manual correction if needed) ───────
+        // Each race: {raceNum, bracket, racers, places, isFinal}
+        // Bracket: "main" | "second" | "final"
+        // Edit this section and recalculate results if a result was entered incorrectly
+        raceBreakdown: raceBreakdown,
+        // Full racer summary with points detail
+        racerSummary: racerSummary,
+      };
+
+      if(!season.events) season.events=[];
+      season.events.push(eventData);
+
+      // Update racer DB (ensure all racers exist)
+      for(const re of R.racers){
+        ensureRacer(re.name, re.isJunior);
+        if(re.rosterId){
+          const dbr=DB.racers.find(r=>r.id===re.rosterId);
+          if(dbr) dbr.isJunior=re.isJunior;
+        }
+      }
+
+      await saveDB();
+      toast('Results saved!','success');
+    } else if(R.mode==='special'){
+      // No active season — save as standalone special event
+      if(!DB.specialEvents) DB.specialEvents=[];
+      const standings=computeFinalStandings();
+      DB.specialEvents.push({
+        id:R.eventId,
+        date:new Date().toLocaleDateString('en-NZ'),
+        type:'special',
+        classKey:R.classKey,
+        specialName:R.specialName||'Special Event',
+        specialPoints:R.specialPoints||'standard',
+        results:standings,
+        podium:R.podium,
+        juniorPodium:R.juniorPodium||null,
+        history:R.history,
+      });
+      for(const re of R.racers){ ensureRacer(re.name, re.isJunior); }
+      await saveDB();
+      toast('Special event results saved!','success');
+    }
+  }
+
+  // Update display window
+  if(dispWin&&!dispWin.closed) writeDisplay();
+  goHome();
+}
+
+function confirmAbortRace(){
+  openConfirm('End Race Early?','All progress for this race will be lost. This cannot be undone.',()=>{
+    if(dispWin&&!dispWin.closed) dispWin.close();
+    goHome();
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  EDIT LAST RESULT
+// ═══════════════════════════════════════════════════════════════
+function editLastResult(){
+  if(!R.lastCompletedRace) return;
+  const {entry,cr} = R.lastCompletedRace;
+  const count=cr.racers.length;
+  const placeLabels=['1st','2nd','3rd'];
+
+  let html=`<p style="color:var(--muted);font-size:13px;margin-bottom:14px">Race #${entry.num} — ${cr.bracket==='main'?'Main Round':'2nd Chance'}</p>`;
+  for(let p=0;p<count;p++){
+    html+=`<div class="form-group">
+      <label>${placeLabels[p]} Place</label>
+      <select id="editPlace_${p}">
+        ${cr.racers.map(id=>`<option value="${id}" ${entry.placeIds[p]===id?'selected':''}>${esc(getName(id))}</option>`).join('')}
+      </select>
+    </div>`;
+  }
+  document.getElementById('editResultBody').innerHTML=html;
+  showModal('editResultModal');
+}
+
+function saveEditResult(){
+  if(!R.lastCompletedRace) return;
+  const {cr, snapshot} = R.lastCompletedRace;
+  const count = cr.racers.length;
+
+  // Collect new places
+  const newPlaces=[];
+  for(let p=0;p<count;p++){
+    const sel=document.getElementById('editPlace_'+p);
+    if(!sel) return;
+    newPlaces.push(sel.value);
+  }
+  if(new Set(newPlaces).size!==newPlaces.length){ toast('Each racer can only have one place','error'); return; }
+
+  // ── Rewind to state just BEFORE the last race was confirmed ──
+  R.wins       = {...snapshot.wins};
+  R.losses     = {...snapshot.losses};
+  R.bracket    = {...snapshot.bracket};
+  R.eliminated = [...snapshot.eliminated];
+  R.mainPool   = [...snapshot.mainPool];
+  R.secondPool = [...snapshot.secondPool];
+  R.roundQueue = snapshot.roundQueue.map(r=>({...r, racers:[...r.racers]}));
+  R.roundType  = snapshot.roundType;
+  R.history    = [...snapshot.history];
+  R.lastCompletedRace = null;
+
+  // ── Re-apply the race with corrected places ───────────────
+  const first = newPlaces[0];
+  const losers = newPlaces.slice(1);
+
+  R.wins[first]++;
+  losers.forEach(id=>R.losses[id]++);
+
+  const correctedEntry = {
+    num: cr.num, bracket: cr.bracket,
+    names: cr.racers.map(getName),
+    places: newPlaces.map(getName),
+    placeIds: newPlaces,
+    isFinal: cr.bracket==='final'
+  };
+  R.history.unshift(correctedEntry);
+
+  if(cr.bracket==='final'){
+    R.podium={first, second:losers[0]||null, third:losers[1]||null};
+    R.bracket[first]='champ';
+    closeModal();
+    computeJuniorPodium();
+    renderRace();
+    toast('Result updated','success');
+    showPodiumModal();
+    return;
+  }
+
+  if(cr.bracket==='main'){
+    R.bracket[first]='main';
+    R.mainPool.push(first);
+    losers.forEach(id=>{ R.bracket[id]='second'; R.secondPool.push(id); });
+  } else {
+    R.bracket[first]='second';
+    R.secondPool.push(first);
+    losers.forEach(id=>{ R.bracket[id]='elim'; R.eliminated.push(id); });
+  }
+
+  closeModal();
+  toast('Result updated','success');
+  serveNextRace();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  START RACE NIGHT
+// ═══════════════════════════════════════════════════════════════
+function startRaceNight(){
+  const entries=[...setupState.racerEntries];
+  if(entries.length<3){ toast('Need at least 3 racers','error'); return; }
+  const mode=setupState.mode;
+  const classKey=setupState.classKey;
+  initRaceState(entries, classKey, mode, setupState.specialName, setupState.specialClass, setupState.specialPoints, setupState.doublePoints);
+  showScreen('raceScreen');
+  renderRace();
+  updateRaceTopBar();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  EDIT NAMES (during race)
+// ═══════════════════════════════════════════════════════════════
+function openEditNames(){
+  const list=document.getElementById('editNamesList');
+  list.innerHTML=R.racers.map((r,i)=>`
+    <div class="racer-item">
+      <span class="racer-num">${i+1}</span>
+      <input type="text" id="en_${r.id}" value="${esc(r.name)}" maxlength="30">
+    </div>`).join('');
+  showModal('editNamesModal');
+}
+
+function saveEditNames(){
+  R.racers.forEach(r=>{
+    const el=document.getElementById('en_'+r.id);
+    if(el&&el.value.trim()) r.name=el.value.trim();
+  });
+  closeModal(); renderRace(); toast('Names updated','success');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  POINTS SCREEN
+// ═══════════════════════════════════════════════════════════════
+function renderPoints(seasonId){
+  const season=DB.seasons.find(s=>s.id===seasonId);
+  if(!season){ document.getElementById('pointsContent').innerHTML='<div class="empty">Season not found</div>'; return; }
+  document.getElementById('pointsSeasonLabel').textContent=season.name;
+
+  const classes=['box','evo','pro'];
+  const classLabel={box:'📦 Box Class',evo:'⚡ EVO Class',pro:'🏆 Pro Class'};
+
+  // Aggregate points per racer per class
+  // Key by normalised name (lowercase) — stable across events unlike temp racerId
+  const standings={box:{},evo:{},pro:{}};
+  const juniorStandings={evo:{}};
+
+  for(const ev of (season.events||[])){
+    if(ev.type==='test'||ev.type==='special') continue;
+    const cls=ev.classKey;
+    if(!standings[cls]) continue;
+    for(const res of (ev.results||[])){
+      const key=(res.name||'').toLowerCase().trim();
+      if(!key) continue;
+      if(!standings[cls][key]) standings[cls][key]={name:res.name,pts:0,isJunior:res.isJunior,events:0};
+      standings[cls][key].pts+=(res.points||0);
+      standings[cls][key].events++;
+      if(cls==='evo'&&res.isJunior){
+        if(!juniorStandings.evo[key]) juniorStandings.evo[key]={name:res.name,pts:0,events:0};
+        juniorStandings.evo[key].pts+=(res.points||0);
+        juniorStandings.evo[key].events++;
+      }
+    }
+  }
+
+  // Special events
+  const specials=(season.events||[]).filter(e=>e.type==='special');
+
+  function tableHTML(data, title, color){
+    const rows=Object.entries(data).sort((a,b)=>b[1].pts-a[1].pts);
+    if(rows.length===0) return `<div class="empty" style="padding:16px">No results yet</div>`;
+    return `<table class="pts-table">
+      <tr><th>#</th><th>Racer</th><th>Events</th><th>Points</th></tr>
+      ${rows.map(([id,d],i)=>`<tr>
+        <td class="pts-pos ${i===0?'pos-1':i===1?'pos-2':i===2?'pos-3':''}">${i+1}</td>
+        <td class="pts-name">${esc(d.name)}</td>
+        <td style="color:var(--muted)">${d.events}</td>
+        <td class="pts-val" style="color:${color||'var(--accent)'}">${d.pts}</td>
+      </tr>`).join('')}
+    </table>`;
+  }
+
+  let html=`<div class="points-grid">`;
+  for(const cls of classes){
+    const color={box:'#60b0ff',evo:'var(--green)',pro:'var(--accent)'}[cls];
+    html+=`<div class="panel">
+      <div class="panel-hdr"><span>${classLabel[cls]} Standings</span>${classPill(cls)}</div>
+      <div class="panel-body"><div class="points-table-wrap">${tableHTML(standings[cls],'',color)}</div></div>
+    </div>`;
+  }
+
+  // EVO Junior
+  html+=`<div class="panel">
+    <div class="panel-hdr"><span>⚡ EVO — Junior Standings</span><span class="chip chip-junior">JNR</span></div>
+    <div class="panel-body"><div class="points-table-wrap">${tableHTML(juniorStandings.evo,'','var(--purple)')}</div></div>
+  </div>`;
+
+  // Special events — group multiple class runs under the same event name
+  if(specials.length>0){
+    // Group by event name
+    const specialGroups={};
+    for(const sp of specials){
+      const gname=(sp.specialName||'Special Event').trim();
+      if(!specialGroups[gname]) specialGroups[gname]=[];
+      specialGroups[gname].push(sp);
+    }
+    for(const [evtName, evts] of Object.entries(specialGroups)){
+      // Aggregate all classes for this event into one table per class
+      const clsData={};
+      for(const sp of evts){
+        const cls=sp.classKey||'open';
+        if(!clsData[cls]) clsData[cls]={};
+        for(const res of (sp.results||[])){
+          const key=(res.name||'').toLowerCase().trim(); if(!key) continue;
+          if(!clsData[cls][key]) clsData[cls][key]={name:res.name,pts:0,events:0,isJunior:res.isJunior};
+          clsData[cls][key].pts+=(res.points||0);
+          clsData[cls][key].events++;
+        }
+      }
+      const clsLabel={box:'📦 Box',evo:'⚡ EVO',pro:'🏆 Pro'};
+      const clsTables=Object.entries(clsData).map(([cls,data])=>`
+        <div style="margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">${clsLabel[cls]||cls}</div>
+          <div class="points-table-wrap">${tableHTML(data,'','#b080ff')}</div>
+        </div>`).join('');
+      html+=`<div class="panel" style="grid-column:1/-1">
+        <div class="panel-hdr"><span>★ ${esc(evtName)}</span>${classPill('special')}<span style="color:var(--muted2);font-size:11px">${evts.length} class${evts.length>1?'es':''}</span></div>
+        <div class="panel-body">${clsTables}</div>
+      </div>`;
+    }
+  }
+
+  html+=`</div>`;
+  document.getElementById('pointsContent').innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  EXPORT FUNCTIONS
+// ═══════════════════════════════════════════════════════════════
+
+// ── Shared helpers ────────────────────────────────────────────
+let _currentExportSeasonId = null; // set by renderPoints so exports know which season
+
+function _getNightData(){
+  // Build export data for tonight's completed race
+  const standings = computeFinalStandings();
+  const p = R.podium;
+  const classLabel = {box:'Box Class', evo:'EVO Class', pro:'Pro Class'}[R.classKey] || R.classKey;
+  const date = new Date().toLocaleDateString('en-NZ');
+  return { standings, podium:p, juniorPodium:R.juniorPodium, classLabel,
+           classKey:R.classKey, date, specialName:R.specialName,
+           history:R.history, racers:R.racers };
+}
+
+function _getSeasonStandings(seasonId){
+  const sid = seasonId || _currentExportSeasonId;
+  const season = DB.seasons.find(s=>s.id===sid);
+  if(!season) return null;
+  const classes = ['box','evo','pro'];
+  const standings = {box:{}, evo:{}, pro:{}};
+  const juniorEvo = {};
+  for(const ev of (season.events||[])){
+    if(ev.type==='test'||ev.type==='special') continue;
+    const cls = ev.classKey;
+    if(!standings[cls]) continue;
+    for(const res of (ev.results||[])){
+      const key = (res.name||'').toLowerCase().trim(); if(!key) continue;
+      if(!standings[cls][key]) standings[cls][key]={name:res.name,pts:0,events:0,isJunior:res.isJunior};
+      standings[cls][key].pts += (res.points||0);
+      standings[cls][key].events++;
+      if(cls==='evo'&&res.isJunior){
+        if(!juniorEvo[key]) juniorEvo[key]={name:res.name,pts:0,events:0};
+        juniorEvo[key].pts += (res.points||0);
+        juniorEvo[key].events++;
+      }
+    }
+  }
+  const sorted = obj => Object.values(obj).sort((a,b)=>b.pts-a.pts);
+  return { season, box:sorted(standings.box), evo:sorted(standings.evo),
+           pro:sorted(standings.pro), juniorEvo:sorted(juniorEvo) };
+}
+
+// ── Shared HTML report builder ────────────────────────────────
+function _buildNightHTML(d, inline=false){
+  const podNames = (id) => id ? esc(d.racers.find(r=>r.id===id)?.name||'?') : '—';
+  const isEvo = d.classKey==='evo';
+
+  const podiumRows = [
+    d.podium?.first  ? `<tr><td>🥇</td><td>${podNames(d.podium.first)}</td></tr>` : '',
+    d.podium?.second ? `<tr><td>🥈</td><td>${podNames(d.podium.second)}</td></tr>` : '',
+    d.podium?.third  ? `<tr><td>🥉</td><td>${podNames(d.podium.third)}</td></tr>` : '',
+  ].join('');
+
+  const juniorSection = isEvo && d.juniorPodium && (d.juniorPodium.first||d.juniorPodium.second||d.juniorPodium.third) ? `
+    <h2>Junior Podium</h2>
+    <table><tr><th>Place</th><th>Racer</th></tr>
+      ${d.juniorPodium.first  ?`<tr><td>🥇</td><td>${podNames(d.juniorPodium.first)}</td></tr>`:''}
+      ${d.juniorPodium.second ?`<tr><td>🥈</td><td>${podNames(d.juniorPodium.second)}</td></tr>`:''}
+      ${d.juniorPodium.third  ?`<tr><td>🥉</td><td>${podNames(d.juniorPodium.third)}</td></tr>`:''}
+    </table>` : '';
+
+  const standingsRows = d.standings.map((s,i)=>`
+    <tr>
+      <td>${i+1}</td><td>${esc(s.name)}${s.isJunior&&isEvo?' (J)':''}</td>
+      <td>${s.wins}</td><td>${s.losses}</td><td><strong>${s.points}</strong></td>
+    </tr>`).join('');
+
+  const histRows = [...d.history].reverse().map(h=>`
+    <tr>
+      <td>#${h.num}</td>
+      <td>${h.bracket==='final'?'Final':h.bracket==='main'?'Main':'2nd Chance'}</td>
+      <td>${h.places.map(esc).join(' · ')}</td>
+    </tr>`).join('');
+
+  const styles = inline ? '' : `<style>
+    body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1a1a2e}
+    h1{color:#c47a00;border-bottom:3px solid #c47a00;padding-bottom:8px}
+    h2{color:#333;margin-top:28px;border-bottom:1px solid #ddd;padding-bottom:6px}
+    table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
+    th{background:#1a1a2e;color:#fff;padding:8px 10px;text-align:left}
+    td{padding:7px 10px;border-bottom:1px solid #eee}
+    tr:nth-child(even) td{background:#f8f8f8}
+    tr:first-child td{font-weight:bold}
+    .meta{color:#666;font-size:13px;margin-bottom:20px}
+    @media print{body{margin:20px}}
+  </style>`;
+
+  return `${styles}
+    <h1>🏁 ${esc(d.classLabel)}${d.specialName?' — '+esc(d.specialName):''}</h1>
+    <p class="meta">Date: ${d.date}</p>
+    <h2>Podium</h2>
+    <table><tr><th>Place</th><th>Racer</th></tr>${podiumRows}</table>
+    ${juniorSection}
+    <h2>Full Results &amp; Points</h2>
+    <table>
+      <tr><th>#</th><th>Racer</th><th>Wins</th><th>Losses</th><th>Points</th></tr>
+      ${standingsRows}
+    </table>
+    <h2>Race History</h2>
+    <table>
+      <tr><th>Race</th><th>Bracket</th><th>Result</th></tr>
+      ${histRows}
+    </table>`;
+}
+
+function _buildSeasonHTML(data, inline=false){
+  const {season, box, evo, pro, juniorEvo} = data;
+  const tbl = (rows, cols) => {
+    if(!rows.length) return '<p style="color:#666;font-size:13px">No results yet</p>';
+    return `<table>
+      <tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr>
+      ${rows.map((r,i)=>`<tr>
+        <td>${i+1}</td><td>${esc(r.name)}</td>
+        <td>${r.events}</td><td><strong>${r.pts}</strong></td>
+      </tr>`).join('')}
+    </table>`;
+  };
+  const styles = inline ? '' : `<style>
+    body{font-family:Arial,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;color:#1a1a2e}
+    h1{color:#c47a00;border-bottom:3px solid #c47a00;padding-bottom:8px}
+    h2{color:#333;margin-top:28px;border-bottom:1px solid #ddd;padding-bottom:6px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:16px}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    th{background:#1a1a2e;color:#fff;padding:8px 10px;text-align:left}
+    td{padding:7px 10px;border-bottom:1px solid #eee}
+    tr:nth-child(even) td{background:#f8f8f8}
+    @media print{body{margin:20px}.grid{grid-template-columns:1fr 1fr}}
+  </style>`;
+  const evts = (season.events||[]).filter(e=>e.type!=='test');
+  return `${styles}
+    <h1>📊 Season Standings — ${esc(season.name)}</h1>
+    <p style="color:#666;font-size:13px">${esc(season.startDate||'')}${season.endDate?' — '+esc(season.endDate):' (active)'} · ${evts.length} events</p>
+    <div class="grid">
+      <div><h2>📦 Box Class</h2>${tbl(box,['#','Racer','Events','Points'])}</div>
+      <div><h2>⚡ EVO Class</h2>${tbl(evo,['#','Racer','Events','Points'])}</div>
+      <div><h2>🏆 Pro Class</h2>${tbl(pro,['#','Racer','Events','Points'])}</div>
+      <div><h2>⚡ EVO — Juniors</h2>${tbl(juniorEvo,['#','Racer','Events','Points'])}</div>
+    </div>`;
+}
+
+// ── Night exports ─────────────────────────────────────────────
+function exportNightHTML(){
+  const d = _getNightData();
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>${esc(d.classLabel)} — ${d.date}</title></head><body>
+    ${_buildNightHTML(d)}</body></html>`;
+  _downloadFile(html, `${d.classLabel.replace(/\s/g,'_')}_${d.date.replace(/\//g,'-')}.html`, 'text/html');
+}
+
+function exportNightCSV(){
+  const d = _getNightData();
+  const isEvo = d.classKey==='evo';
+  const podName = id => id ? (d.racers.find(r=>r.id===id)?.name||'?') : '';
+  const lines = [
+    [`${d.classLabel} — ${d.date}`],[],
+    ['PODIUM'],['Place','Racer'],
+    ['1st', podName(d.podium?.first)],
+    ['2nd', podName(d.podium?.second)],
+    ['3rd', podName(d.podium?.third)],
+  ];
+  if(isEvo && d.juniorPodium){
+    lines.push([],['JUNIOR PODIUM'],['Place','Racer'],
+      ['1st', podName(d.juniorPodium?.first)],
+      ['2nd', podName(d.juniorPodium?.second)],
+      ['3rd', podName(d.juniorPodium?.third)]);
+  }
+  lines.push([],['FULL RESULTS'],
+    isEvo ? ['Position','Racer','Junior','Wins','Losses','Points']
+           : ['Position','Racer','Wins','Losses','Points']);
+  d.standings.forEach((s,i)=>{
+    lines.push(isEvo
+      ? [i+1, s.name, s.isJunior?'Yes':'No', s.wins, s.losses, s.points]
+      : [i+1, s.name, s.wins, s.losses, s.points]);
+  });
+  lines.push([],['RACE HISTORY'],['Race','Bracket','1st','2nd','3rd']);
+  [...d.history].reverse().forEach(h=>{
+    lines.push([`#${h.num}`,
+      h.bracket==='final'?'Final':h.bracket==='main'?'Main':'2nd Chance',
+      h.places[0]||'', h.places[1]||'', h.places[2]||'']);
+  });
+  _downloadFile(_toCSV(lines),
+    `${d.classLabel.replace(/\s/g,'_')}_${d.date.replace(/\//g,'-')}.csv`, 'text/csv');
+}
+
+function exportNightPrint(){
+  const d = _getNightData();
+  _printHTML(_buildNightHTML(d), `${d.classLabel} — ${d.date}`);
+}
+
+// ── Season exports ────────────────────────────────────────────
+function exportSeasonHTML(){
+  const data = _getSeasonStandings();
+  if(!data){ toast('No season data to export','error'); return; }
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>Season Standings — ${esc(data.season.name)}</title></head><body>
+    ${_buildSeasonHTML(data)}</body></html>`;
+  _downloadFile(html, `Season_Standings_${data.season.name.replace(/\s/g,'_')}.html`, 'text/html');
+}
+
+function exportSeasonCSV(){
+  const data = _getSeasonStandings();
+  if(!data){ toast('No season data to export','error'); return; }
+  const {season, box, evo, pro, juniorEvo} = data;
+  const lines = [`Season Standings — ${season.name}`,''].map(l=>[l]);
+  const section = (title, rows) => {
+    lines.push([title],['Position','Racer','Events','Points']);
+    rows.forEach((r,i)=> lines.push([i+1, r.name, r.events, r.pts]));
+    lines.push([]);
+  };
+  section('BOX CLASS', box);
+  section('EVO CLASS', evo);
+  section('PRO CLASS', pro);
+  section('EVO — JUNIORS', juniorEvo);
+  _downloadFile(_toCSV(lines),
+    `Season_Standings_${season.name.replace(/\s/g,'_')}.csv`, 'text/csv');
+}
+
+function exportSeasonPrint(){
+  const data = _getSeasonStandings();
+  if(!data){ toast('No season data to export','error'); return; }
+  _printHTML(_buildSeasonHTML(data), `Season Standings — ${data.season.name}`);
+}
+
+// ── Download helpers ──────────────────────────────────────────
+function _downloadFile(content, filename, mime){
+  const blob = new Blob([content], {type: mime+';charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast(`Saved: ${filename}`, 'success');
+}
+
+function _toCSV(rows){
+  return rows.map(row=>
+    row.map(cell=>{
+      const s = String(cell===null||cell===undefined?'':cell);
+      return s.includes(',') || s.includes('"') || s.includes('\n')
+        ? `"${s.replace(/"/g,'""')}"` : s;
+    }).join(',')
+  ).join('\r\n');
+}
+
+function _printHTML(bodyContent, title){
+  const win = window.open('','_blank','width=900,height=700');
+  if(!win){ toast('Allow pop-ups to print','error'); return; }
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>${esc(title)}</title>
+    <style>
+      body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1a1a2e}
+      h1{color:#c47a00;border-bottom:3px solid #c47a00;padding-bottom:8px}
+      h2{color:#333;margin-top:28px;border-bottom:1px solid #ddd;padding-bottom:6px}
+      table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+      th{background:#1a1a2e;color:#fff;padding:7px 10px;text-align:left}
+      td{padding:6px 10px;border-bottom:1px solid #eee}
+      tr:nth-child(even) td{background:#f8f8f8}
+      .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+      @media print{
+        .no-print{display:none}
+        body{margin:10px}
+        .grid{grid-template-columns:1fr 1fr}
+      }
+    </style>
+    </head><body>
+    <div class="no-print" style="margin-bottom:16px;display:flex;gap:8px">
+      <button onclick="window.print()" style="padding:8px 18px;background:#c47a00;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px">🖨 Print / Save as PDF</button>
+      <button onclick="window.close()" style="padding:8px 18px;background:#eee;border:none;border-radius:6px;cursor:pointer;font-size:14px">Close</button>
+    </div>
+    ${bodyContent}
+    </body></html>`);
+  win.document.close();
+}
+
+// Keep track of which season is being viewed for exports
+const _origRenderPoints = renderPoints;
+renderPoints = function(seasonId){
+  _currentExportSeasonId = seasonId;
+  _origRenderPoints(seasonId);
+};
+
+
+// ═══════════════════════════════════════════════════════════════
+//  SEASONS ARCHIVE
+// ═══════════════════════════════════════════════════════════════
+function showSpecialEventsView(){
+  showScreen('seasonsScreen');
+  const evts = DB.specialEvents||[];
+  if(!evts.length){ document.getElementById('seasonsContent').innerHTML='<div class="empty">No standalone special events recorded</div>'; return; }
+
+  // Group by event name
+  const groups={};
+  for(const ev of evts){
+    const n=ev.specialName||'Special Event';
+    if(!groups[n]) groups[n]=[];
+    groups[n].push(ev);
+  }
+  const clsLabel={box:'📦 Box',evo:'⚡ EVO',pro:'🏆 Pro'};
+  let html=`<div style="margin-bottom:16px">
+    <div style="font-family:'Arial Narrow',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px">Standalone Special Events</div>
+    <div style="color:var(--muted2);font-size:13px">Events run outside of a season</div>
+  </div>`;
+  for(const [name, runs] of Object.entries(groups)){
+    const dates = runs.map(r=>r.date).join(', ');
+    html+=`<div class="panel" style="margin-bottom:10px">
+      <div style="padding:14px 16px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <span style="font-family:'Arial Narrow',sans-serif;font-size:17px;font-weight:700">${esc(name)}</span>
+          ${classPill('special')}
+          <span style="color:var(--muted);font-size:12px">${dates}</span>
+        </div>
+        ${runs.map(r=>`
+          <div style="margin-bottom:8px">
+            <div style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;margin-bottom:4px">${clsLabel[r.classKey]||r.classKey} · ${r.date}</div>
+            <div style="font-size:13px">
+              ${r.podium?.first?`🥇 ${esc(r.results?.find(x=>x.racerId===r.podium.first)?.name||'?')}`:''} 
+              ${r.podium?.second?`🥈 ${esc(r.results?.find(x=>x.racerId===r.podium.second)?.name||'?')}`:''} 
+              ${r.podium?.third?`🥉 ${esc(r.results?.find(x=>x.racerId===r.podium.third)?.name||'?')}`:''} 
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }
+  document.getElementById('seasonsContent').innerHTML=html;
+}
+
+function renderSeasons(){
+  const closed=DB.seasons.filter(s=>s.closed);
+  let html='';
+  if(closed.length===0){
+    html=`<div class="empty"><div class="empty-icon">📁</div>No archived seasons yet</div>`;
+  } else {
+    html=closed.map(s=>`
+      <div class="panel" style="margin-bottom:10px">
+        <div style="padding:14px 16px;display:flex;align-items:center;gap:12px">
+          <div style="flex:1">
+            <div style="font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:17px;font-weight:700">${esc(s.name)}</div>
+            <div style="color:var(--muted);font-size:12px">${esc(s.startDate||'')} — ${esc(s.endDate||'')} · ${(s.events||[]).filter(e=>e.type!=='test').length} events</div>
+          </div>
+          <button class="btn btn-secondary" onclick="showScreen('pointsScreen');renderPoints('${s.id}')">📊 View Standings</button>
+        </div>
+      </div>`).join('');
+  }
+  document.getElementById('seasonsContent').innerHTML=`
+    <div style="margin-bottom:16px">
+      <div style="font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px">Season Archive</div>
+      <div style="color:var(--muted2);font-size:13px">Read-only historical season standings</div>
+    </div>${html}`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DISPLAY WINDOW (second screen)
+// ═══════════════════════════════════════════════════════════════
+let dispWin=null;
+
+function openDisplay(){
+  dispWin=window.open('','RaceDisplay','width=1280,height=720,resizable=yes');
+  if(!dispWin){ alert('Please allow pop-ups for this page.'); return; }
+  writeDisplay();
+}
+
+function writeDisplay(){
+  if(!dispWin||dispWin.closed) return;
+  const cr=R.currentRace, nextR=R.roundQueue?.[0]||null;
+  const isFinal=R.currentRace&&R.currentRace.bracket==='final';
+
+  const badge=(br,fin)=>fin
+    ?`<span style="display:inline-block;padding:5px 16px;border-radius:16px;font-size:14px;font-weight:800;background:rgba(255,215,0,.18);color:#ffd700;border:1px solid rgba(255,215,0,.3);letter-spacing:.06em">🏆 FINAL RACE</span>`
+    :br==='main'
+    ?`<span style="display:inline-block;padding:5px 16px;border-radius:16px;font-size:14px;font-weight:800;background:rgba(64,144,224,.15);color:#60b0ff;border:1px solid rgba(64,144,224,.25);letter-spacing:.06em">MAIN BRACKET</span>`
+    :`<span style="display:inline-block;padding:5px 16px;border-radius:16px;font-size:14px;font-weight:800;background:rgba(232,160,32,.15);color:#f0c060;border:1px solid rgba(232,160,32,.25);letter-spacing:.06em">2ND CHANCE</span>`;
+
+  const classLabel={box:'📦 BOX CLASS',evo:'⚡ EVO CLASS',pro:'🏆 PRO CLASS'}[R.classKey||'box']||'';
+
+  let curHTML='';
+  if(R.podium){
+    const p=R.podium;
+    curHTML=`<div style="text-align:center">
+      <div style="font-size:13px;font-weight:800;letter-spacing:.15em;color:#3dd68c;margin-bottom:20px">🏆 FINAL RESULTS</div>
+      ${p.first?`<div style="display:flex;align-items:center;gap:16px;background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.25);border-radius:16px;padding:16px 22px;margin-bottom:12px"><span style="font-size:38px">🥇</span><span style="font-size:52px;font-weight:900;color:#ffd700">${esc(getName(p.first))}</span></div>`:''}
+      ${p.second?`<div style="display:flex;align-items:center;gap:16px;background:rgba(192,200,208,.07);border:1px solid rgba(192,200,208,.18);border-radius:16px;padding:14px 22px;margin-bottom:10px"><span style="font-size:30px">🥈</span><span style="font-size:42px;font-weight:800;color:#c0c8d0">${esc(getName(p.second))}</span></div>`:''}
+      ${p.third?`<div style="display:flex;align-items:center;gap:16px;background:rgba(205,127,50,.07);border:1px solid rgba(205,127,50,.18);border-radius:16px;padding:14px 22px"><span style="font-size:30px">🥉</span><span style="font-size:42px;font-weight:800;color:#cd7f32">${esc(getName(p.third))}</span></div>`:''}
+    </div>`;
+  } else if(cr){
+    curHTML=`
+      <div style="font-size:11px;font-weight:800;letter-spacing:.18em;color:#4090e0;margin-bottom:10px">NOW RACING</div>
+      <div style="margin-bottom:18px">${badge(cr.bracket,isFinal)}</div>
+      ${cr.racers.map((id,i)=>`
+        <div style="font-size:${cr.racers.length>2?48:58}px;font-weight:900;color:#fff;margin-bottom:8px;line-height:1.1;letter-spacing:-.01em">${esc(getName(id))}</div>
+        ${i<cr.racers.length-1?`<div style="font-size:14px;color:#2a3040;margin-bottom:8px;font-weight:700">VS</div>`:''}`).join('')}`;
+  } else {
+    curHTML=`<div style="color:#1a2030;font-size:22px;padding:80px 0;text-align:center;font-weight:700">⏳ Preparing next race…</div>`;
+  }
+
+  const nxtHTML=nextR
+    ?`<div style="font-size:11px;font-weight:800;letter-spacing:.18em;color:#2a3040;margin-bottom:10px">UP NEXT</div>
+       <div style="margin-bottom:18px">${badge(nextR.bracket,false)}</div>
+       ${nextR.racers.map(id=>`<div style="font-size:36px;font-weight:700;color:#2a3a4a;margin-bottom:8px;line-height:1.15">${esc(getName(id))}</div>`).join('')}`
+    :`<div style="color:#111822;font-size:18px;padding:80px 0;text-align:center;font-weight:700">No race queued</div>`;
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    
+    <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#04060a;color:#fff;font-family:'Arial Narrow','Impact',system-ui,sans-serif;min-height:100vh;display:grid;grid-template-columns:1fr 1fr;gap:0}.pane{padding:36px;min-height:100vh}.left{border-right:2px solid #0d1520}.right{opacity:.6}</style>
+    </head><body>
+    <div class="pane left">${curHTML}</div>
+    <div class="pane right">${nxtHTML}</div>
+    </body></html>`;
+
+  dispWin.document.open(); dispWin.document.write(html); dispWin.document.close();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MODAL HELPERS
+// ═══════════════════════════════════════════════════════════════
+function showModal(id){
+  document.querySelectorAll('.modal').forEach(m=>m.style.display='none');
+  document.getElementById(id).style.display='block';
+  document.getElementById('modalOverlay').style.display='flex';
+}
+
+function closeModal(){
+  document.getElementById('modalOverlay').style.display='none';
+  document.querySelectorAll('.modal').forEach(m=>m.style.display='none');
+}
+
+function closeModalIfBg(e){
+  if(e.target===document.getElementById('modalOverlay')) closeModal();
+}
+
+let _confirmCallback=null;
+function openConfirm(title, msg, cb){
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmMsg').textContent=msg;
+  _confirmCallback=cb;
+  document.getElementById('confirmOkBtn').onclick=()=>{ closeModal(); if(_confirmCallback) _confirmCallback(); };
+  showModal('confirmModal');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════
+async function init(){
+  await loadDB();
+  renderHome();
+
+  // Set today's season close date default
+  const today=new Date().toLocaleDateString('en-NZ');
+  const cse=document.getElementById('closeSeasonEnd');
+  if(cse) cse.value=today;
+
+  if(!serverMode){
+    setTimeout(()=>toast('Running in browser storage mode — use Export to backup data',''),1500);
+  }
+
+  // Heartbeat — tells the server this tab is still open.
+  // Server shuts down automatically when pings stop (tab closed).
+  if(serverMode){
+    setInterval(async()=>{
+      try{ await fetch('/ping'); }catch(e){}
+    }, 5000);
+  }
+}
+
+init();
+</script>
+</body>
+</html>

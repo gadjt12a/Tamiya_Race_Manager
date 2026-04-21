@@ -1,0 +1,163 @@
+Tamiya Race Manager — Change Log
+=================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.19  (2026-04-20)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIXED
+  - Podium modal not appearing after Final race confirmed.
+    Caused by a nested template literal with embedded quotes
+    crashing showPodiumModal() silently before the modal opened.
+    Points label logic extracted to a safe variable before render.
+  - Added try/catch around computeFinalStandings() in podium
+    so a standings error can no longer block the modal.
+
+ADDED
+  - 🏆 Show Results recovery button in race coordinator top bar.
+    Appears whenever podium data is set. Allows coordinator to
+    manually re-trigger the podium modal if it fails to appear.
+  - 🏁 favicon added to browser tab — removes 404 console error.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.18  (2026-04-20)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIXED
+  - ADL, JNR, ×2 PTS, and "X Added" labels still hard to read.
+    Previous fix used --muted2 which was still too dark.
+    All toggle labels now use full --text colour (#eef4ff).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.17  (2026-04-20)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMPROVED
+  - Toggle labels (ADL, JNR, ×2 PTS) lifted from --muted
+    to --muted2 for better readability on dark backgrounds.
+  - Toggle thumb colour lifted from --muted to --muted2 when off.
+  - Race history bracket labels (#12 2nd Chance etc) lifted.
+  - "X added" count and special event class count lifted.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.16  (2026-04-20)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMPROVED
+  - Class tab labels (inactive) lifted from --muted to --muted2.
+  - Active class tab colours brightened (Box, EVO, Pro, Special).
+  - Class tab hover now also lightens background.
+  - Panel headers ("Season Roster", "Tonight's Racers" etc)
+    lifted to full --text colour.
+  - Section titles ("Standings", "Race History" etc) lifted
+    from --muted to --muted2.
+  - Column headers in race coordinator lifted to --text.
+  - Empty state text lifted from --muted to --muted2.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.15  (2026-04-20)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMPROVED — Dark mode text readability pass
+  - Main text colour: #dde8f4 → #eef4ff (brighter white-blue).
+  - Muted text: #5a7090 → #8aa8c4 (was nearly unreadable on
+    dark surfaces, now clearly legible).
+  - Secondary muted: #7a90a8 → #a8c0d8.
+  - Borders slightly brighter for clearer panel edges.
+  - Font weight boosted on racer names, queue names, standings.
+  - Input fields given font-weight:500 for crisp typed text.
+  - Panel section labels lifted from --muted to --muted2.
+  - Roster names and history item text given explicit colour.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.14  (2026-04-20)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ADDED
+  - BYE now clearly labelled throughout the UI:
+    · Race history shows purple BYE entry with racer name
+      and "advances to Final automatically" message.
+    · Queue panel shows purple banner when a racer is
+      waiting on a BYE for the Final.
+    · Standings shows "🎫 BYE → Final" tag for that racer.
+  - HOW TO USE.txt added — comprehensive user guide covering
+    setup, race night operation, bracket logic, points,
+    exports, troubleshooting, and quick reference.
+
+FIXED
+  - Version numbering corrected to v9.14 (was incorrectly
+    tagged as v9.13 in previous release).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.13  (2026-04-19)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ADDED
+  - Double Points toggle (×2 PTS) on setup screen.
+    Applies to all classes on that night.
+    Top 10 points doubled (20→2 instead of 10→1).
+    EVO Junior points also double when EVO is doubled.
+    Shows ✕2 DOUBLE POINTS on podium screen.
+    Shows ×2 badge on home screen event history.
+  - Enriched JSON event structure for manual audit:
+    · raceBreakdown: every individual race in
+      chronological order with bracket and places.
+    · racerSummary: full per-racer detail with points.
+    · pointsScheme and doublePoints flags recorded.
+    · Inline field comments for manual editing guidance.
+  - Bundled Python for Windows — no installation needed.
+    python-bundle folder included, app runs fully offline.
+  - BUILD PYTHON BUNDLE (admin use only).bat — rebuilds
+    the python-bundle if needed (requires internet once).
+  - Mac launcher updated with clearer Python install guidance.
+  - README.txt updated for both Windows and Mac.
+
+FIXED
+  - Special Event "Open (All Classes)" option removed —
+    was confusing and non-functional.
+  - Special events can now run without an active season,
+    saved to a standalone specialEvents bucket in the DB.
+  - Multiple classes under same special event name now
+    group together correctly in the standings view.
+  - Special event points scheme (Standard/Double/Podium)
+    flows correctly through to exports.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.12  (2026-04-19)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIXED
+  - 2nd Chance bracket logic: when mainPool===1 and
+    secondPool===3, a single 3-person race was producing
+    only 1 finalist instead of 2.
+    Fix: racer with most wins receives a bye to the Final,
+    the other 2 race for the second Final spot.
+  - Verified with 1000 simulations across 5–21 racers.
+    All finals correctly assembled as 1+2=3.
+
+ADDED
+  - Season points accumulation now aggregates by racer name
+    (normalised) instead of temporary race-night ID.
+    Racers now correctly accumulate points across events.
+  - Export results — three formats from podium screen
+    and season standings screen:
+    · 💾 HTML — self-contained webpage, good for emailing.
+    · 📊 CSV — spreadsheet, opens in Excel.
+    · 🖨 Print/PDF — print-ready page with Print button.
+  - Junior toggle now shows on all classes (not just EVO).
+    Junior flag is a person attribute — affects points
+    and standings in EVO class only.
+  - Manage Roster modal — edit names, toggle Junior/Adult,
+    bulk All Junior / All Adult with search filter, delete.
+  - Junior toggle in roster sidebar for quick inline editing.
+  - Auto-shutdown when browser tab is closed (heartbeat).
+  - Fully offline operation — no internet required.
+  - Mac launcher (Start Race Manager.command).
+  - Fonts switched to system fonts (Segoe UI / Arial Narrow)
+    — no internet required for font loading.
+  - CHANGELOG.txt added (this file).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.11 and earlier
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Development and iteration of core race logic.
+  Bracket engine rewrites to fix 2nd Chance routing.
+  Season management, roster database, EVO Junior tracking.
+  Edit last result (snapshot/rewind approach).
+  Display window (second screen).
+  Test mode, Special Events framework.
+  Points system and season standings.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
