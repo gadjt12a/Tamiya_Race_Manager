@@ -1,8 +1,4 @@
-# Tamiya_Race_Manager
-Race Manager for Tamiya Mini 4WD racers
-
-Tamiya Race Manager v9.19
-
+Tamiya Race Manager v9.14
 HOW TO USE
 ==========================================
 
