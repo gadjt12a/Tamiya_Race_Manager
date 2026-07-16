@@ -2,6 +2,17 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.27  (2026-07-16)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHANGED
+  - Season Roster panel on the race setup screen (Box /
+    EVO / Pro) now lists racers alphabetically instead of
+    in the order they were first added to the database.
+  - Manage Roster modal is also sorted alphabetically.
+  - Display-only change — no data format changes, fully
+    compatible with existing racedata.json files.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v9.26  (2026-05-27)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ADDED

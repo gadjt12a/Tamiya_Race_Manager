@@ -1176,7 +1176,7 @@ function renderSetupContent(){
       return r.name.toLowerCase().includes(setupState.rosterFilter.toLowerCase());
     }
     return true;
-  });
+  }).sort((a,b)=>a.name.localeCompare(b.name));
   const addedIds = new Set(setupState.racerEntries.map(r=>r.rosterId).filter(Boolean));
 
   const rosterHTML = setupState.mode==='test'
@@ -1366,7 +1366,7 @@ function renderManageRoster(){
   const racers = DB.racers.filter(r=>
     !rosterEdits[r.id]?.deleted &&
     (!search || rosterEdits[r.id]?.name.toLowerCase().includes(search))
-  );
+  ).sort((a,b)=>(rosterEdits[a.id]?.name||a.name).localeCompare(rosterEdits[b.id]?.name||b.name));
   const el = document.getElementById('manageRosterList');
   if(!el) return;
   if(!racers.length){
