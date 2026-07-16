@@ -1,7 +1,14 @@
 # Tamiya_Race_Manager
 Race Manager for Tamiya Mini 4WD racers
 
-Tamiya Race Manager v9.19
+Tamiya Race Manager v9.28
+
+**Data safety (v9.28):** the server keeps automatic daily backups in
+`data/backups/` (last 14 days). If saving to disk ever fails mid-event, a
+red banner appears on screen with recovery instructions — follow it before
+closing the tab. The `Export Data` button remains the recommended USB backup
+after every race night. See `DEPLOYMENT_PLAN.md` for the upcoming
+installer-based release plan.
 
 HOW TO USE
 ==========================================

@@ -2,7 +2,7 @@
 title Tamiya Race Manager
 echo.
 echo  ==========================================
-echo   TAMIYA RACE MANAGER v9.13
+echo   TAMIYA RACE MANAGER
 echo  ==========================================
 echo.
 

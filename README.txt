@@ -1,5 +1,9 @@
-Tamiya Race Manager v9.14
+Tamiya Race Manager v9.28
 =========================
+
+DATA SAFETY: automatic daily backups are kept in data\backups\
+(last 14 days). If a red banner ever appears saying saves are
+failing, do NOT close the tab — use Export Data first.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  WINDOWS
