@@ -8,6 +8,7 @@ import json
 import os
 import shutil
 import socketserver
+import sys
 import threading
 import time
 import webbrowser
@@ -15,9 +16,59 @@ from pathlib import Path
 
 PORT = 8765
 BASE_DIR = Path(__file__).parent
-DATA_FILE = BASE_DIR / "data" / "racedata.json"
-BACKUP_DIR = BASE_DIR / "data" / "backups"
+
+
+def resolve_data_dir():
+    """Race data lives OUTSIDE the app folder so installing/updating the app
+    can never touch it. Override with TAMIYA_DATA_DIR for portable use."""
+    override = os.environ.get("TAMIYA_DATA_DIR")
+    if override:
+        return Path(override)
+    if os.name == "nt":
+        base = os.environ.get("LOCALAPPDATA")
+        if base:
+            return Path(base) / "TamiyaRaceManager"
+    elif sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "TamiyaRaceManager"
+    return Path.home() / ".tamiya-race-manager"
+
+
+DATA_DIR = resolve_data_dir()
+DATA_FILE = DATA_DIR / "racedata.json"
+BACKUP_DIR = DATA_DIR / "backups"
 BACKUP_KEEP = 14  # daily backups retained
+
+# Where pre-v10 zip installs kept their data (next to the app)
+LEGACY_DATA_FILE = BASE_DIR / "data" / "racedata.json"
+LEGACY_BACKUP_DIR = BASE_DIR / "data" / "backups"
+migrated_this_run = False
+
+
+def migrate_legacy_data():
+    """One-time move of race data to the new per-user location.
+    COPIES, never moves — the old file is deliberately left in place as a
+    fossil backup. Runs only when the new location has no data yet."""
+    global migrated_this_run
+    if DATA_FILE.exists() or not LEGACY_DATA_FILE.exists():
+        return
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(LEGACY_DATA_FILE, DATA_FILE)
+    if LEGACY_BACKUP_DIR.is_dir():
+        shutil.copytree(LEGACY_BACKUP_DIR, BACKUP_DIR, dirs_exist_ok=True)
+    migrated_this_run = True
+    print(f"  Race data copied to its new home: {DATA_FILE}")
+    print(f"  (The old copy in {LEGACY_DATA_FILE.parent} was left untouched as a backup.)")
+    try:
+        (LEGACY_DATA_FILE.parent / "DATA-HAS-MOVED.txt").write_text(
+            "Your race data now lives at:\n"
+            f"  {DATA_FILE}\n\n"
+            f"It was copied there on {time.strftime('%Y-%m-%d')} and this old copy was left\n"
+            "in place as a backup. App updates can no longer touch your data.\n"
+            "Do not use racedata.json in THIS folder - it is no longer updated.\n",
+            encoding="utf-8",
+        )
+    except Exception:
+        pass  # the note is a courtesy; never block startup over it
 
 
 def backup_data_file():
@@ -69,27 +120,64 @@ class RaceHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(BASE_DIR), **kwargs)
 
+    def _send_json(self, obj, status=200):
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps(obj).encode("utf-8"))
+
     def do_GET(self):
-        global last_ping
-        if self.path == "/ping":
+        global last_ping, migrated_this_run
+        path_only = self.path.split("?")[0]
+
+        if path_only == "/ping":
             last_ping = time.time()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(b'{"ok":true}')
+            self._send_json({"ok": True})
             return
+
+        if path_only == "/info":
+            # migrated flag is reported once so the app shows a one-time notice
+            self._send_json({"dataDir": str(DATA_DIR), "migrated": migrated_this_run})
+            migrated_this_run = False
+            return
+
+        # The data file no longer lives under the app folder — serve it from
+        # its real home so the app's existing fetch path keeps working.
+        if path_only == "/data/racedata.json":
+            try:
+                self._send_json(json.loads(DATA_FILE.read_text(encoding="utf-8")))
+            except FileNotFoundError:
+                self._send_json({"error": "no data file"}, 404)
+            except Exception as e:
+                self._send_json({"error": str(e)}, 500)
+            return
+
         super().do_GET()
 
     def do_POST(self):
         global last_ping
         last_ping = time.time()
 
+        if self.path == "/backup":
+            # Tagged snapshot (e.g. pre-upgrade-v2) taken before a data migration
+            length = int(self.headers.get("Content-Length", 0))
+            try:
+                tag = json.loads(self.rfile.read(length)).get("tag", "manual")
+                tag = "".join(c for c in str(tag) if c.isalnum() or c in "-_")[:40] or "manual"
+                if DATA_FILE.exists():
+                    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(DATA_FILE, BACKUP_DIR / f"{tag}-{time.strftime('%Y-%m-%d-%H%M%S')}.json")
+                self._send_json({"ok": True})
+            except Exception as e:
+                self._send_json({"error": str(e)}, 500)
+            return
+
         if self.path == "/save":
             length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(length)
             try:
                 data = json.loads(body)
-                DATA_FILE.parent.mkdir(exist_ok=True)
+                DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
                 backup_data_file()
                 tmp_file = DATA_FILE.with_suffix('.tmp')
                 with open(tmp_file, "w", encoding="utf-8") as f:
@@ -132,7 +220,8 @@ class RaceHandler(http.server.SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    DATA_FILE.parent.mkdir(exist_ok=True)
+    migrate_legacy_data()  # copy (never move) pre-v10 data to the new home
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
     if not DATA_FILE.exists():
         with open(DATA_FILE, "w") as f:
             json.dump({"version": 1, "seasons": [], "racers": [], "currentSeason": None}, f, indent=2)

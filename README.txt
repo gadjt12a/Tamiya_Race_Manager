@@ -1,7 +1,10 @@
-Tamiya Race Manager v9.28
+Tamiya Race Manager v9.29
 =========================
 
-DATA SAFETY: automatic daily backups are kept in data\backups\
+WHERE YOUR DATA LIVES: %LOCALAPPDATA%\TamiyaRaceManager\
+(outside the app folder, so updates can never touch it).
+Existing data is copied there automatically on first launch.
+Automatic daily backups are kept in the backups\ folder there
 (last 14 days). If a red banner ever appears saying saves are
 failing, do NOT close the tab — use Export Data first.
 

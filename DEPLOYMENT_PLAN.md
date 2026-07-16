@@ -88,11 +88,18 @@ user where their data now lives.
       name→id lookup then raw name for typed-in racers and pre-v9.28 events.
 
 ### Phase 2 — Data relocation & migration framework
-- [ ] Server stores data in `%LOCALAPPDATA%\TamiyaRaceManager\` (env-var override
-      for portable/Mac use).
-- [ ] Legacy-data auto-migration (copy, never move) + one-time user notice.
-- [ ] Schema version gate on load and on import (refuse-newer rule).
-- [ ] Migration scaffolding with the pre-upgrade backup step.
+*Completed 2026-07-17 as v9.29 — server endpoints + migration tested end-to-end
+against real test data (copy, idempotency, /save round-trip verified identical).*
+- [x] Server stores data in `%LOCALAPPDATA%\TamiyaRaceManager\` (Windows),
+      `~/Library/Application Support/TamiyaRaceManager` (Mac); `TAMIYA_DATA_DIR`
+      env-var override for portable use. `/data/racedata.json` is routed to the
+      new home so the app's fetch path is unchanged.
+- [x] Legacy-data auto-migration (copy, never move; legacy backups copied too;
+      `DATA-HAS-MOVED.txt` note left behind) + one-time in-app notice via `/info`.
+- [x] Schema version gate on load and on import (refuse-newer rule; `dbReadOnly`
+      blocks all writes when refused).
+- [x] Migration scaffolding (`SCHEMA_VERSION`/`MIGRATIONS` walk-forward) with a
+      tagged pre-upgrade backup via new `POST /backup` endpoint.
 
 ### Phase 3 — Single executable
 - [ ] PyInstaller build: `TamiyaRaceManager.exe` bundling server + HTML + icon.

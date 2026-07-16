@@ -754,16 +754,55 @@ table.pts-table tr:hover td{background:var(--surface2)}
 const DATA_PATH = 'data/racedata.json';
 let DB = { version:1, seasons:[], racers:[], currentSeason:null };
 let serverMode = false;
+let dbReadOnly = false; // set when the data file is newer than this app — never write to it
+
+// ── Schema versioning ──────────────────────────────────────────
+// Bump SCHEMA_VERSION for any breaking data format change and add a
+// migration keyed by the FROM version. Migrations are cumulative and
+// must never be removed, so any old file can be walked forward.
+const SCHEMA_VERSION = 1;
+const MIGRATIONS = {
+  // 2: db => { ...transform v1 → v2... }   (example — none exist yet)
+};
+
+async function runMigrations(){
+  // Snapshot the untouched original on the server before changing anything
+  try{
+    await fetch('/backup', {method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({tag:'pre-upgrade-v'+SCHEMA_VERSION})});
+  }catch(e){}
+  let v = DB.version||1;
+  while(v < SCHEMA_VERSION){
+    const migrate = MIGRATIONS[v];
+    if(!migrate){
+      dbReadOnly = true;
+      setSaveWarning(true, '⚠ This data file could not be upgraded (missing migration from v'+v+'). Your data has NOT been changed — contact support.');
+      return;
+    }
+    DB = migrate(DB);
+    DB.version = ++v;
+  }
+  await saveDB();
+}
 
 async function loadDB(){
   try {
     const r = await fetch(DATA_PATH+'?t='+Date.now());
-    if(r.ok){ DB = await r.json(); serverMode = true; return; }
+    if(r.ok){ DB = await r.json(); serverMode = true; }
   } catch(e){}
-  // fallback: localStorage
-  const raw = localStorage.getItem('tamiya_race_db');
-  if(raw) try{ DB = JSON.parse(raw); }catch(e){}
-  serverMode = false;
+  if(!serverMode){
+    // fallback: localStorage
+    const raw = localStorage.getItem('tamiya_race_db');
+    if(raw) try{ DB = JSON.parse(raw); }catch(e){}
+  }
+  const v = DB.version||1;
+  if(v > SCHEMA_VERSION){
+    // File is from a NEWER app — refuse to touch it, by policy.
+    dbReadOnly = true;
+    setSaveWarning(true, '⚠ This data file was created by a NEWER version of Race Manager. Please update the app — your data has not been changed and nothing will be saved until then.');
+  } else if(v < SCHEMA_VERSION){
+    await runMigrations();
+  }
 }
 
 // Persistent red banner for data-safety problems — stays up until saving works again
@@ -780,6 +819,7 @@ function setSaveWarning(on, msg){
 }
 
 async function saveDB(){
+  if(dbReadOnly) return; // newer-version data file — never write to it
   if(serverMode){
     try{
       const r = await fetch('/save', {
@@ -836,13 +876,17 @@ function importData(event){
     if(!incoming || typeof incoming!=='object' || !Array.isArray(incoming.seasons) || !Array.isArray(incoming.racers)){
       toast('Not a Race Manager data file — nothing was changed','error'); return;
     }
+    if((incoming.version||1) > SCHEMA_VERSION){
+      toast('That file is from a NEWER version of Race Manager — update the app first. Nothing was changed.','error'); return;
+    }
     const summary = `${incoming.seasons.length} season${incoming.seasons.length!==1?'s':''}, ${incoming.racers.length} racer${incoming.racers.length!==1?'s':''}`;
     openConfirm('Replace All Data?',
       `The file contains ${summary}. This will REPLACE the current database. A safety copy of the current data is kept in browser storage until the next import.`,
       async ()=>{
         try{ localStorage.setItem('tamiya_race_db_preimport', JSON.stringify(DB)); }catch(err){}
         DB = incoming;
-        await saveDB();
+        if((DB.version||1) < SCHEMA_VERSION) await runMigrations();
+        else await saveDB();
         toast('Data imported successfully!','success');
         renderHome();
       });
@@ -858,10 +902,10 @@ function uid(){ return Math.random().toString(36).slice(2,9); }
 function shuffle(a){ let b=[...a]; for(let i=b.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]; } return b; }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-function toast(msg, type=''){
+function toast(msg, type='', duration=2800){
   const el = document.getElementById('toast');
   el.textContent = msg; el.className = 'show '+(type||'');
-  clearTimeout(el._t); el._t = setTimeout(()=>el.className='',2800);
+  clearTimeout(el._t); el._t = setTimeout(()=>el.className='',duration);
 }
 
 function showScreen(id){
@@ -2890,6 +2934,16 @@ async function init(){
 
   // Heartbeat — tells the server this tab is still open.
   // Server shuts down automatically when pings stop (tab closed).
+  // One-time notice after the server relocates data to its new home
+  if(serverMode){
+    try{
+      const info = await (await fetch('/info')).json();
+      if(info.migrated){
+        toast('✅ Your race data has moved to a safe location: '+info.dataDir+' — app updates can no longer touch it. The old copy was left in place as a backup.','success',12000);
+      }
+    }catch(e){}
+  }
+
   if(serverMode){
     let missedPings = 0, pingWarn = false;
     setInterval(async()=>{

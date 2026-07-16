@@ -2,6 +2,27 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.29  (2026-07-17)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DATA RELOCATION & MIGRATIONS (Phase 2 of v10 plan)
+  - Race data now lives OUTSIDE the app folder, in
+    %LOCALAPPDATA%\TamiyaRaceManager\ (Windows) or
+    ~/Library/Application Support/TamiyaRaceManager (Mac),
+    so installing or updating the app can never touch it.
+    Override with the TAMIYA_DATA_DIR environment variable
+    for portable/USB use.
+  - First launch COPIES (never moves) existing data and
+    backups from the old data\ folder to the new home. The
+    old copy is left in place as a backup, with a
+    DATA-HAS-MOVED.txt note, and the app shows a one-time
+    notice saying where the data now lives.
+  - Data files carry a schema version. Opening or importing
+    a file made by a NEWER app version is politely refused
+    and nothing is written - update the app instead. Old
+    files are upgraded automatically, with a tagged
+    pre-upgrade backup taken first.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v9.28  (2026-07-16)  [v10-packaging branch]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 DATA SAFETY (Phase 1 of v10 deployment plan)
