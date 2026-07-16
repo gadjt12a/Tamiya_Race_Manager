@@ -2,6 +2,34 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.30  (2026-07-17)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SINGLE EXECUTABLE (Phase 3 of v10 plan)
+  - The whole app now builds into one file:
+    TamiyaRaceManager.exe (~8 MB) - server, app and version
+    bundled. No Python download, no python-bundle folder.
+    Build with "BUILD EXE (developer use only).bat"
+    (requires: python -m pip install pyinstaller).
+  - FIXED: on a first run the server could shut itself down
+    17-21 seconds after starting if the browser was slow to
+    load (antivirus scan, SmartScreen, cold browser start),
+    leaving the app showing "server connection lost". The
+    shutdown countdown now only starts after the browser has
+    connected once (with a 5-minute give-up if none ever
+    does).
+  - Server now binds to 127.0.0.1 only - private to the
+    machine, and avoids the Windows Firewall "Allow access"
+    prompt on first run of a new exe.
+  - Launching a second copy now just opens the browser to
+    the already-running app instead of failing.
+  - Port conflict (another program on 8765) now shows a
+    friendly message instead of a Python error.
+  - Browser opens only after the server is confirmed
+    listening.
+  - One version source: the VERSION file. Shown in the app
+    header (via /info), server console and build script.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v9.29  (2026-07-17)  [v10-packaging branch]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 DATA RELOCATION & MIGRATIONS (Phase 2 of v10 plan)

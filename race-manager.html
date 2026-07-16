@@ -455,7 +455,7 @@ table.pts-table tr:hover td{background:var(--surface2)}
 ═══════════════════════════════════════════════════════ -->
 <div id="homeScreen" class="screen active">
   <div class="topbar">
-    <div class="topbar-logo">🏁 <span>Tamiya</span> Race Manager</div>
+    <div class="topbar-logo">🏁 <span>Tamiya</span> Race Manager <span id="appVersionLabel" style="font-size:11px;color:var(--muted);font-weight:400;margin-left:6px"></span></div>
     <div class="topbar-sep"></div>
     <div class="topbar-right">
       <button class="icon-btn" onclick="exportData()">⬆ Export Data</button>
@@ -2934,10 +2934,14 @@ async function init(){
 
   // Heartbeat — tells the server this tab is still open.
   // Server shuts down automatically when pings stop (tab closed).
-  // One-time notice after the server relocates data to its new home
+  // Version label + one-time notice after the server relocates data
   if(serverMode){
     try{
       const info = await (await fetch('/info')).json();
+      if(info.version && info.version!=='?'){
+        const vl = document.getElementById('appVersionLabel');
+        if(vl) vl.textContent = 'v'+info.version;
+      }
       if(info.migrated){
         toast('✅ Your race data has moved to a safe location: '+info.dataDir+' — app updates can no longer touch it. The old copy was left in place as a backup.','success',12000);
       }

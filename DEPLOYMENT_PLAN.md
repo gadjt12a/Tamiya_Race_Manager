@@ -102,12 +102,24 @@ against real test data (copy, idempotency, /save round-trip verified identical).
       tagged pre-upgrade backup via new `POST /backup` endpoint.
 
 ### Phase 3 — Single executable
-- [ ] PyInstaller build: `TamiyaRaceManager.exe` bundling server + HTML + icon.
-- [ ] Friendly handling of port 8765 conflicts (detect an already-running instance
-      and just open the browser to it, instead of a traceback).
-- [ ] Browser opens only after the server is confirmed listening.
-- [ ] Single source of truth for the version string (shown in app header, server
-      console, installer, and About).
+*Completed 2026-07-17 as v9.30 — exe smoke-tested end-to-end (migration from
+beside the exe, bundled HTML serving, /info version, already-running guard,
+watchdog first-ping gating + tab-close detection). Icon still pending (Kris
+supplying artwork — candidates in Working_Files/Images/, untracked).*
+- [x] PyInstaller build: `TamiyaRaceManager.exe` (~8 MB onefile) bundling server +
+      HTML + VERSION via `BUILD EXE (developer use only).bat`; `--icon` wired in,
+      activates when `icon.ico` exists.
+- [x] Friendly handling of port 8765 conflicts: an already-running instance is
+      detected via `/ping` and the browser is opened to it; a foreign program on
+      the port gets a plain-English error instead of a traceback.
+- [x] Browser opens only after the server is bound and listening (and a browser
+      failure can't kill the server).
+- [x] Single source of truth for the version string: `VERSION` file → server
+      console, `/info`, app header label, build script.
+- [x] *(found in field test)* Watchdog no longer kills the server before the
+      browser's **first** ping (SmartScreen/AV/cold-start delays); 5-minute
+      give-up if no browser ever connects. Server binds `127.0.0.1` only — no
+      Windows Firewall prompt, not visible on the LAN.
 
 ### Phase 4 — Installer
 - [ ] Inno Setup script: per-user install (no admin), desktop icon, Start Menu

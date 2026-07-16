@@ -1,0 +1,14 @@
+# Club race data — never commit live data
+data/
+
+# Bundled/portable Python (zip distribution)
+python-bundle/
+
+# PyInstaller build artifacts
+build/
+dist/
+*.spec
+__pycache__/
+
+# Local working files (icon drafts etc.) - not for the repo
+Working_Files/

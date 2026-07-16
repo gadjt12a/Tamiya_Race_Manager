@@ -1,7 +1,11 @@
 # Tamiya_Race_Manager
 Race Manager for Tamiya Mini 4WD racers
 
-Tamiya Race Manager v9.29
+Tamiya Race Manager v9.30
+
+**Single-exe build (v9.30):** developers can build `TamiyaRaceManager.exe`
+with `BUILD EXE (developer use only).bat` (needs `pip install pyinstaller`).
+The exe bundles the server + app; the version comes from the `VERSION` file.
 
 **Where your data lives (v9.29):** race data is stored outside the app folder —
 `%LOCALAPPDATA%\TamiyaRaceManager\` on Windows — so installing or updating the
