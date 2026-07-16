@@ -2891,17 +2891,22 @@ async function init(){
   // Heartbeat — tells the server this tab is still open.
   // Server shuts down automatically when pings stop (tab closed).
   if(serverMode){
-    let missedPings = 0;
+    let missedPings = 0, pingWarn = false;
     setInterval(async()=>{
       try{
         const r = await fetch('/ping');
-        if(r.ok){ missedPings = 0; return; }
+        if(r.ok){
+          missedPings = 0;
+          if(pingWarn){ pingWarn = false; setSaveWarning(false); saveDB(); } // server back — flush held data to disk
+          return;
+        }
       }catch(e){}
       missedPings++;
-      if(missedPings >= 3){
+      if(missedPings >= 2){
+        pingWarn = true;
         setSaveWarning(true, '⚠ SERVER CONNECTION LOST — data is NOT being saved to the data file. Do NOT close this tab: use Export Data on the home screen now, then restart the app.');
       }
-    }, 5000);
+    }, 3000);
   }
 
   // Offer to resume a race that was interrupted by a crash or unexpected shutdown
