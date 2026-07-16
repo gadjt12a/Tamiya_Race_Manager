@@ -1,7 +1,7 @@
 # Tamiya_Race_Manager
 Race Manager for Tamiya Mini 4WD racers
 
-Tamiya Race Manager v9.30
+Tamiya Race Manager v9.31
 
 **Single-exe build (v9.30):** developers can build `TamiyaRaceManager.exe`
 with `BUILD EXE (developer use only).bat` (needs `pip install pyinstaller`).

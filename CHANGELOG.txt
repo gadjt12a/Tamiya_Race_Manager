@@ -2,6 +2,23 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.31  (2026-07-17)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DISPLAY WINDOW (2nd screen) — prize-giving support
+  - FIXED: the display window could stop updating after a
+    race ended and had to be closed and reopened. It now
+    pulls fresh content from the app every second instead
+    of waiting to be pushed to, so it self-heals and never
+    goes stale.
+  - Winners now STAY on the display after a class finishes
+    (for call-ups and prize presentation) until the next
+    race is started.
+  - The winners screen is titled with the class name
+    (BOX / EVO / PRO or the special event name).
+  - EVO (or any event with juniors): class winners are
+    shown on the LEFT and Junior winners on the RIGHT.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v9.30  (2026-07-17)  [v10-packaging branch]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SINGLE EXECUTABLE (Phase 3 of v10 plan)

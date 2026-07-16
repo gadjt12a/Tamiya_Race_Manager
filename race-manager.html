@@ -2838,11 +2838,36 @@ let dispWin=null;
 function openDisplay(){
   dispWin=window.open('','RaceDisplay','width=1280,height=720,resizable=yes');
   if(!dispWin){ alert('Please allow pop-ups for this page.'); return; }
+  // The shell is written ONCE; it then PULLS fresh content from this window
+  // every second. Pull (not push) means the display self-heals if an update
+  // is ever missed — it never goes stale or needs closing and reopening.
+  const shell=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Race Display</title>
+    <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#04060a;color:#fff;font-family:'Arial Narrow','Impact',system-ui,sans-serif;height:100vh;display:grid;grid-template-columns:1fr 1fr;gap:0;overflow:hidden}.pane{padding:clamp(24px,3.5vw,60px) clamp(20px,3vw,52px);height:100vh;overflow:hidden}.left{border-right:2px solid #0d1520}.right{opacity:.82}</style>
+    </head><body>
+    <script>
+      var last='';
+      setInterval(function(){
+        try{
+          var h = (window.opener && !window.opener.closed && window.opener.getDisplayHTML) ? window.opener.getDisplayHTML() : null;
+          if(h!==null && h!==last){ last=h; document.body.innerHTML=h; }
+        }catch(e){}
+      }, 1000);
+    <\/script>
+    </body></html>`;
+  dispWin.document.open(); dispWin.document.write(shell); dispWin.document.close();
   writeDisplay();
 }
 
 function writeDisplay(){
+  // Immediate push for snappy updates; the popup's own 1s poll is the safety net.
   if(!dispWin||dispWin.closed) return;
+  try{ dispWin.document.body.innerHTML = getDisplayHTML(); }catch(e){}
+}
+
+function getDisplayHTML(){
+  if(!R || !R.racers) return `<div class="pane left"><div style="color:#1a2030;font-size:clamp(20px,3.5vw,56px);padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">Waiting for racing to start...</div></div><div class="pane right"></div>`;
   const cr=R.currentRace, nextR=R.roundQueue?.[0]||null;
   const isFinal=R.currentRace&&R.currentRace.bracket==='final';
 
@@ -2855,8 +2880,9 @@ function writeDisplay(){
   let curHTML='';
   if(R.podium){
     const p=R.podium;
+    const classLabel={box:'📦 BOX CLASS',evo:'⚡ EVO CLASS',pro:'🏆 PRO CLASS'}[R.classKey]||(R.specialName?esc(R.specialName.toUpperCase()):'FINAL');
     curHTML=`<div>
-      <div style="font-size:clamp(14px,1.8vw,30px);font-weight:800;letter-spacing:.15em;color:#3dd68c;margin-bottom:clamp(14px,2.5vh,32px)">🏆 FINAL RESULTS</div>
+      <div style="font-size:clamp(14px,1.8vw,30px);font-weight:800;letter-spacing:.15em;color:#3dd68c;margin-bottom:clamp(14px,2.5vh,32px)">🏆 ${classLabel} — WINNERS</div>
       ${p.first?`<div style="display:flex;align-items:center;gap:clamp(12px,1.8vw,28px);background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.25);border-radius:16px;padding:clamp(12px,2vh,24px) clamp(16px,2vw,32px);margin-bottom:clamp(8px,1.5vh,18px)"><span style="font-size:clamp(40px,6vw,96px)">🥇</span><span style="font-size:clamp(60px,10vw,190px);font-weight:900;color:#ffd700;line-height:1">${esc(getName(p.first))}</span></div>`:''}
       ${p.second?`<div style="display:flex;align-items:center;gap:clamp(12px,1.8vw,28px);background:rgba(192,200,208,.07);border:1px solid rgba(192,200,208,.18);border-radius:16px;padding:clamp(10px,1.6vh,20px) clamp(16px,2vw,32px);margin-bottom:clamp(6px,1.2vh,14px)"><span style="font-size:clamp(30px,4.5vw,72px)">🥈</span><span style="font-size:clamp(46px,8vw,152px);font-weight:800;color:#c0c8d0;line-height:1">${esc(getName(p.second))}</span></div>`:''}
       ${p.third?`<div style="display:flex;align-items:center;gap:clamp(12px,1.8vw,28px);background:rgba(205,127,50,.07);border:1px solid rgba(205,127,50,.18);border-radius:16px;padding:clamp(10px,1.6vh,20px) clamp(16px,2vw,32px)"><span style="font-size:clamp(30px,4.5vw,72px)">🥉</span><span style="font-size:clamp(46px,8vw,152px);font-weight:800;color:#cd7f32;line-height:1">${esc(getName(p.third))}</span></div>`:''}
@@ -2872,21 +2898,26 @@ function writeDisplay(){
     curHTML=`<div style="color:#1a2030;font-size:clamp(20px,3.5vw,56px);padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">Preparing next race...</div>`;
   }
 
-  const nxtHTML=nextR
-    ?`<div style="font-size:clamp(13px,1.8vw,30px);font-weight:800;letter-spacing:.18em;color:#7090a8;margin-bottom:clamp(8px,1.5vh,18px)">UP NEXT</div>
-       <div style="margin-bottom:clamp(14px,2.5vh,28px)">${badge(nextR.bracket,false)}</div>
-       ${nextR.racers.map(id=>`<div style="font-size:clamp(46px,7vw,134px);font-weight:700;color:#c8dae8;margin-bottom:clamp(6px,1.2vh,14px);line-height:1.05">${esc(getName(id))}</div>`).join('')}`
-    :`<div style="color:#3a5060;font-size:clamp(16px,2.5vw,40px);padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">No race queued</div>`;
+  let nxtHTML;
+  if(R.podium){
+    // Winners stay on screen for prize-giving until the next race is started.
+    // EVO (or any event with juniors): class winners LEFT, Junior winners RIGHT.
+    const jp=R.juniorPodium;
+    nxtHTML = (jp&&(jp.first||jp.second||jp.third))
+      ?`<div style="font-size:clamp(14px,1.8vw,30px);font-weight:800;letter-spacing:.15em;color:#b090e8;margin-bottom:clamp(14px,2.5vh,32px)">👾 JUNIOR — WINNERS</div>
+        ${jp.first?`<div style="display:flex;align-items:center;gap:clamp(12px,1.8vw,28px);background:rgba(144,96,224,.12);border:1px solid rgba(144,96,224,.3);border-radius:16px;padding:clamp(12px,2vh,24px) clamp(16px,2vw,32px);margin-bottom:clamp(8px,1.5vh,18px)"><span style="font-size:clamp(40px,6vw,96px)">🥇</span><span style="font-size:clamp(60px,10vw,190px);font-weight:900;color:#c0a0f0;line-height:1">${esc(getName(jp.first))}</span></div>`:''}
+        ${jp.second?`<div style="display:flex;align-items:center;gap:clamp(12px,1.8vw,28px);background:rgba(144,96,224,.07);border:1px solid rgba(144,96,224,.2);border-radius:16px;padding:clamp(10px,1.6vh,20px) clamp(16px,2vw,32px);margin-bottom:clamp(6px,1.2vh,14px)"><span style="font-size:clamp(30px,4.5vw,72px)">🥈</span><span style="font-size:clamp(46px,8vw,152px);font-weight:800;color:#b0a0d0;line-height:1">${esc(getName(jp.second))}</span></div>`:''}
+        ${jp.third?`<div style="display:flex;align-items:center;gap:clamp(12px,1.8vw,28px);background:rgba(144,96,224,.05);border:1px solid rgba(144,96,224,.15);border-radius:16px;padding:clamp(10px,1.6vh,20px) clamp(16px,2vw,32px)"><span style="font-size:clamp(30px,4.5vw,72px)">🥉</span><span style="font-size:clamp(46px,8vw,152px);font-weight:800;color:#a098c0;line-height:1">${esc(getName(jp.third))}</span></div>`:''}`
+      :'';
+  } else {
+    nxtHTML=nextR
+      ?`<div style="font-size:clamp(13px,1.8vw,30px);font-weight:800;letter-spacing:.18em;color:#7090a8;margin-bottom:clamp(8px,1.5vh,18px)">UP NEXT</div>
+         <div style="margin-bottom:clamp(14px,2.5vh,28px)">${badge(nextR.bracket,false)}</div>
+         ${nextR.racers.map(id=>`<div style="font-size:clamp(46px,7vw,134px);font-weight:700;color:#c8dae8;margin-bottom:clamp(6px,1.2vh,14px);line-height:1.05">${esc(getName(id))}</div>`).join('')}`
+      :`<div style="color:#3a5060;font-size:clamp(16px,2.5vw,40px);padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">No race queued</div>`;
+  }
 
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#04060a;color:#fff;font-family:'Arial Narrow','Impact',system-ui,sans-serif;height:100vh;display:grid;grid-template-columns:1fr 1fr;gap:0;overflow:hidden}.pane{padding:clamp(24px,3.5vw,60px) clamp(20px,3vw,52px);height:100vh;overflow:hidden}.left{border-right:2px solid #0d1520}.right{opacity:.82}</style>
-    </head><body>
-    <div class="pane left">${curHTML}</div>
-    <div class="pane right">${nxtHTML}</div>
-    </body></html>`;
-
-  dispWin.document.open(); dispWin.document.write(html); dispWin.document.close();
+  return `<div class="pane left">${curHTML}</div><div class="pane right">${nxtHTML}</div>`;
 }
 
 // ═══════════════════════════════════════════════════════════════

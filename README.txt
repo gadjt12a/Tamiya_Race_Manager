@@ -1,4 +1,4 @@
-Tamiya Race Manager v9.30
+Tamiya Race Manager v9.31
 =========================
 
 WHERE YOUR DATA LIVES: %LOCALAPPDATA%\TamiyaRaceManager\
