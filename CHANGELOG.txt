@@ -2,6 +2,26 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.32  (2026-07-17)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WINDOWS INSTALLER (Phase 4 of v10 plan)
+  - New installer: TamiyaRaceManager-Setup-<version>.exe
+    (built with Inno Setup via "BUILD INSTALLER
+    (developer use only).bat").
+  - Installs per-user (no admin rights needed), creates a
+    desktop icon and Start Menu entry, includes a proper
+    uninstaller.
+  - Before installing, a plain-English page explains that
+    race data lives separately and is never touched by
+    install, update or uninstall - including the special
+    steps for old browser-storage-mode setups.
+  - If Race Manager is running when the installer starts,
+    it is asked to shut down gracefully first.
+  - Uninstalling shows a reminder that race data is kept.
+  - App icon added (working artwork - final licensing to
+    be confirmed before public release).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v9.31  (2026-07-17)  [v10-packaging branch]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 DISPLAY WINDOW (2nd screen) — prize-giving support

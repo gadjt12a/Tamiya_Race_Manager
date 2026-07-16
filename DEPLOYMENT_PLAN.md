@@ -122,15 +122,29 @@ supplying artwork — candidates in Working_Files/Images/, untracked).*
       Windows Firewall prompt, not visible on the LAN.
 
 ### Phase 4 — Installer
-- [ ] Inno Setup script: per-user install (no admin), desktop icon, Start Menu
-      entry, proper uninstaller.
-- [ ] Installer welcome page states plainly: **"Your race data is stored separately
-      and is not modified by this installer."** plus the standard advice to Export
-      Data before any update.
-- [ ] Installer detects a legacy zip-style install (if upgrading in place) and
-      explains what will happen to the old folder.
+*Completed 2026-07-17 as v9.32 — silent install tested on a real machine:
+files in `{localappdata}\Programs\TamiyaRaceManager`, Start Menu + desktop
+shortcuts created (OneDrive-redirected desktop handled), installed exe runs
+and serves v9.32 from the proper data home.*
+- [x] Inno Setup script (`TamiyaRaceManager.iss`, built by `BUILD INSTALLER
+      (developer use only).bat`): per-user install (PrivilegesRequired=lowest),
+      desktop icon (default on, optional), Start Menu entry, uninstaller.
+      Installer asks a running instance to shut down gracefully first
+      (POST /shutdown) so race-night updates can't hit a locked exe.
+- [x] Pre-install info page (`installer-info.txt`): data lives separately and is
+      never touched by install/update/uninstall; Export Data advice; explicit
+      browser-storage-mode export/import steps. Uninstall shows a
+      your-data-is-kept reminder.
+- [x] Legacy zip-style installs: covered by the info page + the app's own
+      copy-not-move migration on first launch (no installer logic needed).
 - [ ] Document the SmartScreen "unsigned app" click-through with screenshots
-      (code signing deferred — cost).
+      (needs a machine that hasn't seen the exe — fold into Phase 6 release
+      notes; code signing deferred — cost).
+
+> **Icon licensing (must resolve before public release):** current `icon.ico`
+> is generated from Kris's Car2 artwork (`Working_Files/Images/`, untracked).
+> Provenance/licence unconfirmed — confirm rights or replace before the v10
+> public release. Swapping = replace `icon.ico`, rerun the build.
 
 ### Phase 5 — Test matrix (all must pass before merge)
 
