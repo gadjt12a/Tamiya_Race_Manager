@@ -6,6 +6,7 @@ Serves the app, handles data file read/write, and shuts down when the browser ta
 import http.server
 import json
 import os
+import shutil
 import socketserver
 import threading
 import time
@@ -15,6 +16,26 @@ from pathlib import Path
 PORT = 8765
 BASE_DIR = Path(__file__).parent
 DATA_FILE = BASE_DIR / "data" / "racedata.json"
+BACKUP_DIR = BASE_DIR / "data" / "backups"
+BACKUP_KEEP = 14  # daily backups retained
+
+
+def backup_data_file():
+    """Once per day, snapshot the data file as it was BEFORE today's first save
+    (i.e. it preserves the previous race night's final state)."""
+    try:
+        if not DATA_FILE.exists():
+            return
+        dest = BACKUP_DIR / f"racedata-{time.strftime('%Y-%m-%d')}.json"
+        if dest.exists():
+            return
+        BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(DATA_FILE, dest)
+        for old in sorted(BACKUP_DIR.glob("racedata-*.json"))[:-BACKUP_KEEP]:
+            old.unlink()
+    except Exception as e:
+        # A backup problem must never block saving the live data
+        print(f"  Warning: daily backup failed: {e}")
 
 # ── Heartbeat watchdog ─────────────────────────────────────────────────────────
 # The browser page sends a /ping every 5 seconds while open.
@@ -24,11 +45,20 @@ last_ping = time.time()
 server_ref = None
 
 def watchdog():
-    """Background thread — shuts down server if browser tab closes."""
+    """Background thread — shuts down server if browser tab closes.
+    Sleep-tolerant: if the wall clock jumps (laptop lid closed / machine slept),
+    the browser never had a chance to ping, so reset the timer instead of
+    killing the server out from under an open tab."""
+    global last_ping
     time.sleep(10)  # grace period on startup
+    last_check = time.time()
     while True:
         time.sleep(3)
-        if time.time() - last_ping > HEARTBEAT_TIMEOUT:
+        now = time.time()
+        if now - last_check > 30:  # slept far past our 3s interval
+            last_ping = now  # give the browser a fresh window to resume pinging
+        last_check = now
+        if now - last_ping > HEARTBEAT_TIMEOUT:
             print("\n  Browser tab closed — shutting down. Goodbye!")
             if server_ref:
                 threading.Thread(target=server_ref.shutdown, daemon=True).start()
@@ -60,6 +90,7 @@ class RaceHandler(http.server.SimpleHTTPRequestHandler):
             try:
                 data = json.loads(body)
                 DATA_FILE.parent.mkdir(exist_ok=True)
+                backup_data_file()
                 tmp_file = DATA_FILE.with_suffix('.tmp')
                 with open(tmp_file, "w", encoding="utf-8") as f:
                     json.dump(data, f, indent=2, ensure_ascii=False)

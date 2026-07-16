@@ -72,19 +72,20 @@ user where their data now lives.
 ## Work phases
 
 ### Phase 1 — Data-safety fixes (no format changes, could even be back-ported to v9)
-- [ ] `saveDB()` checks `response.ok`; on failure falls back to localStorage **and**
+*Completed 2026-07-16 as v9.28 — needs field-style manual testing (matrix #7, #8, #11).*
+- [x] `saveDB()` checks `response.ok`; on failure falls back to localStorage **and**
       shows a persistent on-screen warning banner (not just a toast).
-- [ ] Server watchdog made sleep-tolerant: a large wall-clock jump (laptop slept)
+- [x] Server watchdog made sleep-tolerant: a large wall-clock jump (laptop slept)
       resets the ping timer instead of killing the server.
-- [ ] App detects a dead server mid-session (failed pings/saves) and shows a loud
+- [x] App detects a dead server mid-session (failed pings) and shows a loud
       persistent banner: data is not reaching disk; how to recover.
-- [ ] Import Data validates structure, shows a summary confirm
+- [x] Import Data validates structure, shows a summary confirm
       ("3 seasons, 42 racers — replace current data?"), and snapshots the current
-      DB to backups before replacing it.
-- [ ] Automatic daily rolling backups (server side).
-- [ ] `saveEditResult()` calls `saveActiveRace()` so corrections survive a crash.
-- [ ] Season standings keyed by `racerId` (fall back to name for old events) so
-      mid-season renames don't split points.
+      DB (browser storage, `tamiya_race_db_preimport`) before replacing it.
+- [x] Automatic daily rolling backups (server side, `data/backups/`, keep 14).
+- [x] `saveEditResult()` calls `saveActiveRace()` so corrections survive a crash.
+- [x] Season standings keyed by roster id — `res.rosterId`, falling back to
+      name→id lookup then raw name for typed-in racers and pre-v9.28 events.
 
 ### Phase 2 — Data relocation & migration framework
 - [ ] Server stores data in `%LOCALAPPDATA%\TamiyaRaceManager\` (env-var override

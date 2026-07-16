@@ -2,6 +2,33 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.28  (2026-07-16)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DATA SAFETY (Phase 1 of v10 deployment plan)
+  - Automatic daily backups: on the first save of each day
+    the server snapshots the data file to data/backups/
+    (keeps the last 14 days). Preserves the previous race
+    night's final state before anything new is written.
+  - Save verification: the app now checks the server
+    actually accepted each save. On failure, data is held
+    in browser storage and a persistent red banner tells
+    the coordinator to Export Data and restart.
+  - Lost-server detection: if the server stops responding
+    mid-session, a persistent red banner appears instead of
+    data silently going nowhere.
+  - Sleep-tolerant server: closing the laptop lid no longer
+    kills the server when the machine wakes up.
+  - Import Data now validates the file, shows a summary
+    ("3 seasons, 42 racers") confirmation before replacing
+    anything, and keeps a safety copy of the current data.
+  - Editing a race result is now crash-safe (the correction
+    is saved to the resume snapshot immediately).
+  - Season standings are tracked by racer identity rather
+    than name, so fixing a name typo mid-season no longer
+    splits a racer's points into two rows. Older events
+    are matched by name automatically.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v9.27  (2026-07-16)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CHANGED

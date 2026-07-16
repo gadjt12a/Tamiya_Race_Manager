@@ -766,16 +766,33 @@ async function loadDB(){
   serverMode = false;
 }
 
+// Persistent red banner for data-safety problems — stays up until saving works again
+function setSaveWarning(on, msg){
+  let b = document.getElementById('saveWarnBanner');
+  if(!b){
+    b = document.createElement('div');
+    b.id = 'saveWarnBanner';
+    b.style.cssText = 'display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#a02020;color:#fff;font-weight:700;text-align:center;padding:10px 16px;font-size:14px;box-shadow:0 2px 12px rgba(0,0,0,.5)';
+    document.body.appendChild(b);
+  }
+  b.textContent = msg || '';
+  b.style.display = on ? 'block' : 'none';
+}
+
 async function saveDB(){
   if(serverMode){
     try{
-      await fetch('/save', {
+      const r = await fetch('/save', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify(DB, null, 2)
       });
-      return;
+      if(r.ok){ setSaveWarning(false); return; }
     }catch(e){}
+    // Server save failed — hold data in browser storage and warn loudly.
+    localStorage.setItem('tamiya_race_db', JSON.stringify(DB));
+    setSaveWarning(true, '⚠ SAVE PROBLEM — results are NOT reaching the data file. A copy is held in browser storage. Do NOT close this tab: use Export Data on the home screen now, then restart the app.');
+    return;
   }
   localStorage.setItem('tamiya_race_db', JSON.stringify(DB));
 }
@@ -812,13 +829,23 @@ function exportData(){
 function importData(event){
   const file = event.target.files[0]; if(!file) return;
   const reader = new FileReader();
-  reader.onload = async e => {
-    try{
-      DB = JSON.parse(e.target.result);
-      await saveDB();
-      toast('Data imported successfully!','success');
-      renderHome();
-    }catch(err){ toast('Invalid file format','error'); }
+  reader.onload = e => {
+    let incoming;
+    try{ incoming = JSON.parse(e.target.result); }
+    catch(err){ toast('Not a valid JSON file — nothing was changed','error'); return; }
+    if(!incoming || typeof incoming!=='object' || !Array.isArray(incoming.seasons) || !Array.isArray(incoming.racers)){
+      toast('Not a Race Manager data file — nothing was changed','error'); return;
+    }
+    const summary = `${incoming.seasons.length} season${incoming.seasons.length!==1?'s':''}, ${incoming.racers.length} racer${incoming.racers.length!==1?'s':''}`;
+    openConfirm('Replace All Data?',
+      `The file contains ${summary}. This will REPLACE the current database. A safety copy of the current data is kept in browser storage until the next import.`,
+      async ()=>{
+        try{ localStorage.setItem('tamiya_race_db_preimport', JSON.stringify(DB)); }catch(err){}
+        DB = incoming;
+        await saveDB();
+        toast('Data imported successfully!','success');
+        renderHome();
+      });
   };
   reader.readAsText(file);
   event.target.value='';
@@ -2230,6 +2257,7 @@ function saveEditResult(){
     renderRace();
     toast('Result updated','success');
     showPodiumModal();
+    saveActiveRace();
     return;
   }
 
@@ -2246,6 +2274,7 @@ function saveEditResult(){
   closeModal();
   toast('Result updated','success');
   serveNextRace();
+  saveActiveRace();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2422,17 +2451,23 @@ function _getSeasonStandings(seasonId){
   const classes = ['box','evo','pro'];
   const standings = {box:{}, evo:{}, pro:{}};
   const juniorEvo = {};
+  // Key by roster (database) id so a mid-season rename doesn't split points.
+  // Typed-in racers and pre-v9.28 events fall back to name → id lookup, then raw name.
+  const nameToId = {};
+  DB.racers.forEach(r=>{ nameToId[r.name.toLowerCase().trim()] = r.id; });
+  const resKey = res => res.rosterId || nameToId[(res.name||'').toLowerCase().trim()] || (res.name||'').toLowerCase().trim();
+  const resName = (key,res) => (DB.racers.find(r=>r.id===key)||{}).name || res.name;
   for(const ev of (season.events||[])){
     if(ev.type==='test'||ev.type==='special') continue;
     const cls = ev.classKey;
     if(!standings[cls]) continue;
     for(const res of (ev.results||[])){
-      const key = (res.name||'').toLowerCase().trim(); if(!key) continue;
-      if(!standings[cls][key]) standings[cls][key]={name:res.name,pts:0,events:0,isJunior:res.isJunior};
+      const key = resKey(res); if(!key) continue;
+      if(!standings[cls][key]) standings[cls][key]={name:resName(key,res),pts:0,events:0,isJunior:res.isJunior};
       standings[cls][key].pts += (res.points||0);
       standings[cls][key].events++;
       if(cls==='evo'&&res.isJunior){
-        if(!juniorEvo[key]) juniorEvo[key]={name:res.name,pts:0,events:0};
+        if(!juniorEvo[key]) juniorEvo[key]={name:resName(key,res),pts:0,events:0};
         juniorEvo[key].pts += (res.points||0);
         juniorEvo[key].events++;
       }
@@ -2856,8 +2891,16 @@ async function init(){
   // Heartbeat — tells the server this tab is still open.
   // Server shuts down automatically when pings stop (tab closed).
   if(serverMode){
+    let missedPings = 0;
     setInterval(async()=>{
-      try{ await fetch('/ping'); }catch(e){}
+      try{
+        const r = await fetch('/ping');
+        if(r.ok){ missedPings = 0; return; }
+      }catch(e){}
+      missedPings++;
+      if(missedPings >= 3){
+        setSaveWarning(true, '⚠ SERVER CONNECTION LOST — data is NOT being saved to the data file. Do NOT close this tab: use Export Data on the home screen now, then restart the app.');
+      }
     }, 5000);
   }
 
