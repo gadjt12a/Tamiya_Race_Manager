@@ -1520,6 +1520,7 @@ function getPrevSeasonRacerIds(){
 }
 
 let _rosterActive = {};
+let _rosterJunior = {};
 let _seasonRosterPrevIds = null;
 
 function openSeasonRosterModal(source='edit'){
@@ -1531,18 +1532,20 @@ function openSeasonRosterModal(source='edit'){
   _seasonRosterPrevIds = (source==='newseason' && prev) ? getPrevSeasonRacerIds() : null;
 
   _rosterActive = {};
+  _rosterJunior = {};
   for(const r of DB.racers){
     _rosterActive[r.id] = _seasonRosterPrevIds
       ? _seasonRosterPrevIds.has(r.id)      // new season: tick prev-season racers only
       : r.active !== false;                 // edit: reflect current active state
+    _rosterJunior[r.id] = !!r.isJunior;
   }
 
   document.getElementById('seasonRosterTitle').textContent =
     source==='newseason' ? 'Season Roster Setup' : 'Edit Season Racers';
   document.getElementById('seasonRosterSub').textContent =
     (source==='newseason' && prev)
-      ? `Racers from "${prev.name}" are ticked. Untick anyone not returning this season.`
-      : 'Ticked racers appear in the race setup screen. Untick anyone sitting out this season.';
+      ? `Racers from "${prev.name}" are ticked. Untick anyone not returning this season. Use the JNR/ADL switch if a junior is returning as an adult.`
+      : 'Ticked racers appear in the race setup screen. Untick anyone sitting out this season. The JNR/ADL switch updates junior status.';
 
   renderSeasonRosterList();
   showModal('seasonRosterModal');
@@ -1575,10 +1578,14 @@ function renderSeasonRosterList(){
 
 function _seasonRosterRow(r){
   const on = !!_rosterActive[r.id];
+  const jnr = !!_rosterJunior[r.id];
   return `<div class="roster-item" style="opacity:${on?'1':'.45'}" onclick="toggleSeasonRacer('${r.id}')">
     <div class="roster-check" style="background:${on?'var(--green)':'var(--surface3)'};border-color:${on?'var(--green)':'var(--border2)'};color:#000">${on?'✓':''}</div>
     <span class="roster-name">${esc(r.name)}</span>
-    ${r.isJunior?`<span class="chip chip-junior" style="font-size:10px">JNR</span>`:''}
+    <div class="toggle${jnr?' junior-on':''}" onclick="event.stopPropagation();toggleSeasonJunior('${r.id}')" title="Toggle Junior/Adult — juniors can return as adults next season" style="flex-shrink:0">
+      <div class="toggle-track"><div class="toggle-thumb"></div></div>
+      <span style="color:${jnr?'var(--purple)':'var(--text)'};font-size:10px">${jnr?'JNR':'ADL'}</span>
+    </div>
     <span style="font-size:11px;color:${on?'var(--green)':'var(--muted)'};font-weight:600">${on?'Active':'Inactive'}</span>
   </div>`;
 }
@@ -1588,13 +1595,21 @@ function toggleSeasonRacer(id){
   renderSeasonRosterList();
 }
 
+function toggleSeasonJunior(id){
+  _rosterJunior[id] = !_rosterJunior[id];
+  renderSeasonRosterList();
+}
+
 function setAllSeasonRoster(active){
   for(const r of DB.racers) _rosterActive[r.id] = active;
   renderSeasonRosterList();
 }
 
 async function confirmSeasonRoster(){
-  for(const r of DB.racers) r.active = !!_rosterActive[r.id];
+  for(const r of DB.racers){
+    r.active = !!_rosterActive[r.id];
+    r.isJunior = !!_rosterJunior[r.id];
+  }
   await saveDB();
   closeModal();
   const n = DB.racers.filter(r=>r.active!==false).length;

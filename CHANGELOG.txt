@@ -2,6 +2,22 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.34  (2026-07-17)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SEASON ROSTER
+  - Each racer row in the Season Roster modal now has a
+    JNR/ADL switch, so a junior returning next season as
+    an adult (or vice versa) can be updated while
+    reviewing the roster. Applies both to the automatic
+    new-season roster setup and the mid-season
+    "Season Racers" screen.
+  - Reminder of the existing flow (since v9.26): creating
+    a new season automatically opens the roster picker
+    with last season's racers pre-ticked - regulars carry
+    over in one click, no re-typing. (It is skipped only
+    when the racer database is empty.)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v9.33  (2026-07-17)  [v10-packaging branch]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 NATIVE DESKTOP APP
