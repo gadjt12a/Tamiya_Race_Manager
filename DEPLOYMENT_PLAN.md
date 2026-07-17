@@ -193,15 +193,21 @@ Scripted results from 2026-07-17 run against the v9.35 packaged exe.
       contents verified; Mac launcher works in both packaged and repo layouts.
 
 ### Phase 6 — Release & merge
-- [ ] Tag `v9.27` on `main` (last zip-style release, kept downloadable).
-- [ ] `BUILD.md` — how to produce the exe + installer from a clean checkout.
-- [ ] Release notes template incl. the **pre-update checklist for clubs**:
-      1. Open old version → Export Data → save to USB.
-      2. Run the new installer.
-      3. Launch, confirm seasons & standings look right.
-      4. Keep the USB export until confident.
-- [ ] Merge `v10-packaging` → `main`, tag `v10.0`, publish GitHub release with
-      installer + plain zip (portable fallback).
+- [x] Tag `v9.27` on `main` (last zip-style release, kept downloadable) —
+      done 2026-07-16.
+- [x] `BUILD.md` — full clean-checkout build guide for all three packages,
+      incl. smoke-test checklist and gotchas (ASCII bats, SmartScreen,
+      WebView2, icon regeneration).
+- [x] `RELEASE_NOTES_v10.md` (DRAFT) — club-facing: pre-update checklist,
+      SmartScreen click-through (screenshot placeholders pending a fresh
+      machine), zip→installer import step, browser-storage-mode caveat,
+      what's-new, downgrade policy, Mac untested disclaimer.
+- [ ] Fill in SmartScreen screenshots (needs a machine that hasn't seen the
+      exe).
+- [ ] Kris's manual test matrix items pass (#7, #9, #11, #12, #13) + icon
+      licence resolved.
+- [ ] Merge `v10-packaging` → `main`, retitle release notes to final, tag
+      `v10.0`, publish GitHub release with all three packages attached.
 
 ---
 
