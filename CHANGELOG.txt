@@ -2,6 +2,15 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.38  (2026-07-17)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  - Splash screen: double-clicking the desktop icon now
+    shows the app logo with "Tamiya Race Manager /
+    Loading..." INSTANTLY, and it stays up until the app
+    window is on screen - no more wondering whether the
+    double-click worked.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v9.37  (2026-07-17)  [v10-packaging branch]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   - New app icon (licence-clean club artwork) - shows on

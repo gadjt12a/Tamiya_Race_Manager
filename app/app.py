@@ -20,6 +20,16 @@ import server
 DISPLAY_URL = f"http://127.0.0.1:{server.PORT}/display"
 
 
+def close_splash():
+    """Close the PyInstaller boot splash (shown instantly on double-click,
+    while the onefile exe unpacks). No-op outside a frozen splash build."""
+    try:
+        import pyi_splash
+        pyi_splash.close()
+    except Exception:
+        pass
+
+
 class Api:
     """Called from the app's JavaScript via window.pywebview.api"""
 
@@ -68,13 +78,15 @@ def run():
     except Exception as e:
         # pywebview unavailable - fall back to console-style browser mode
         print(f"pywebview unavailable ({e}) - falling back to browser mode")
+        close_splash()
         server.main()
         return
 
     if server.already_running():
         # Another instance owns the server - just show a window onto it
-        webview.create_window("Tamiya Race Manager", server.APP_URL,
-                              width=1360, height=860, min_size=(900, 600))
+        w = webview.create_window("Tamiya Race Manager", server.APP_URL,
+                                  width=1360, height=860, min_size=(900, 600))
+        w.events.shown += close_splash
         webview.start()
         return
 
@@ -82,6 +94,7 @@ def run():
     try:
         httpd = server.create_server()
     except OSError:
+        close_splash()
         webview.create_window(
             "Tamiya Race Manager",
             html="<h2 style='font-family:sans-serif;padding:24px'>Port 8765 is in use by "
@@ -102,6 +115,8 @@ def run():
         main_win = webview.create_window(
             "Tamiya Race Manager", server.APP_URL, js_api=api,
             width=1360, height=860, min_size=(900, 600))
+        # Splash stays up until the real window is on screen
+        main_win.events.shown += close_splash
         # Coordinator closes the main window -> the whole app closes
         main_win.events.closed += lambda: os._exit(0)
         webview.start()
@@ -109,6 +124,7 @@ def run():
         # WebView2 runtime missing or GUI failed - browser fallback keeps
         # race night running rather than dying on the spot.
         print(f"Native window failed ({e}) - falling back to the browser")
+        close_splash()
         try:
             webbrowser.open(server.APP_URL)
         except Exception:

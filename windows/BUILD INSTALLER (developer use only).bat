@@ -24,6 +24,7 @@ python -m PyInstaller --noconfirm --clean --onefile --noconsole ^
   --add-data "app\race-manager.html;." ^
   --add-data "app\VERSION;." ^
   --collect-all webview ^
+  --splash "app\splash.png" ^
   %ICONFLAG% ^
   app\app.py
 
