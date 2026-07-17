@@ -153,10 +153,9 @@ and serves v9.32 from the proper data home.*
 - [ ] Kris to run test matrix #13 (exports/print/import + display inside the
       native window — WebView2 handles downloads/popups differently to Chrome).
 
-> **Icon licensing (must resolve before public release):** current `icon.ico`
-> is generated from Kris's Car2 artwork (`Working_Files/Images/`, untracked).
-> Provenance/licence unconfirmed — confirm rights or replace before the v10
-> public release. Swapping = replace `icon.ico`, rerun the build.
+> **Icon licensing: RESOLVED (v9.37).** `app/icon.ico` is now generated from
+> Kris's licence-clean `Race_App_Icon.png` artwork. The earlier watermarked
+> stock candidates were never shipped.
 
 ### Phase 5 — Test matrix (all must pass before merge)
 
@@ -204,8 +203,9 @@ Scripted results from 2026-07-17 run against the v9.35 packaged exe.
       what's-new, downgrade policy, Mac untested disclaimer.
 - [ ] Fill in SmartScreen screenshots (needs a machine that hasn't seen the
       exe).
-- [ ] Kris's manual test matrix items pass (#7, #9, #11, #12, #13) + icon
-      licence resolved.
+- [ ] Kris's manual test matrix items pass — step-by-step guide in
+      `TESTING_MANUAL.md` (T1–T7, incl. the SmartScreen screenshot list).
+      Icon licence: resolved in v9.37.
 - [ ] Merge `v10-packaging` → `main`, retitle release notes to final, tag
       `v10.0`, publish GitHub release with all three packages attached.
 

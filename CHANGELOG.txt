@@ -2,6 +2,16 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.37  (2026-07-17)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  - New app icon (licence-clean club artwork) - shows on
+    the exe, desktop icon, installer and app window.
+  - TESTING_MANUAL.md added: step-by-step manual test guide
+    (full race night, display/second screen, exports inside
+    the app window, sleep, crash recovery, garbage import,
+    fresh-machine SmartScreen run with screenshot list).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v9.36  (2026-07-17)  [v10-packaging branch]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 REPOSITORY RESTRUCTURE - CLEAR PLATFORM PACKAGES
