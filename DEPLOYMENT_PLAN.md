@@ -179,6 +179,19 @@ Scripted results from 2026-07-17 run against the v9.35 packaged exe.
 | 12 | Full race night simulation on packaged exe (Box+EVO+Pro, juniors, edit result, display window, exports) | Identical behaviour to v9.27 | 🧑 KRIS |
 | 13 | Native-window feature pass: display second window (1 + 2 monitors), Export HTML/CSV downloads, Print/PDF, Import Data file picker | All work inside the desktop app window; any WebView2 quirks documented | 🧑 KRIS |
 
+### Phase 4c — Platform separation (added at Kris's request, v9.36)
+*Completed 2026-07-17 — repo restructured with `git mv` (history preserved).*
+- [x] `app/` (shared core: HTML, server.py, app.py, VERSION, icon),
+      `windows/` (installer script, build bats, Windows README),
+      `mac/` (launcher, package builder, Mac README with UNTESTED disclaimer).
+- [x] Three clean release artefacts: Windows installer, Windows portable zip
+      (just the exe — the python-bundle machinery and its three bat files are
+      removed as obsolete), Mac zip. All build into `dist\`.
+- [x] Root README.md rewritten as a platform picker; per-platform READMEs ship
+      inside the packages.
+- [x] Rebuilt + smoke-tested from the new layout (exe serves v9.36); Mac zip
+      contents verified; Mac launcher works in both packaged and repo layouts.
+
 ### Phase 6 — Release & merge
 - [ ] Tag `v9.27` on `main` (last zip-style release, kept downloadable).
 - [ ] `BUILD.md` — how to produce the exe + installer from a clean checkout.

@@ -2,6 +2,29 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.36  (2026-07-17)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+REPOSITORY RESTRUCTURE - CLEAR PLATFORM PACKAGES
+  - Repo reorganised so downloaders know exactly what they
+    are getting:
+      app/      - the application (shared core)
+      windows/  - Windows packaging + Windows README
+      mac/      - Mac (OSX) packaging + Mac README
+  - THREE clean packages, built into dist\:
+      TamiyaRaceManager-Setup-<ver>.exe          (Windows installer)
+      TamiyaRaceManager-WindowsPortable-<ver>.zip (Windows portable)
+      TamiyaRaceManager-Mac-<ver>.zip             (Mac, UNTESTED)
+  - The Mac README states clearly that the Mac version is
+    untested (developers run Windows) and how to report issues.
+  - Windows portable zip is now just the exe - the old
+    python-bundle machinery (SETUP WINDOWS bat, BUILD PYTHON
+    BUNDLE bat, START RACE MANAGER bat) is obsolete and removed.
+  - Mac launcher finds the app in both the packaged and repo
+    layouts; new "BUILD MAC PACKAGE" bat stages and zips the
+    Mac package on Windows.
+  - Root README.md rewritten as a clear platform picker.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v9.35  (2026-07-17)  [v10-packaging branch]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 UPGRADE GUIDANCE + SCRIPTED SAFETY TESTS

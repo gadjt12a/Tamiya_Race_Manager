@@ -1,8 +1,8 @@
 ; Tamiya Race Manager - Inno Setup installer script
 ; Build with: BUILD INSTALLER (developer use only).bat
-; Version comes from the VERSION file (single source of truth).
+; Paths are relative to this file (windows\); version from app\VERSION.
 
-#define VerFile FileOpen("VERSION")
+#define VerFile FileOpen(SourcePath + "\..\app\VERSION")
 #define AppVer Trim(FileRead(VerFile))
 #expr FileClose(VerFile)
 
@@ -16,9 +16,9 @@ DisableProgramGroupPage=yes
 DisableDirPage=yes
 ; Per-user install - no admin rights needed on club laptops
 PrivilegesRequired=lowest
-OutputDir=dist\installer
+OutputDir=..\dist\installer
 OutputBaseFilename=TamiyaRaceManager-Setup-{#AppVer}
-SetupIconFile=icon.ico
+SetupIconFile=..\app\icon.ico
 UninstallDisplayIcon={app}\TamiyaRaceManager.exe
 Compression=lzma2
 SolidCompression=yes
@@ -27,7 +27,7 @@ CloseApplications=yes
 WizardStyle=modern
 
 [Files]
-Source: "dist\TamiyaRaceManager.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\dist\TamiyaRaceManager.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Tasks]
 Name: desktopicon; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"; Flags: checkedonce
