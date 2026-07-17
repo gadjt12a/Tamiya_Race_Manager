@@ -1044,6 +1044,9 @@ function renderHome(){
         <div class="season-hero-info">
           <h2>No Active Season</h2>
           <p>Start a new season to begin recording race results and points</p>
+          ${(DB.seasons.length===0 && DB.racers.length===0)
+            ? `<p style="margin-top:8px;padding:8px 12px;background:rgba(64,144,224,.1);border:1px solid rgba(64,144,224,.25);border-radius:6px;font-size:12px;color:var(--text)">📦 <b>Upgrading from an older version?</b> Click <b>⬇ Import Data</b> (top right) and choose the <b>data\\racedata.json</b> file inside your old race-manager folder — seasons, racers and points all come across.</p>`
+            : ''}
         </div>
         <div class="season-hero-actions">
           <button class="btn btn-primary" onclick="openNewSeasonModal()">+ Start New Season</button>

@@ -2,6 +2,24 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.35  (2026-07-17)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+UPGRADE GUIDANCE + SCRIPTED SAFETY TESTS
+  - First-run hint on the home screen: when the database is
+    completely empty, a notice explains how to bring data
+    across from an old zip-style install (Import Data with
+    the old folder's data\racedata.json).
+  - Installer info page rewritten to describe the import
+    step accurately (the installed app cannot see data in
+    the old zip folder automatically).
+  - Scripted data-safety test results (all PASS) recorded
+    in DEPLOYMENT_PLAN.md: fresh install; zip-in-place
+    upgrade (byte-identical copy, original untouched);
+    installer-style upgrade + import path; reinstall over
+    install (data hash unchanged); future-version data
+    file survives a full app session byte-identical.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v9.34  (2026-07-17)  [v10-packaging branch]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SEASON ROSTER

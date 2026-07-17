@@ -1,7 +1,7 @@
 # Tamiya_Race_Manager
 Race Manager for Tamiya Mini 4WD racers
 
-Tamiya Race Manager v9.34
+Tamiya Race Manager v9.35
 
 **Desktop app (v9.33):** the installed app runs in its own native window —
 no console, no browser tab; the server runs invisibly inside and closing the

@@ -14,16 +14,18 @@ not on uninstall.
 
 UPDATING FROM AN OLDER (ZIP-STYLE) VERSION?
 -------------------------------------------
-The first time you launch the new version, your existing race data
-is COPIED from the old race-manager folder to its new home. The old
-copy is left in place as a backup and is no longer used.
+Your old race data is NOT deleted - it stays in the old
+race-manager folder. To bring it into the new app (one time only):
 
-One exception - if your old version ran WITHOUT Python (the app
-opened straight in the browser and warned about "browser storage
-mode"), your data cannot be found automatically:
-  1. BEFORE updating, open the old version and click "Export Data".
-  2. After installing, launch the new version and click
-     "Import Data" to load that file.
+  1. Launch the new version (desktop icon).
+  2. Click "Import Data" (top right of the home screen).
+  3. Choose the file  data\racedata.json  inside your OLD
+     race-manager folder - or your latest "Export Data" file.
+  4. Seasons, racers and points all come across.
+
+If your old version ran WITHOUT Python (it warned about "browser
+storage mode"), there is no data file on disk - open the OLD version
+first, click "Export Data", then import that file as above.
 
 GOOD PRACTICE
 -------------

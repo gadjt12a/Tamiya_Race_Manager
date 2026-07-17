@@ -160,21 +160,24 @@ and serves v9.32 from the proper data home.*
 
 ### Phase 5 — Test matrix (all must pass before merge)
 
-| # | Scenario | Expected |
-|---|---|---|
-| 1 | Fresh install, no prior data | Clean first run, empty DB created in new location |
-| 2 | Install over machine with v9.x zip + existing `data/racedata.json` | Data auto-copied, original untouched, seasons/points intact |
-| 3 | Run installer twice (update over v10) | App files replaced, data + backups untouched |
-| 4 | Import a v9.x export file into v10 | Loads and migrates cleanly |
-| 5 | Import a v10 export into v9.x *(downgrade)* | v9 has no version gate — documented as unsupported; release notes warn |
-| 6 | Import a future-versioned file into v10 | Friendly refusal, no data written |
-| 7 | Laptop sleep mid-event, wake, continue racing | Server alive, saves still hit disk |
-| 8 | Kill server mid-event | Persistent warning banner appears; localStorage holds data; recovery path documented |
-| 9 | Race night crash + relaunch | Resume modal restores in-progress race (existing feature, re-verify) |
-| 10 | Port 8765 already in use | Friendly message / reuse, no traceback |
-| 11 | Import wrong/garbage JSON | Rejected with message, DB unchanged |
-| 12 | Full race night simulation on packaged exe (Box+EVO+Pro, juniors, edit result, display window, exports) | Identical behaviour to v9.27 |
-| 13 | Native-window feature pass (v9.33): display second window (1 + 2 monitors), Export HTML/CSV downloads, Print/PDF, Import Data file picker | All work inside the desktop app window; any WebView2 quirks documented |
+Scripted results from 2026-07-17 run against the v9.35 packaged exe.
+
+| # | Scenario | Expected | Result |
+|---|---|---|---|
+| 1 | Fresh install, no prior data | Clean first run, empty DB created in new location | ✅ PASS (scripted) |
+| 2a | New exe dropped INTO old zip folder | Data auto-copied, original + legacy backups untouched, moved-note written | ✅ PASS (scripted; hash-verified byte-identical) |
+| 2b | Installer-style upgrade — old data in a *different* folder | No false migration (boots empty); Import Data with old `racedata.json` brings everything across; old file untouched. First-run hint + installer text guide the user | ✅ PASS (scripted; import path hash-verified) |
+| 3 | Run installer twice (update over v10) | App files replaced, data + backups untouched | ✅ PASS (scripted; data hash+mtime unchanged) |
+| 4 | Import a v9.x export file into v10 | Loads cleanly (same JSON as #2b) | ✅ PASS (scripted via #2b) |
+| 5 | Import a v10 export into v9.x *(downgrade)* | v9 has no version gate — documented as unsupported; release notes warn | 📋 documentation-only |
+| 6 | Future-versioned data file (version 99) | Refused read-only, file never written | ✅ PASS (scripted; full app session in real window, file byte-identical after) — banner visual: Kris |
+| 7 | Laptop sleep mid-event, wake, continue racing | Server alive, saves still hit disk | 🧑 KRIS — real hardware |
+| 8 | Kill server mid-event | Warning banner ~6s, browser holds data, recovery works | ✅ Kris verified 2026-07-16 (browser mode); re-check once in app window |
+| 9 | Race night crash + relaunch | Resume modal restores in-progress race | 🧑 KRIS — with #12 |
+| 10 | Port 8765 already in use | Second instance opens window onto running app; foreign program → message window | ✅ already-running scripted (v9.30); foreign-port path code-reviewed |
+| 11 | Import wrong/garbage JSON | Rejected with message, DB unchanged | 🧑 KRIS — UI-side, 30 seconds |
+| 12 | Full race night simulation on packaged exe (Box+EVO+Pro, juniors, edit result, display window, exports) | Identical behaviour to v9.27 | 🧑 KRIS |
+| 13 | Native-window feature pass: display second window (1 + 2 monitors), Export HTML/CSV downloads, Print/PDF, Import Data file picker | All work inside the desktop app window; any WebView2 quirks documented | 🧑 KRIS |
 
 ### Phase 6 — Release & merge
 - [ ] Tag `v9.27` on `main` (last zip-style release, kept downloadable).
@@ -193,6 +196,7 @@ and serves v9.32 from the proper data home.*
 
 | Risk | Who is affected | Mitigation / instruction |
 |---|---|---|
+| **Zip → installer upgrades don't auto-migrate.** The installed exe lives in `%LOCALAPPDATA%\Programs\`, so it can't see data in the old zip folder — the app boots looking empty. Data is safe but *looks* lost. | Every club moving from zip to installer | First-run hint on the home screen + installer info page: use **Import Data** with the old folder's `data\racedata.json`. Old file is never touched. (Auto-migration still works when the exe runs from inside the old folder.) |
 | **localStorage-mode data doesn't carry over.** A club that ran v9.x *without* Python (opened the HTML directly) has data in the browser under a `file://` origin. The packaged app serves from `localhost:8765` — a different origin — so that data will NOT appear automatically. | Only clubs that never had Python working (no `data/racedata.json` on disk) | Release notes + installer text: *before updating*, open the old version and use **Export Data**, then **Import Data** in the new version. This is the universal bridge and must be stated prominently. |
 | Downgrading (v10 file → v9 app) is not supported | Anyone rolling back | Keep the pre-upgrade backup + v9.27 zip download available; document that rolling back means restoring the pre-upgrade backup file, not the v10 file. |
 | SmartScreen warning on unsigned exe | All new installs | Documented click-through with screenshots; consider code signing later if budget allows. |
