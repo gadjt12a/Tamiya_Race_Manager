@@ -18,12 +18,13 @@ echo.
 set ICONFLAG=
 if exist "icon.ico" set ICONFLAG=--icon "icon.ico"
 
-python -m PyInstaller --noconfirm --clean --onefile ^
+python -m PyInstaller --noconfirm --clean --onefile --noconsole ^
   --name TamiyaRaceManager ^
   --add-data "race-manager.html;." ^
   --add-data "VERSION;." ^
+  --collect-all webview ^
   %ICONFLAG% ^
-  server.py
+  app.py
 
 if not exist "dist\TamiyaRaceManager.exe" (
     echo  EXE BUILD FAILED - see errors above.

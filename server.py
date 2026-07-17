@@ -111,6 +111,29 @@ last_ping = time.time()
 first_ping_seen = False   # countdown only starts once the browser has connected
 server_ref = None
 
+# ── Second-screen display feed ─────────────────────────────────────────────────
+# The coordinator app POSTs its display HTML here; the /display page (browser
+# popup or native window) polls it every second. Server-mediated, so the display
+# never depends on a window.opener reference and can never go stale.
+display_html = ('<div class="pane left"><div style="color:#1a2030;font-size:clamp(20px,3.5vw,56px);'
+                'padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">'
+                'Waiting for racing to start...</div></div><div class="pane right"></div>')
+
+DISPLAY_PAGE = """<!DOCTYPE html><html><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Race Display</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#04060a;color:#fff;font-family:'Arial Narrow','Impact',system-ui,sans-serif;height:100vh;display:grid;grid-template-columns:1fr 1fr;gap:0;overflow:hidden;cursor:none}.pane{padding:clamp(24px,3.5vw,60px) clamp(20px,3vw,52px);height:100vh;overflow:hidden}.left{border-right:2px solid #0d1520}.right{opacity:.82}</style>
+</head><body>
+<script>
+var last='';
+setInterval(function(){
+  fetch('/display-content?t='+Date.now()).then(function(r){return r.text();}).then(function(h){
+    if(h!==last){ last=h; document.body.innerHTML=h; }
+  }).catch(function(){});
+}, 1000);
+</script>
+</body></html>"""
+
 def watchdog():
     """Background thread - shuts down server if browser tab closes.
     - The close-detection countdown does not start until the browser has pinged
@@ -166,6 +189,20 @@ class RaceHandler(http.server.SimpleHTTPRequestHandler):
             migrated_this_run = False
             return
 
+        if path_only == "/display":
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(DISPLAY_PAGE.encode("utf-8"))
+            return
+
+        if path_only == "/display-content":
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(display_html.encode("utf-8"))
+            return
+
         # The data file no longer lives under the app folder - serve it from
         # its real home so the app's existing fetch path keeps working.
         if path_only == "/data/racedata.json":
@@ -182,6 +219,12 @@ class RaceHandler(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         global last_ping
         last_ping = time.time()
+
+        if self.path == "/display-content":
+            length = int(self.headers.get("Content-Length", 0))
+            globals()["display_html"] = self.rfile.read(length).decode("utf-8", "replace")
+            self._send_json({"ok": True})
+            return
 
         if self.path == "/backup":
             # Tagged snapshot (e.g. pre-upgrade-v2) taken before a data migration
@@ -254,8 +297,29 @@ def already_running():
         return False
 
 
-if __name__ == "__main__":
-    APP_URL = f"http://localhost:{PORT}/race-manager.html"
+APP_URL = f"http://127.0.0.1:{PORT}/race-manager.html"
+
+
+def prepare():
+    """Migrate legacy data and make sure the data file exists."""
+    migrate_legacy_data()  # copy (never move) pre-v10 data to the new home
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    if not DATA_FILE.exists():
+        with open(DATA_FILE, "w") as f:
+            json.dump({"version": 1, "seasons": [], "racers": [], "currentSeason": None}, f, indent=2)
+
+
+def create_server():
+    """Bind and return the HTTP server (raises OSError if the port is taken).
+    127.0.0.1 (not all interfaces): keeps the app private to this machine and
+    avoids the Windows Firewall prompt on first run."""
+    socketserver.TCPServer.allow_reuse_address = True
+    return socketserver.TCPServer(("127.0.0.1", PORT), RaceHandler)
+
+
+def main():
+    """Console mode - used by the zip distribution's launchers (bat/command)."""
+    global server_ref
 
     if already_running():
         print("  Race Manager is already running - opening it in your browser.")
@@ -266,11 +330,7 @@ if __name__ == "__main__":
         time.sleep(2)
         sys.exit(0)
 
-    migrate_legacy_data()  # copy (never move) pre-v10 data to the new home
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    if not DATA_FILE.exists():
-        with open(DATA_FILE, "w") as f:
-            json.dump({"version": 1, "seasons": [], "racers": [], "currentSeason": None}, f, indent=2)
+    prepare()
 
     print("=" * 50)
     print(f"  TAMIYA RACE MANAGER v{APP_VERSION}")
@@ -283,11 +343,8 @@ if __name__ == "__main__":
     print("  Press Ctrl+C to stop manually.")
     print("=" * 50)
 
-    socketserver.TCPServer.allow_reuse_address = True
     try:
-        # 127.0.0.1 (not all interfaces): keeps the app private to this machine
-        # and avoids the Windows Firewall "Allow access" prompt on first run.
-        httpd = socketserver.TCPServer(("127.0.0.1", PORT), RaceHandler)
+        httpd = create_server()
     except OSError:
         print()
         print(f"  ERROR: port {PORT} is in use by another program.")
@@ -308,3 +365,7 @@ if __name__ == "__main__":
             httpd.serve_forever()
         except KeyboardInterrupt:
             print("\n  Server stopped. Goodbye!")
+
+
+if __name__ == "__main__":
+    main()

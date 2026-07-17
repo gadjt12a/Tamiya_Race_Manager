@@ -1915,7 +1915,7 @@ function swapToRace(idx){
 // ═══════════════════════════════════════════════════════════════
 //  RENDER — RACE SCREEN
 // ═══════════════════════════════════════════════════════════════
-function renderRace(){ renderCurrent(); renderQueue(); renderStandings(); renderHistory(); updateRaceTopBar(); if(dispWin&&!dispWin.closed) writeDisplay(); }
+function renderRace(){ renderCurrent(); renderQueue(); renderStandings(); renderHistory(); updateRaceTopBar(); writeDisplay(); }
 
 function updateRaceTopBar(){
   const el = document.getElementById('raceTopInfo');
@@ -2216,7 +2216,7 @@ async function autoSaveResults(){
 
 async function finishClass(){
   closeModal();
-  if(dispWin&&!dispWin.closed) writeDisplay();
+  writeDisplay();
   goHome();
 }
 
@@ -2224,6 +2224,8 @@ function confirmAbortRace(){
   openConfirm('End Race Early?','All progress for this race will be lost. This cannot be undone.',()=>{
     delete DB.activeRace;
     saveDB().catch(()=>{});
+    R.currentRace=null; R.roundQueue=[]; R.podium=null;
+    writeDisplay(); // display drops back to the waiting state
     if(dispWin&&!dispWin.closed) dispWin.close();
     goHome();
   });
@@ -2835,12 +2837,35 @@ function renderSeasons(){
 // ═══════════════════════════════════════════════════════════════
 let dispWin=null;
 
+let _lastDisplayPush='';
+function pushDisplayContent(force){
+  // Feed the server's /display page (browser popup or native second window).
+  // The display polls this every second, so it self-heals and never goes stale.
+  if(!serverMode) return;
+  const h=getDisplayHTML();
+  if(!force && h===_lastDisplayPush) return;
+  _lastDisplayPush=h;
+  fetch('/display-content',{method:'POST',headers:{'Content-Type':'text/html'},body:h}).catch(()=>{});
+}
+
 function openDisplay(){
+  // Native app (installed exe): ask Python for a real window — fullscreen on
+  // the second monitor when one is present.
+  if(window.pywebview && window.pywebview.api && window.pywebview.api.open_display){
+    pushDisplayContent(true);
+    window.pywebview.api.open_display();
+    return;
+  }
+  // Browser + server: popup onto the server-fed display page
+  if(serverMode){
+    pushDisplayContent(true);
+    dispWin=window.open('/display','RaceDisplay','width=1280,height=720,resizable=yes');
+    if(!dispWin) alert('Please allow pop-ups for this page.');
+    return;
+  }
+  // No server (browser-storage mode): legacy self-polling popup
   dispWin=window.open('','RaceDisplay','width=1280,height=720,resizable=yes');
   if(!dispWin){ alert('Please allow pop-ups for this page.'); return; }
-  // The shell is written ONCE; it then PULLS fresh content from this window
-  // every second. Pull (not push) means the display self-heals if an update
-  // is ever missed — it never goes stale or needs closing and reopening.
   const shell=`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Race Display</title>
@@ -2861,9 +2886,10 @@ function openDisplay(){
 }
 
 function writeDisplay(){
-  // Immediate push for snappy updates; the popup's own 1s poll is the safety net.
+  pushDisplayContent();
+  // Legacy popup (no-server mode) gets pushed directly; its poll is the safety net.
   if(!dispWin||dispWin.closed) return;
-  try{ dispWin.document.body.innerHTML = getDisplayHTML(); }catch(e){}
+  if(!serverMode){ try{ dispWin.document.body.innerHTML = getDisplayHTML(); }catch(e){} }
 }
 
 function getDisplayHTML(){

@@ -2,6 +2,30 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.33  (2026-07-17)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NATIVE DESKTOP APP
+  - The installed app now runs in its OWN WINDOW - no
+    console window, no browser tab. The server runs
+    invisibly inside the app; closing the window closes
+    everything.
+  - The 2nd-screen display opens as a real window too, and
+    goes FULL-SCREEN on the second monitor automatically
+    when one is connected.
+  - The display is now fed through the server (/display),
+    in both the desktop app and browser mode - even more
+    robust than v9.31.
+  - Ending a race early now resets the display to its
+    waiting screen.
+  - If the native window cannot start (e.g. WebView2
+    missing), the app falls back to the browser
+    automatically so race night is never blocked.
+  - Diagnostics log: %LOCALAPPDATA%\TamiyaRaceManager\
+    app.log
+  - The zip distribution (bat/command launchers) still
+    works exactly as before: console + browser.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v9.32  (2026-07-17)  [v10-packaging branch]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 WINDOWS INSTALLER (Phase 4 of v10 plan)

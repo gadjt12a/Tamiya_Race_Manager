@@ -141,6 +141,18 @@ and serves v9.32 from the proper data home.*
       (needs a machine that hasn't seen the exe — fold into Phase 6 release
       notes; code signing deferred — cost).
 
+### Phase 4b — Native desktop app (added at Kris's request, v9.33)
+*Completed 2026-07-17 — the installed exe now runs as a real desktop app.*
+- [x] `app.py` entry point: pywebview native window, server runs invisibly
+      inside the process, window close = full shutdown, no console/browser.
+- [x] Display feed moved server-side (`/display` + `/display-content`): native
+      second window (auto-fullscreen on 2nd monitor), browser popup uses the
+      same page; legacy opener-poll popup kept for no-server mode.
+- [x] Fallbacks: WebView2/GUI failure → browser mode; windowed build logs to
+      `%LOCALAPPDATA%\TamiyaRaceManager\app.log`; zip/console mode unchanged.
+- [ ] Kris to run test matrix #13 (exports/print/import + display inside the
+      native window — WebView2 handles downloads/popups differently to Chrome).
+
 > **Icon licensing (must resolve before public release):** current `icon.ico`
 > is generated from Kris's Car2 artwork (`Working_Files/Images/`, untracked).
 > Provenance/licence unconfirmed — confirm rights or replace before the v10
@@ -162,6 +174,7 @@ and serves v9.32 from the proper data home.*
 | 10 | Port 8765 already in use | Friendly message / reuse, no traceback |
 | 11 | Import wrong/garbage JSON | Rejected with message, DB unchanged |
 | 12 | Full race night simulation on packaged exe (Box+EVO+Pro, juniors, edit result, display window, exports) | Identical behaviour to v9.27 |
+| 13 | Native-window feature pass (v9.33): display second window (1 + 2 monitors), Export HTML/CSV downloads, Print/PDF, Import Data file picker | All work inside the desktop app window; any WebView2 quirks documented |
 
 ### Phase 6 — Release & merge
 - [ ] Tag `v9.27` on `main` (last zip-style release, kept downloadable).
