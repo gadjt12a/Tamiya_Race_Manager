@@ -19,19 +19,24 @@ import server
 
 DISPLAY_URL = f"http://127.0.0.1:{server.PORT}/display"
 
+# Kept OUTSIDE the Api class on purpose. pywebview walks the js_api object's
+# attributes when it builds the JS bridge at start-up, and a webview Window
+# stored there sends it into infinite recursion through window.native
+# ("maximum recursion depth exceeded"), which wedges the whole app.
+main_window = None
+
 
 def close_splash():
     """Close the PyInstaller boot splash, if this build has one.
 
-    Currently a no-op: the splash was dropped in v9.39 because PyInstaller
-    implements it in Tcl/Tk, which broke launches with 'Failed to load Tcl
-    DLL' errors. The onedir build starts fast enough not to need it. Hooks
-    are left in place so a future splash can be closed at the right moment."""
-    try:
-        import pyi_splash
-        pyi_splash.close()
-    except Exception:
-        pass
+    A deliberate no-op since v9.39: the splash was dropped because
+    PyInstaller implements it in Tcl/Tk, which broke launches with 'Failed
+    to load Tcl DLL' errors. The onedir build starts fast enough not to need
+    it. The hooks are left wired up so a future splash can be closed at the
+    right moment - don't re-add `import pyi_splash` here without also
+    re-adding --splash, as the module prints a traceback when it loads in a
+    build that has no splash."""
+    return
 
 
 class Api:
@@ -39,6 +44,16 @@ class Api:
 
     def __init__(self):
         self.display_window = None
+
+    def toggle_fullscreen(self):
+        """Full-screen the main app window (Full Screen button / F11)."""
+        try:
+            if main_window is not None:
+                main_window.toggle_fullscreen()
+                return True
+        except Exception as e:
+            print(f"toggle_fullscreen failed: {e}")
+        return False
 
     def open_display(self):
         """Open (or re-open) the second-screen display as a native window -
@@ -119,6 +134,8 @@ def run():
         main_win = webview.create_window(
             "Tamiya Race Manager", server.APP_URL, js_api=api,
             width=1360, height=860, min_size=(900, 600))
+        global main_window
+        main_window = main_win
         # Splash stays up until the real window is on screen
         main_win.events.shown += close_splash
         # Coordinator closes the main window -> the whole app closes

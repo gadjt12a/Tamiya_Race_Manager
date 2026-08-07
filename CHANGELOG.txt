@@ -16,6 +16,13 @@ Tamiya Race Manager — Change Log
   - Portable zip users: unzip the whole folder and run
     TamiyaRaceManager.exe from inside it. The exe needs
     the _internal folder beside it.
+  - NEW: Full Screen button on the Home and Race screens
+    (or press F11 anywhere) - handy for putting the race
+    screen up on the big monitor.
+  - Home screen tidies up better when you make the window
+    narrower: the season buttons wrap instead of being
+    squashed off the edge, and the two columns stack
+    rather than both being crushed.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v9.38  (2026-07-17)  [v10-packaging branch]
