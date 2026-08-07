@@ -16,6 +16,24 @@ Tamiya Race Manager — Change Log
   - Portable zip users: unzip the whole folder and run
     TamiyaRaceManager.exe from inside it. The exe needs
     the _internal folder beside it.
+  - The app window now opens centred on the screen, sized
+    to fit it, instead of drifting down and to the right.
+  - Closing a season now warns you properly first: it names
+    the season, says how many events it has, and spells out
+    what closing does.
+  - NEW: closed a season by mistake? "View All Seasons" now
+    has a Reopen button that makes it the active season
+    again. (Close the current season first - only one can
+    be active at a time.)
+  - The loading screen is BACK, done a different way: the
+    app window itself opens instantly showing the logo and
+    "Loading...", then switches to the app once it's ready.
+    None of the v9.38 Tcl/Tk problems.
+  - Installers and packages are now numbered version.build
+    (e.g. 9.39.21). The build number comes from the source
+    itself and goes up with every change, so you can always
+    tell two downloads apart. It also shows in the app
+    header and in the file's Properties.
   - NEW: Full Screen button on the Home and Race screens
     (or press F11 anywhere) - handy for putting the race
     screen up on the big monitor.

@@ -31,6 +31,19 @@ try:
 except Exception:
     APP_VERSION = "?"
 
+# Build number = commit count on the branch that produced this package
+# (git rev-list --count HEAD), written by the build scripts. It ticks up
+# with every pushed commit, so two packages built from the same commit are
+# identical and two different commits can never be confused. "0" means the
+# package was built without git available (e.g. from a source zip).
+try:
+    APP_BUILD = (RESOURCE_DIR / "BUILD").read_text().strip() or "0"
+except Exception:
+    APP_BUILD = "0"
+
+# What the app header, console and installer all show, e.g. "9.39.412"
+FULL_VERSION = f"{APP_VERSION}.{APP_BUILD}"
+
 
 def resolve_data_dir():
     """Race data lives OUTSIDE the app folder so installing/updating the app
@@ -185,7 +198,9 @@ class RaceHandler(http.server.SimpleHTTPRequestHandler):
 
         if path_only == "/info":
             # migrated flag is reported once so the app shows a one-time notice
-            self._send_json({"dataDir": str(DATA_DIR), "migrated": migrated_this_run, "version": APP_VERSION})
+            self._send_json({"dataDir": str(DATA_DIR), "migrated": migrated_this_run,
+                             "version": APP_VERSION, "build": APP_BUILD,
+                             "fullVersion": FULL_VERSION})
             migrated_this_run = False
             return
 
@@ -333,7 +348,7 @@ def main():
     prepare()
 
     print("=" * 50)
-    print(f"  TAMIYA RACE MANAGER v{APP_VERSION}")
+    print(f"  TAMIYA RACE MANAGER v{FULL_VERSION}")
     print("=" * 50)
     print(f"  Starting on http://localhost:{PORT}")
     print(f"  Data file: {DATA_FILE}")

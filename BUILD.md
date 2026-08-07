@@ -85,10 +85,29 @@ That gives you `Tamiya_Race_Manager-v10-packaging\`. The zip has no `.git`
 folder, so you can't pull updates or commit from it — re-download for a newer
 build, or use the Git route instead.
 
+## Version and build numbers
+
+Packages are named `<version>.<build>`, e.g. `9.39.21`:
+
+- **version** — `app/VERSION`, bumped by hand when you decide to release
+  something. Single source of truth for the app header, server console,
+  installer name and file version.
+- **build** — generated at build time from `git rev-list --count HEAD`, the
+  number of commits on the branch. It ticks up with **every commit**, so it
+  identifies the *source*, not the machine: two people building the same
+  commit produce the same number, and two different commits can never be
+  confused for each other. The build scripts write it to `app/BUILD`, which
+  is gitignored (committing it would change the count it comes from).
+
+Building without git available — a source-zip download, say — gives build
+`0`. That still works; you just lose the ability to tell builds apart.
+
+The full number shows in the app header, `app.log`, the installer filename
+and the exe's Properties → Details.
+
 ## Releasing a new version
 
-1. Update `app/VERSION` (single source of truth — it drives the app header,
-   server console, installer name and file version everywhere).
+1. Update `app/VERSION` (the build number looks after itself).
 2. Add a `CHANGELOG.txt` entry at the top, and update the header version in
    `HOW TO USE.txt`.
 3. Build the packages (below), smoke-test, commit, tag.
@@ -134,6 +153,10 @@ No Mac is needed to *build* it — but it should be *tested* on one
 
 - **Keep the `.bat` files ASCII-only.** `cmd.exe` reads them in the ANSI
   codepage; fancy Unicode characters get mangled and can execute as garbage.
+- **The loading screen is `LOADING_HTML` in `app/app.py`**, shown in the real
+  window before the server starts, then swapped for the app by `boot()`.
+  Note `webview.start(boot, main_win)` passes the window *into* the callback,
+  so `boot` must accept that argument.
 - **Don't add `--splash`.** It was tried in v9.38 and removed in v9.39.
   PyInstaller's splash is Tcl/Tk, which pulls `tcl86t.dll`, `tk86t.dll` and
   the `_tcl_data`/`_tk_data` trees into an app that otherwise has no Tk at

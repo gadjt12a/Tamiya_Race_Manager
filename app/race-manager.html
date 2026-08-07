@@ -418,6 +418,7 @@ table.pts-table tr:hover td{background:var(--surface2)}
 #toast.show{transform:translateY(0);opacity:1}
 #toast.success{border-color:rgba(61,214,140,.4);color:var(--green)}
 #toast.error{border-color:rgba(224,85,85,.4);color:var(--red)}
+#toast.warn{border-color:rgba(232,160,32,.4);color:var(--accent)}
 
 /* race mode indicator */
 .mode-badge{
@@ -614,14 +615,17 @@ table.pts-table tr:hover td{background:var(--surface2)}
   <!-- Close Season Modal -->
   <div class="modal" id="closeSeasonModal" style="display:none">
     <h2>Close Current Season</h2>
-    <p class="modal-sub">This will archive the season as read-only. You can view it but not add results.</p>
+    <div id="closeSeasonWarn" style="margin-bottom:14px;padding:12px 14px;border-radius:8px;
+      background:rgba(224,85,85,.1);border:1px solid rgba(224,85,85,.3);font-size:13px;line-height:1.5">
+      <!-- filled by openCloseSeasonModal() -->
+    </div>
     <div class="form-group">
       <label>End Date</label>
       <input type="text" id="closeSeasonEnd" placeholder="e.g. 31/12/2025">
     </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-danger" onclick="closeSeason()">Close Season</button>
+      <button class="btn btn-danger" onclick="closeSeason()">Yes, Close Season</button>
     </div>
   </div>
 
@@ -1013,6 +1017,23 @@ async function createSeason(){
   }
 }
 
+// Spell out exactly what closing does before it happens - it's the most
+// destructive-feeling button on the home screen, and it's one click away.
+function openCloseSeasonModal(){
+  const s = getCurrentSeason(); if(!s) return;
+  const events = (s.events||[]).filter(e=>e.type!=='test').length;
+  document.getElementById('closeSeasonWarn').innerHTML =
+    `<b>⚠ You are about to close "${esc(s.name)}".</b><br><br>`+
+    `It has <b>${events} recorded event${events===1?'':'s'}</b>. Closing will:`+
+    `<ul style="margin:8px 0 8px 18px;padding:0">`+
+    `<li>archive the season as read-only — no more results can be added</li>`+
+    `<li>leave you with no active season until you start a new one</li>`+
+    `</ul>`+
+    `Nothing is deleted, and you can put it back from `+
+    `<b>View All Seasons → Reopen</b> if you close it by mistake.`;
+  showModal('closeSeasonModal');
+}
+
 async function closeSeason(){
   const s = getCurrentSeason(); if(!s) return;
   s.endDate = document.getElementById('closeSeasonEnd').value.trim();
@@ -1020,8 +1041,31 @@ async function closeSeason(){
   DB.currentSeason = null;
   await saveDB();
   closeModal();
-  toast('Season closed','success');
+  toast('Season closed — reopen it from View All Seasons if that was a mistake','success',5000);
   renderHome();
+}
+
+// Undo an accidental close. Only one season can be active at a time, so a
+// reopen is refused while another season is running rather than silently
+// swapping which one is live.
+async function reopenSeason(id){
+  const s = (DB.seasons||[]).find(x=>x.id===id); if(!s) return;
+  const current = getCurrentSeason();
+  if(current){
+    toast(`Close "${current.name}" first — only one season can be active at a time`,'warn',5000);
+    return;
+  }
+  openConfirm('Reopen Season',
+    `Reopen "${s.name}" and make it the active season again? `+
+    `Results can be added to it once more.`,
+    async ()=>{
+      s.closed = false;
+      s.endDate = '';
+      DB.currentSeason = s.id;
+      await saveDB();
+      toast(`"${s.name}" reopened`,'success');
+      goHome();
+    });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1068,7 +1112,7 @@ function renderHome(){
         <div class="season-hero-actions">
           <button class="btn btn-secondary" onclick="showScreen('pointsScreen');renderPoints('${season.id}')">📊 Season Standings</button>
           <button class="btn btn-secondary" onclick="openSeasonRosterModal()">👥 Season Racers</button>
-          <button class="btn btn-secondary btn-danger" onclick="showModal('closeSeasonModal')">Close Season</button>
+          <button class="btn btn-secondary btn-danger" onclick="openCloseSeasonModal()">Close Season</button>
         </div>
       </div>`
     : `<div class="season-hero">
@@ -2871,13 +2915,18 @@ function renderSeasons(){
             <div style="color:var(--muted);font-size:12px">${esc(s.startDate||'')} — ${esc(s.endDate||'')} · ${(s.events||[]).filter(e=>e.type!=='test').length} events</div>
           </div>
           <button class="btn btn-secondary" onclick="showScreen('pointsScreen');renderPoints('${s.id}')">📊 View Standings</button>
+          <button class="btn btn-secondary" onclick="reopenSeason('${s.id}')" title="Make this the active season again">↩ Reopen</button>
         </div>
       </div>`).join('');
   }
+  const activeNote = getCurrentSeason()
+    ? `<div style="color:var(--muted);font-size:12px;margin-top:6px">A season is currently active — close it before reopening an archived one.</div>`
+    : '';
   document.getElementById('seasonsContent').innerHTML=`
     <div style="margin-bottom:16px">
       <div style="font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px">Season Archive</div>
-      <div style="color:var(--muted2);font-size:13px">Read-only historical season standings</div>
+      <div style="color:var(--muted2);font-size:13px">Read-only historical season standings — use Reopen if a season was closed by mistake</div>
+      ${activeNote}
     </div>${html}`;
 }
 
@@ -3046,7 +3095,7 @@ async function init(){
       const info = await (await fetch('/info')).json();
       if(info.version && info.version!=='?'){
         const vl = document.getElementById('appVersionLabel');
-        if(vl) vl.textContent = 'v'+info.version;
+        if(vl) vl.textContent = 'v'+(info.fullVersion||info.version);
       }
       if(info.migrated){
         toast('✅ Your race data has moved to a safe location: '+info.dataDir+' — app updates can no longer touch it. The old copy was left in place as a backup.','success',12000);

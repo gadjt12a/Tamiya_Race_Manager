@@ -10,5 +10,9 @@ dist/
 *.spec
 __pycache__/
 
+# Generated at build time from `git rev-list --count HEAD`. Never commit it -
+# committing it would change the commit count it is derived from.
+app/BUILD
+
 # Local working files (icon drafts etc.) - not for the repo
 Working_Files/

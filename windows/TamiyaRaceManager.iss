@@ -6,10 +6,23 @@
 #define AppVer Trim(FileRead(VerFile))
 #expr FileClose(VerFile)
 
+; Build number written by the build scripts from `git rev-list --count HEAD`.
+; Missing only if ISCC is run directly instead of via the build bat.
+#if FileExists(SourcePath + "\..\app\BUILD")
+  #define BuildFile FileOpen(SourcePath + "\..\app\BUILD")
+  #define BuildNo Trim(FileRead(BuildFile))
+  #expr FileClose(BuildFile)
+#else
+  #define BuildNo "0"
+#endif
+#define FullVer AppVer + "." + BuildNo
+
 [Setup]
 AppId={{8F2C4B7A-9D31-4E5A-A6C0-52B8A1F0D9E3}
 AppName=Tamiya Race Manager
-AppVersion={#AppVer}
+AppVersion={#FullVer}
+VersionInfoVersion={#FullVer}
+VersionInfoProductVersion={#FullVer}
 AppPublisher=Tamiya Race Manager
 DefaultDirName={localappdata}\Programs\TamiyaRaceManager
 DisableProgramGroupPage=yes
@@ -17,7 +30,7 @@ DisableDirPage=yes
 ; Per-user install - no admin rights needed on club laptops
 PrivilegesRequired=lowest
 OutputDir=..\dist\installer
-OutputBaseFilename=TamiyaRaceManager-Setup-{#AppVer}
+OutputBaseFilename=TamiyaRaceManager-Setup-{#FullVer}
 SetupIconFile=..\app\icon.ico
 UninstallDisplayIcon={app}\TamiyaRaceManager.exe
 Compression=lzma2
