@@ -8,12 +8,47 @@ Closing the main window shuts everything down.
 
 The zip distribution's launchers still use server.py directly (console +
 browser mode); this file is what the installed TamiyaRaceManager.exe runs.
+
+There is NO splash screen. Two attempts failed: PyInstaller's --splash
+(v9.38) is Tcl/Tk and broke launches outright with 'Failed to load Tcl DLL',
+and an HTML loading page shown in the window itself (v9.39) was visible for
+~10ms - WebView2 can't paint until it has initialised, so it can't cover its
+own initialisation.
+
+Chasing that second failure turned up the real problem. Measured start-up
+(the stamp() lines land in app.log) had a 2.05s hole in it that was NOT
+WebView2 at all: already_running() probed "localhost", which resolves to
+IPv6 ::1 first while the server binds IPv4 only, so every launch burned a
+full timeout on a probe that could never succeed. Fixed in server.py. Now:
+
+    0.02s  python + server import done
+    0.07s  pywebview imported
+    0.47s  already-running probe done
+    0.48s  server bound, window created
+
+With that gone the window is up in about half a second and the GUI loop
+follows shortly after, so a splash isn't worth the machinery - a real one
+would have to be a native Win32 window drawn before WebView2 starts.
+
+If start-up ever feels slow again, read the stamps in app.log first rather
+than guessing which stage is at fault; guessing got it wrong twice here.
 """
 import os
 import sys
 import threading
 import time
 import webbrowser
+
+# Start-up timing. T0 is as early as this module can observe; the process
+# itself started somewhat before that (exe bootloader + interpreter init).
+# Logged at each stage so slow launches can be diagnosed from app.log in
+# the field instead of guessed at.
+T0 = time.time()
+
+
+def stamp(what):
+    print(f"  [{time.time() - T0:5.2f}s] {what}")
+
 
 import server
 
@@ -24,34 +59,6 @@ DISPLAY_URL = f"http://127.0.0.1:{server.PORT}/display"
 # stored there sends it into infinite recursion through window.native
 # ("maximum recursion depth exceeded"), which wedges the whole app.
 main_window = None
-
-# Shown the instant the window opens, while the server starts behind it.
-# Self-contained (no server, no files, no Tcl/Tk) - it has to render before
-# anything else exists. Colours match the app's own theme.
-LOADING_HTML = """
-<!DOCTYPE html><html><head><meta charset="utf-8"><style>
-  html,body{height:100%;margin:0;background:#080b0f;color:#eef4ff;
-    font-family:'Segoe UI',sans-serif;overflow:hidden}
-  .wrap{height:100%;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:18px}
-  .flag{font-size:64px;line-height:1}
-  h1{font-family:'Arial Narrow','Impact',sans-serif;font-size:34px;font-weight:800;
-    letter-spacing:.08em;text-transform:uppercase;color:#e8a020;margin:0}
-  p{color:#8aa8c4;font-size:14px;letter-spacing:.14em;text-transform:uppercase;margin:0}
-  .bar{width:220px;height:3px;border-radius:2px;background:#1e2a3c;overflow:hidden}
-  .bar i{display:block;width:40%;height:100%;background:#e8a020;
-    animation:slide 1.1s ease-in-out infinite}
-  @keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(250%)}}
-</style></head><body>
-  <div class="wrap">
-    <div class="flag">&#127937;</div>
-    <h1>Tamiya Race Manager</h1>
-    <div class="bar"><i></i></div>
-    <p>Loading&hellip;</p>
-  </div>
-</body></html>
-"""
-
 
 def window_geometry(want_w=1360, want_h=860):
     """Size and position for the main window: centred on the primary screen,
@@ -131,15 +138,19 @@ def run():
             import io
             sys.stdout = sys.stderr = io.StringIO()
 
+    stamp("log open (python + server import done)")
     try:
         import webview
+        stamp("pywebview imported")
     except Exception as e:
         # pywebview unavailable - fall back to console-style browser mode
         print(f"pywebview unavailable ({e}) - falling back to browser mode")
         server.main()
         return
 
-    if server.already_running():
+    running = server.already_running()
+    stamp("already-running probe done")
+    if running:
         # Another instance owns the server - just show a window onto it
         w2, h2, x2, y2 = window_geometry()
         webview.create_window("Tamiya Race Manager", server.APP_URL,
@@ -148,57 +159,48 @@ def run():
         webview.start()
         return
 
+    # Server first, then the window: starting it costs ~0.01s and the window
+    # can then load the app directly. No splash - see the start-up note at
+    # the top of this file.
+    server.prepare()
+    try:
+        httpd = server.create_server()
+    except OSError:
+        win_w, win_h, win_x, win_y = window_geometry(560, 240)
+        webview.create_window(
+            "Tamiya Race Manager",
+            html="<body style='background:#080b0f;color:#eef4ff;font-family:sans-serif'>"
+                 "<h2 style='padding:24px'>Port 8765 is in use by "
+                 "another program.<br><br>Close that program (or restart the computer) "
+                 "and try again.</h2></body>",
+            width=win_w, height=win_h, x=win_x, y=win_y)
+        webview.start()
+        return
+
+    server.server_ref = httpd
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    # Watchdog still runs as a fallback, but window-close is the primary exit
+    threading.Thread(target=server.watchdog, daemon=True).start()
+    print(f"Server on port {server.PORT}; data file: {server.DATA_FILE}")
+    stamp("server up, creating window")
+
     api = Api()
     try:
-        # The window opens IMMEDIATELY on the loading screen, before any of
-        # the slow work (data migration, server bind, first page load), so a
-        # double-click gives instant feedback. boot() below then swaps it to
-        # the real app. This replaces the v9.38 Tcl/Tk splash, which broke
-        # launches outright - see close_splash().
         win_w, win_h, win_x, win_y = window_geometry()
         main_win = webview.create_window(
-            "Tamiya Race Manager", html=LOADING_HTML, js_api=api,
+            "Tamiya Race Manager", server.APP_URL, js_api=api,
             width=win_w, height=win_h, x=win_x, y=win_y,
             min_size=(900, 600), background_color="#080b0f")
+        stamp("window created")
         global main_window
         main_window = main_win
         # Coordinator closes the main window -> the whole app closes
         main_win.events.closed += lambda: os._exit(0)
-
-        def boot(window):
-            """Runs once the window is on screen: do the slow start-up work,
-            then swap the loading screen for the real app. pywebview passes
-            the window in as the argument - it must be accepted."""
-            server.prepare()
-            try:
-                httpd = server.create_server()
-            except OSError:
-                main_win.load_html(
-                    "<body style='background:#080b0f;color:#eef4ff;font-family:sans-serif'>"
-                    "<h2 style='padding:24px'>Port 8765 is in use by another program."
-                    "<br><br>Close that program (or restart the computer) "
-                    "and try again.</h2></body>")
-                return
-            server.server_ref = httpd
-            threading.Thread(target=httpd.serve_forever, daemon=True).start()
-            # Watchdog still runs as a fallback, but window-close is the primary exit
-            threading.Thread(target=server.watchdog, daemon=True).start()
-            print(f"Server on port {server.PORT}; data file: {server.DATA_FILE}")
-            main_win.load_url(server.APP_URL)
-
-        webview.start(boot, main_win)
+        webview.start()
     except Exception as e:
         # WebView2 runtime missing or GUI failed - browser fallback keeps
         # race night running rather than dying on the spot.
         print(f"Native window failed ({e}) - falling back to the browser")
-        try:
-            server.prepare()
-            httpd = server.create_server()
-            server.server_ref = httpd
-            threading.Thread(target=httpd.serve_forever, daemon=True).start()
-            threading.Thread(target=server.watchdog, daemon=True).start()
-        except Exception as e2:
-            print(f"Server start failed in browser fallback: {e2}")
         try:
             webbrowser.open(server.APP_URL)
         except Exception:

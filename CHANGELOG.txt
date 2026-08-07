@@ -25,10 +25,11 @@ Tamiya Race Manager — Change Log
     has a Reopen button that makes it the active season
     again. (Close the current season first - only one can
     be active at a time.)
-  - The loading screen is BACK, done a different way: the
-    app window itself opens instantly showing the logo and
-    "Loading...", then switches to the app once it's ready.
-    None of the v9.38 Tcl/Tk problems.
+  - The app now opens roughly 2.5 seconds faster. Every
+    launch was wasting about 2 seconds checking whether the
+    app was already running, using an address that could
+    never answer. There is no splash screen - it starts
+    quickly enough now not to need one.
   - Installers and packages are now numbered version.build
     (e.g. 9.39.21). The build number comes from the source
     itself and goes up with every change, so you can always

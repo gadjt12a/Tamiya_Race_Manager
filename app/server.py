@@ -303,10 +303,20 @@ class RaceHandler(http.server.SimpleHTTPRequestHandler):
 
 
 def already_running():
-    """True if another Race Manager instance is already serving on our port."""
+    """True if another Race Manager instance is already serving on our port.
+
+    Runs on EVERY launch, so it has to fail fast when nothing is there.
+    Two things matter:
+      - 127.0.0.1, not "localhost". localhost resolves to IPv6 ::1 first and
+        we bind IPv4 only, so the probe burned a full timeout on ::1 before
+        retrying IPv4 - 2.05s of dead time on every single start-up.
+      - a short timeout. This machine doesn't refuse the connection quickly,
+        it just goes quiet, so the timeout IS the cost. A live local instance
+        answers /ping in milliseconds, so 0.35s is plenty.
+    """
     import urllib.request
     try:
-        with urllib.request.urlopen(f"http://localhost:{PORT}/ping", timeout=1) as r:
+        with urllib.request.urlopen(f"http://127.0.0.1:{PORT}/ping", timeout=0.35) as r:
             return r.status == 200
     except Exception:
         return False
