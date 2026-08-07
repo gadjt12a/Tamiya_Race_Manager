@@ -1,8 +1,7 @@
 # Tamiya Race Manager — Project Memory
 
-*Last updated: 2026-08-07 (architecture section refreshed for the v10
-packaging work; the race-logic sections below have not been re-verified
-against the code and date from May 2026.)*
+*Last updated: 2026-08-08. Architecture refreshed for the v10 packaging
+work; race logic and points re-verified against `app/race-manager.html`.*
 
 ---
 
@@ -78,17 +77,28 @@ Main Round → 2nd Chance Round → Main Round → 2nd Chance Round → ... → 
 ```
 
 ### The Final
-- Requires **exactly 3 racers**: 1 Main winner + 2 separate 2nd Chance winners
-- Final is triggered when `mainPool.length === 1` AND `secondPool.length === 2`
-- The last 2nd Chance round must be structured to produce **2 separate winners** (not 1) — requires careful batch sizing when 3 racers remain in 2nd Chance
+Normally **3 racers**: 1 Main winner + 2 separate 2nd Chance winners,
+triggered when `mainPool.length === 1 && secondPool.length === 2`.
+`startNextRound()` also handles four other end states — read it before
+assuming the 3-racer case is the only one:
+
+| State | What happens |
+|---|---|
+| main 1, second 0 | sole survivor — `finishWithChampion()`, no final race |
+| main 1, second 2 | the normal 3-racer final |
+| main 1, second 1 | **2-person final** — unusual but valid |
+| main 1, second 3 | `makeBatches(3)` would yield only 1 winner, so the **best performer gets a bye** to the final (by wins, then fewest losses) and the other 2 race for the second slot. The bye is logged in race history so it is visible on screen. |
 
 ### Batch Sizing (`makeBatches`)
-Modulo arithmetic to avoid solo races:
+Modulo arithmetic, chosen to avoid solo races:
 - `n % 3 === 0` → all groups of 3
 - `n % 3 === 2` → one group of 2, rest groups of 3
 - `n % 3 === 1` → two groups of 2, rest groups of 3
 
-**Never produces groups of 1.**
+Threes are emitted first, then the twos. Note the guard at the top:
+`n === 1` **does** return a single solo group — the bracket flow is what
+prevents a pool of 1 ever reaching it (see the end states above), not
+`makeBatches` itself. Don't "fix" that guard in isolation.
 
 ---
 
@@ -112,7 +122,10 @@ Each class has its own racer list, bracket, and points table.
 - EVO has a **parallel Junior table** — juniors compete in the same bracket but have their own standings
 - Junior flag is a **toggle** on each racer when entering names
 - Test races do **not** count toward season points
-- Three points schemes: Standard, Double, Podium Only
+- **Four** points schemes in `POINTS_SCHEMES`: `standard` (10…1),
+  `double` (20…2), `triple` (30…3) and `podium` (3/2/1). Triple was added
+  as a night multiplier alongside double — code that only handles
+  standard/double/podium is missing a case.
 
 ---
 

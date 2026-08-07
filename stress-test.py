@@ -2,8 +2,17 @@
 """
 Tamiya Race Manager -- Stress Test
 Simulates 30 race nights (Box + EVO + Pro each night) using the same
-bracket logic as race-manager.html, writes the result to data/racedata.json,
-and validates data integrity.
+bracket logic as app/race-manager.html and validates data integrity.
+
+This re-implements the bracket rules rather than importing them, so it
+can drift from the app. If a rule changes in app/race-manager.html,
+change it here too.
+
+The generated data is written to  data/racedata.json  BESIDE THIS SCRIPT
+purely as scratch output for inspection. That is NOT where the app keeps
+its data - the app uses %LOCALAPPDATA%\TamiyaRaceManager\ (Windows) and
+never reads this file, so running this cannot touch real club data. The
+data/ folder is gitignored.
 
 Covers:
   - Bracket engine correctness (all racer counts 3-21)

@@ -46,6 +46,8 @@ Tamiya Race Manager — Change Log
     the old data location or the removed python-bundle folder,
     and now covers Full Screen, reopening a season and the
     native second-screen display.
+  - Housekeeping: removed the unused splash image left behind
+    when the splash screen was dropped.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v9.38  (2026-07-17)  [v10-packaging branch]
