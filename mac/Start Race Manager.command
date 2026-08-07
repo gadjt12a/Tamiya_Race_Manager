@@ -9,6 +9,18 @@ echo "   TAMIYA RACE MANAGER"
 echo "  =========================================="
 echo ""
 
+# Locate the app files (packaged layout: app/ beside this launcher;
+# repo layout: ../app/)
+if [ -f "app/server.py" ]; then
+    SERVER="app/server.py"
+elif [ -f "../app/server.py" ]; then
+    SERVER="../app/server.py"
+else
+    echo "  ERROR: cannot find app/server.py next to this launcher."
+    read -p "  Press Enter to close..."
+    exit 1
+fi
+
 # ── Try Python 3 (standard on modern Macs) ───────────────────
 if command -v python3 &>/dev/null; then
     # Verify it's actually Python 3
@@ -17,7 +29,7 @@ if command -v python3 &>/dev/null; then
         echo "  Starting Race Manager..."
         echo "  [Closes automatically when you close the browser tab]"
         echo ""
-        python3 server.py
+        python3 "$SERVER"
         exit 0
     fi
 fi
@@ -27,7 +39,7 @@ if command -v python &>/dev/null; then
     VER=$(python --version 2>&1)
     if [[ $VER == Python\ 3* ]]; then
         echo "  Starting Race Manager..."
-        python server.py
+        python "$SERVER"
         exit 0
     fi
 fi

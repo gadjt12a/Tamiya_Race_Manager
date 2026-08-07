@@ -1,0 +1,22 @@
+# Club race data — never commit live data
+data/
+
+# Bundled/portable Python (zip distribution)
+python-bundle/
+
+# PyInstaller build artifacts
+build/
+dist/
+*.spec
+__pycache__/
+
+# Generated at build time from `git rev-list --count HEAD`. Never commit it -
+# committing it would change the commit count it is derived from.
+app/BUILD
+
+# Local working files (icon drafts etc.) - not for the repo
+Working_Files/
+
+# Claude Code per-machine permission grants - not shared.
+# .claude/skills/ IS committed: those are project tooling.
+.claude/settings.local.json

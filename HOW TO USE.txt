@@ -1,4 +1,4 @@
-Tamiya Race Manager v9.14
+Tamiya Race Manager v9.39
 HOW TO USE
 ==========================================
 
@@ -226,13 +226,24 @@ VIEW STANDINGS
 
 CLOSE A SEASON
   Click "Close Season" on the home screen.
+  A warning names the season and how many events it has, and
+  spells out what closing does - read it before confirming.
   Enter the end date.
   The season becomes read-only and moves to the archive.
   You can still view standings from archived seasons.
+  Nothing is deleted, and a season closed by mistake can be
+  reopened - see below.
 
 VIEW PREVIOUS SEASONS
   Click "📁 View All Seasons" on the home screen.
   Select a season to view its standings.
+
+REOPEN A CLOSED SEASON
+  Closed one by mistake? On "📁 View All Seasons", click
+  "↩ Reopen" next to it. It becomes the active season again
+  and results can be added to it once more.
+  Only one season can be active at a time, so close the
+  current one first - the app will tell you if you forget.
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -265,21 +276,42 @@ using the same three buttons in the top right.
 The app supports a second monitor for audience display.
 
   1. Click "📺 Display" in the race coordinator top bar
-  2. Allow pop-ups when your browser asks
-  3. Drag the new window to your second monitor
-  4. The display shows the current race and next race up
-  5. Updates automatically as races are confirmed
+  2. With a second monitor connected, the display opens
+     full-screen on it automatically
+  3. The display shows the current race and next race up
+  4. Updates automatically as races are confirmed
+  5. After a class finishes, the winners stay on screen for
+     call-ups and prize-giving until the next race starts
 
-Note: pop-ups must be allowed for the app in your browser.
-In Chrome: click the pop-up blocked icon in the address bar
-and select "Always allow pop-ups from this site".
+If you are running the app in a BROWSER rather than the
+installed desktop app, the display opens as a pop-up instead:
+allow pop-ups when asked, then drag the window to your second
+monitor. In Chrome: click the pop-up blocked icon in the
+address bar and select "Always allow pop-ups from this site".
+
+FULL SCREEN
+  Click "⛶ Full Screen" in the top bar (or press F11) to fill
+  the screen with the app — useful on the coordinator laptop
+  or when showing the race screen on a big monitor.
+  Press F11 again to go back.
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  BACKING UP YOUR DATA
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-All data is stored in:  race-manager/data/racedata.json
+All data is stored OUTSIDE the app, so installing, updating
+or uninstalling can never touch it:
+
+  Windows:  %LOCALAPPDATA%\TamiyaRaceManager\racedata.json
+  Mac:      ~/Library/Application Support/TamiyaRaceManager/
+                                              racedata.json
+
+Automatic daily backups (last 14 days) are kept in the
+"backups" folder beside it.
+
+  (Paste the Windows path into the File Explorer address bar
+   to open it — it expands automatically.)
 
 To back up:
   Click "⬆ Export Data" on the home screen.
@@ -289,11 +321,11 @@ To back up:
 To restore:
   Click "⬇ Import Data" on the home screen.
   Select your backup file.
-  This overwrites current data — use with care.
+  You get a summary to confirm before anything is replaced.
 
 To move to a new computer:
-  Copy the entire race-manager folder.
-  Or export data and import it on the new machine.
+  Export data on the old machine, install the app on the
+  new one, and import the file there.
 
 The JSON file is plain text and can be opened in any
 text editor (Notepad on Windows, TextEdit on Mac) if
@@ -305,25 +337,38 @@ manual corrections are ever needed.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 App won't start (Windows):
-  Make sure the python-bundle folder is inside the
-  race-manager folder and contains python.exe.
-  Contact your administrator if it is missing.
+  If you used the PORTABLE zip: make sure you extracted the
+  whole folder, and that TamiyaRaceManager.exe still has the
+  "_internal" folder next to it. The app cannot start if the
+  exe has been moved out on its own. Put a shortcut on the
+  desktop instead of moving the exe.
+  If you used the INSTALLER: launch it from the desktop icon
+  or Start Menu.
+
+Windows warns "Windows protected your PC" on first run:
+  Expected — the app is not code-signed. Click "More info"
+  then "Run anyway". This only happens the first time.
 
 App won't start (Mac):
   Make sure you right-clicked and selected Open the first time.
   If Python is missing, install it from python.org/downloads.
+  NOTE: the Mac version has never been tested on a Mac.
 
-Browser doesn't open automatically:
-  Manually open your browser and go to:
-  http://localhost:8765/race-manager.html
+Nothing appears to happen for a moment after double-clicking:
+  Normal — it takes about a second to appear. There is no
+  splash screen.
 
-App seems slow or unresponsive:
+Window opens in an awkward place or size:
+  It should open centred and sized to fit your screen. If it
+  does not, just move/resize it; the app does not force it.
+
+App seems slow or unresponsive (browser mode):
   Try a different browser (Chrome or Edge recommended).
-  Avoid using Internet Explorer.
 
 Data appears missing after moving computers:
-  Check that the data/racedata.json file came across.
-  Use the Import Data button to restore from a backup.
+  Data no longer lives beside the app — see BACKING UP YOUR
+  DATA above for where it is. Use Export Data on the old
+  machine and Import Data on the new one.
 
 Accidentally confirmed a wrong result:
   Click "✏️ Edit Last" in the top bar immediately.
@@ -348,6 +393,7 @@ Pop-up blocked (second screen):
   ✏️ Edit Last    Edit the most recently confirmed race result
   🔄 Swap Race    Delay current race, run a different queued race first
   📺 Display      Open the audience display on a second screen
+  ⛶ Full Screen   Fill the screen with the app (or press F11)
   ✏️ Names        Edit racer names mid-event (doesn't affect logic)
   ✕ End Race      Abort the current class (no results saved)
 

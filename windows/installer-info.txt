@@ -1,0 +1,35 @@
+TAMIYA RACE MANAGER - PLEASE READ BEFORE INSTALLING
+====================================================
+
+YOUR RACE DATA IS SAFE
+----------------------
+Your race database (seasons, racers, points) is stored SEPARATELY
+from the app, in:
+
+    %LOCALAPPDATA%\TamiyaRaceManager\
+
+This installer only replaces the app itself. It does not read,
+modify or delete your race data - not on install, not on update,
+not on uninstall.
+
+UPDATING FROM AN OLDER (ZIP-STYLE) VERSION?
+-------------------------------------------
+Your old race data is NOT deleted - it stays in the old
+race-manager folder. To bring it into the new app (one time only):
+
+  1. Launch the new version (desktop icon).
+  2. Click "Import Data" (top right of the home screen).
+  3. Choose the file  data\racedata.json  inside your OLD
+     race-manager folder - or your latest "Export Data" file.
+  4. Seasons, racers and points all come across.
+
+If your old version ran WITHOUT Python (it warned about "browser
+storage mode"), there is no data file on disk - open the OLD version
+first, click "Export Data", then import that file as above.
+
+GOOD PRACTICE
+-------------
+Even though updates are safe, we recommend clicking "Export Data"
+and saving to a USB stick before updating - and after every race
+night. Automatic daily backups are also kept in
+%LOCALAPPDATA%\TamiyaRaceManager\backups\ (last 14 days).

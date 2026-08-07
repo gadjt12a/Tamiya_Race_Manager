@@ -2,6 +2,267 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.39  (2026-08-07)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  - FIXED: on some PCs the app refused to start and
+    threw a stack of error boxes ("Failed to load Tcl
+    DLL", "File already exists but should not"). The
+    v9.38 splash screen was the cause - it is gone.
+  - The app no longer unpacks itself into a temporary
+    folder every time it starts. It now installs as a
+    normal program folder, so it launches quicker and
+    can't be tripped up by leftover temp files or
+    anti-virus. Race data is unaffected as always.
+  - Portable zip users: unzip the whole folder and run
+    TamiyaRaceManager.exe from inside it. The exe needs
+    the _internal folder beside it.
+  - The app window now opens centred on the screen, sized
+    to fit it, instead of drifting down and to the right.
+  - Closing a season now warns you properly first: it names
+    the season, says how many events it has, and spells out
+    what closing does.
+  - NEW: closed a season by mistake? "View All Seasons" now
+    has a Reopen button that makes it the active season
+    again. (Close the current season first - only one can
+    be active at a time.)
+  - The app now opens roughly 2.5 seconds faster. Every
+    launch was wasting about 2 seconds checking whether the
+    app was already running, using an address that could
+    never answer. There is no splash screen - it starts
+    quickly enough now not to need one.
+  - Installers and packages are now numbered version.build
+    (e.g. 9.39.21). The build number comes from the source
+    itself and goes up with every change, so you can always
+    tell two downloads apart. It also shows in the app
+    header and in the file's Properties.
+  - NEW: Full Screen button on the Home and Race screens
+    (or press F11 anywhere) - handy for putting the race
+    screen up on the big monitor.
+  - Home screen tidies up better when you make the window
+    narrower: the season buttons wrap instead of being
+    squashed off the edge, and the two columns stack
+    rather than both being crushed.
+  - Docs brought up to date: "HOW TO USE" no longer points at
+    the old data location or the removed python-bundle folder,
+    and now covers Full Screen, reopening a season and the
+    native second-screen display.
+  - Housekeeping: removed the unused splash image left behind
+    when the splash screen was dropped.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.38  (2026-07-17)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  - Splash screen: double-clicking the desktop icon now
+    shows the app logo with "Tamiya Race Manager /
+    Loading..." INSTANTLY, and it stays up until the app
+    window is on screen - no more wondering whether the
+    double-click worked.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.37  (2026-07-17)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  - New app icon (licence-clean club artwork) - shows on
+    the exe, desktop icon, installer and app window.
+  - TESTING_MANUAL.md added: step-by-step manual test guide
+    (full race night, display/second screen, exports inside
+    the app window, sleep, crash recovery, garbage import,
+    fresh-machine SmartScreen run with screenshot list).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.36  (2026-07-17)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+REPOSITORY RESTRUCTURE - CLEAR PLATFORM PACKAGES
+  - Repo reorganised so downloaders know exactly what they
+    are getting:
+      app/      - the application (shared core)
+      windows/  - Windows packaging + Windows README
+      mac/      - Mac (OSX) packaging + Mac README
+  - THREE clean packages, built into dist\:
+      TamiyaRaceManager-Setup-<ver>.exe          (Windows installer)
+      TamiyaRaceManager-WindowsPortable-<ver>.zip (Windows portable)
+      TamiyaRaceManager-Mac-<ver>.zip             (Mac, UNTESTED)
+  - The Mac README states clearly that the Mac version is
+    untested (developers run Windows) and how to report issues.
+  - Windows portable zip is now just the exe - the old
+    python-bundle machinery (SETUP WINDOWS bat, BUILD PYTHON
+    BUNDLE bat, START RACE MANAGER bat) is obsolete and removed.
+  - Mac launcher finds the app in both the packaged and repo
+    layouts; new "BUILD MAC PACKAGE" bat stages and zips the
+    Mac package on Windows.
+  - Root README.md rewritten as a clear platform picker.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.35  (2026-07-17)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+UPGRADE GUIDANCE + SCRIPTED SAFETY TESTS
+  - First-run hint on the home screen: when the database is
+    completely empty, a notice explains how to bring data
+    across from an old zip-style install (Import Data with
+    the old folder's data\racedata.json).
+  - Installer info page rewritten to describe the import
+    step accurately (the installed app cannot see data in
+    the old zip folder automatically).
+  - Scripted data-safety test results (all PASS) recorded
+    in DEPLOYMENT_PLAN.md: fresh install; zip-in-place
+    upgrade (byte-identical copy, original untouched);
+    installer-style upgrade + import path; reinstall over
+    install (data hash unchanged); future-version data
+    file survives a full app session byte-identical.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.34  (2026-07-17)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SEASON ROSTER
+  - Each racer row in the Season Roster modal now has a
+    JNR/ADL switch, so a junior returning next season as
+    an adult (or vice versa) can be updated while
+    reviewing the roster. Applies both to the automatic
+    new-season roster setup and the mid-season
+    "Season Racers" screen.
+  - Reminder of the existing flow (since v9.26): creating
+    a new season automatically opens the roster picker
+    with last season's racers pre-ticked - regulars carry
+    over in one click, no re-typing. (It is skipped only
+    when the racer database is empty.)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.33  (2026-07-17)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NATIVE DESKTOP APP
+  - The installed app now runs in its OWN WINDOW - no
+    console window, no browser tab. The server runs
+    invisibly inside the app; closing the window closes
+    everything.
+  - The 2nd-screen display opens as a real window too, and
+    goes FULL-SCREEN on the second monitor automatically
+    when one is connected.
+  - The display is now fed through the server (/display),
+    in both the desktop app and browser mode - even more
+    robust than v9.31.
+  - Ending a race early now resets the display to its
+    waiting screen.
+  - If the native window cannot start (e.g. WebView2
+    missing), the app falls back to the browser
+    automatically so race night is never blocked.
+  - Diagnostics log: %LOCALAPPDATA%\TamiyaRaceManager\
+    app.log
+  - The zip distribution (bat/command launchers) still
+    works exactly as before: console + browser.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.32  (2026-07-17)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WINDOWS INSTALLER (Phase 4 of v10 plan)
+  - New installer: TamiyaRaceManager-Setup-<version>.exe
+    (built with Inno Setup via "BUILD INSTALLER
+    (developer use only).bat").
+  - Installs per-user (no admin rights needed), creates a
+    desktop icon and Start Menu entry, includes a proper
+    uninstaller.
+  - Before installing, a plain-English page explains that
+    race data lives separately and is never touched by
+    install, update or uninstall - including the special
+    steps for old browser-storage-mode setups.
+  - If Race Manager is running when the installer starts,
+    it is asked to shut down gracefully first.
+  - Uninstalling shows a reminder that race data is kept.
+  - App icon added (working artwork - final licensing to
+    be confirmed before public release).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.31  (2026-07-17)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DISPLAY WINDOW (2nd screen) — prize-giving support
+  - FIXED: the display window could stop updating after a
+    race ended and had to be closed and reopened. It now
+    pulls fresh content from the app every second instead
+    of waiting to be pushed to, so it self-heals and never
+    goes stale.
+  - Winners now STAY on the display after a class finishes
+    (for call-ups and prize presentation) until the next
+    race is started.
+  - The winners screen is titled with the class name
+    (BOX / EVO / PRO or the special event name).
+  - EVO (or any event with juniors): class winners are
+    shown on the LEFT and Junior winners on the RIGHT.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.30  (2026-07-17)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SINGLE EXECUTABLE (Phase 3 of v10 plan)
+  - The whole app now builds into one file:
+    TamiyaRaceManager.exe (~8 MB) - server, app and version
+    bundled. No Python download, no python-bundle folder.
+    Build with "BUILD EXE (developer use only).bat"
+    (requires: python -m pip install pyinstaller).
+  - FIXED: on a first run the server could shut itself down
+    17-21 seconds after starting if the browser was slow to
+    load (antivirus scan, SmartScreen, cold browser start),
+    leaving the app showing "server connection lost". The
+    shutdown countdown now only starts after the browser has
+    connected once (with a 5-minute give-up if none ever
+    does).
+  - Server now binds to 127.0.0.1 only - private to the
+    machine, and avoids the Windows Firewall "Allow access"
+    prompt on first run of a new exe.
+  - Launching a second copy now just opens the browser to
+    the already-running app instead of failing.
+  - Port conflict (another program on 8765) now shows a
+    friendly message instead of a Python error.
+  - Browser opens only after the server is confirmed
+    listening.
+  - One version source: the VERSION file. Shown in the app
+    header (via /info), server console and build script.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.29  (2026-07-17)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DATA RELOCATION & MIGRATIONS (Phase 2 of v10 plan)
+  - Race data now lives OUTSIDE the app folder, in
+    %LOCALAPPDATA%\TamiyaRaceManager\ (Windows) or
+    ~/Library/Application Support/TamiyaRaceManager (Mac),
+    so installing or updating the app can never touch it.
+    Override with the TAMIYA_DATA_DIR environment variable
+    for portable/USB use.
+  - First launch COPIES (never moves) existing data and
+    backups from the old data\ folder to the new home. The
+    old copy is left in place as a backup, with a
+    DATA-HAS-MOVED.txt note, and the app shows a one-time
+    notice saying where the data now lives.
+  - Data files carry a schema version. Opening or importing
+    a file made by a NEWER app version is politely refused
+    and nothing is written - update the app instead. Old
+    files are upgraded automatically, with a tagged
+    pre-upgrade backup taken first.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.28  (2026-07-16)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DATA SAFETY (Phase 1 of v10 deployment plan)
+  - Automatic daily backups: on the first save of each day
+    the server snapshots the data file to data/backups/
+    (keeps the last 14 days). Preserves the previous race
+    night's final state before anything new is written.
+  - Save verification: the app now checks the server
+    actually accepted each save. On failure, data is held
+    in browser storage and a persistent red banner tells
+    the coordinator to Export Data and restart.
+  - Lost-server detection: if the server stops responding
+    mid-session, a persistent red banner appears instead of
+    data silently going nowhere.
+  - Sleep-tolerant server: closing the laptop lid no longer
+    kills the server when the machine wakes up.
+  - Import Data now validates the file, shows a summary
+    ("3 seasons, 42 racers") confirmation before replacing
+    anything, and keeps a safety copy of the current data.
+  - Editing a race result is now crash-safe (the correction
+    is saved to the resume snapshot immediately).
+  - Season standings are tracked by racer identity rather
+    than name, so fixing a name typo mid-season no longer
+    splits a racer's points into two rows. Older events
+    are matched by name automatically.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v9.27  (2026-07-16)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CHANGED

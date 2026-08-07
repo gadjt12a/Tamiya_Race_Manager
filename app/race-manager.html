@@ -164,12 +164,21 @@ select option{background:var(--surface2)}
 ═══════════════════════════════════════════════════════ */
 #homeScreen .content{
   flex:1;overflow-y:auto;padding:20px;
-  display:grid;grid-template-columns:320px 1fr;gap:16px;align-content:start;
+  /* minmax(0,...) stops long names/tables from blowing the columns out and
+     shoving the cards out of line with each other */
+  display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:16px;align-content:start;
+}
+/* Narrow window: stack into one column rather than squash both */
+@media (max-width:900px){
+  #homeScreen .content{grid-template-columns:minmax(0,1fr)}
 }
 .season-hero{
   background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);
   border:1px solid var(--border);border-radius:12px;padding:24px;
   grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;
+  /* wrap instead of squashing the action buttons into each other - the
+     overflow:hidden below would otherwise clip them off the edge */
+  flex-wrap:wrap;gap:16px;
   position:relative;overflow:hidden;
 }
 .season-hero::before{
@@ -181,7 +190,7 @@ select option{background:var(--surface2)}
   color:var(--accent);letter-spacing:.04em;margin-bottom:4px;
 }
 .season-hero-info p{color:var(--muted2);font-size:13px}
-.season-hero-actions{display:flex;gap:8px}
+.season-hero-actions{display:flex;gap:8px;flex-wrap:wrap}
 
 /* ════════════════════════════════════════════════════════
    SETUP / RACE NIGHT SCREEN
@@ -409,6 +418,7 @@ table.pts-table tr:hover td{background:var(--surface2)}
 #toast.show{transform:translateY(0);opacity:1}
 #toast.success{border-color:rgba(61,214,140,.4);color:var(--green)}
 #toast.error{border-color:rgba(224,85,85,.4);color:var(--red)}
+#toast.warn{border-color:rgba(232,160,32,.4);color:var(--accent)}
 
 /* race mode indicator */
 .mode-badge{
@@ -455,9 +465,10 @@ table.pts-table tr:hover td{background:var(--surface2)}
 ═══════════════════════════════════════════════════════ -->
 <div id="homeScreen" class="screen active">
   <div class="topbar">
-    <div class="topbar-logo">🏁 <span>Tamiya</span> Race Manager</div>
+    <div class="topbar-logo">🏁 <span>Tamiya</span> Race Manager <span id="appVersionLabel" style="font-size:11px;color:var(--muted);font-weight:400;margin-left:6px"></span></div>
     <div class="topbar-sep"></div>
     <div class="topbar-right">
+      <button class="icon-btn" onclick="toggleFullScreen()" title="Full screen (F11)">⛶ Full Screen</button>
       <button class="icon-btn" onclick="exportData()">⬆ Export Data</button>
       <label class="icon-btn" style="cursor:pointer">⬇ Import Data<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
     </div>
@@ -505,6 +516,7 @@ table.pts-table tr:hover td{background:var(--surface2)}
     <div class="topbar-right">
       <button class="icon-btn" id="swapHint" onclick="toggleSwapMode()" style="display:none">🔄 Swap Race</button>
       <button class="icon-btn" onclick="editLastResult()" id="editLastBtn" style="display:none">✏️ Edit Last</button>
+      <button class="icon-btn" onclick="toggleFullScreen()" title="Full screen (F11)">⛶ Full Screen</button>
       <button class="icon-btn" onclick="openDisplay()">📺 Display</button>
       <button class="icon-btn" onclick="openEditNames()">✏️ Names</button>
       <button class="icon-btn" id="showResultsBtn" onclick="showPodiumModal()" style="display:none">🏆 Show Results</button>
@@ -603,14 +615,17 @@ table.pts-table tr:hover td{background:var(--surface2)}
   <!-- Close Season Modal -->
   <div class="modal" id="closeSeasonModal" style="display:none">
     <h2>Close Current Season</h2>
-    <p class="modal-sub">This will archive the season as read-only. You can view it but not add results.</p>
+    <div id="closeSeasonWarn" style="margin-bottom:14px;padding:12px 14px;border-radius:8px;
+      background:rgba(224,85,85,.1);border:1px solid rgba(224,85,85,.3);font-size:13px;line-height:1.5">
+      <!-- filled by openCloseSeasonModal() -->
+    </div>
     <div class="form-group">
       <label>End Date</label>
       <input type="text" id="closeSeasonEnd" placeholder="e.g. 31/12/2025">
     </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-danger" onclick="closeSeason()">Close Season</button>
+      <button class="btn btn-danger" onclick="closeSeason()">Yes, Close Season</button>
     </div>
   </div>
 
@@ -754,28 +769,85 @@ table.pts-table tr:hover td{background:var(--surface2)}
 const DATA_PATH = 'data/racedata.json';
 let DB = { version:1, seasons:[], racers:[], currentSeason:null };
 let serverMode = false;
+let dbReadOnly = false; // set when the data file is newer than this app — never write to it
+
+// ── Schema versioning ──────────────────────────────────────────
+// Bump SCHEMA_VERSION for any breaking data format change and add a
+// migration keyed by the FROM version. Migrations are cumulative and
+// must never be removed, so any old file can be walked forward.
+const SCHEMA_VERSION = 1;
+const MIGRATIONS = {
+  // 2: db => { ...transform v1 → v2... }   (example — none exist yet)
+};
+
+async function runMigrations(){
+  // Snapshot the untouched original on the server before changing anything
+  try{
+    await fetch('/backup', {method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({tag:'pre-upgrade-v'+SCHEMA_VERSION})});
+  }catch(e){}
+  let v = DB.version||1;
+  while(v < SCHEMA_VERSION){
+    const migrate = MIGRATIONS[v];
+    if(!migrate){
+      dbReadOnly = true;
+      setSaveWarning(true, '⚠ This data file could not be upgraded (missing migration from v'+v+'). Your data has NOT been changed — contact support.');
+      return;
+    }
+    DB = migrate(DB);
+    DB.version = ++v;
+  }
+  await saveDB();
+}
 
 async function loadDB(){
   try {
     const r = await fetch(DATA_PATH+'?t='+Date.now());
-    if(r.ok){ DB = await r.json(); serverMode = true; return; }
+    if(r.ok){ DB = await r.json(); serverMode = true; }
   } catch(e){}
-  // fallback: localStorage
-  const raw = localStorage.getItem('tamiya_race_db');
-  if(raw) try{ DB = JSON.parse(raw); }catch(e){}
-  serverMode = false;
+  if(!serverMode){
+    // fallback: localStorage
+    const raw = localStorage.getItem('tamiya_race_db');
+    if(raw) try{ DB = JSON.parse(raw); }catch(e){}
+  }
+  const v = DB.version||1;
+  if(v > SCHEMA_VERSION){
+    // File is from a NEWER app — refuse to touch it, by policy.
+    dbReadOnly = true;
+    setSaveWarning(true, '⚠ This data file was created by a NEWER version of Race Manager. Please update the app — your data has not been changed and nothing will be saved until then.');
+  } else if(v < SCHEMA_VERSION){
+    await runMigrations();
+  }
+}
+
+// Persistent red banner for data-safety problems — stays up until saving works again
+function setSaveWarning(on, msg){
+  let b = document.getElementById('saveWarnBanner');
+  if(!b){
+    b = document.createElement('div');
+    b.id = 'saveWarnBanner';
+    b.style.cssText = 'display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#a02020;color:#fff;font-weight:700;text-align:center;padding:10px 16px;font-size:14px;box-shadow:0 2px 12px rgba(0,0,0,.5)';
+    document.body.appendChild(b);
+  }
+  b.textContent = msg || '';
+  b.style.display = on ? 'block' : 'none';
 }
 
 async function saveDB(){
+  if(dbReadOnly) return; // newer-version data file — never write to it
   if(serverMode){
     try{
-      await fetch('/save', {
+      const r = await fetch('/save', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify(DB, null, 2)
       });
-      return;
+      if(r.ok){ setSaveWarning(false); return; }
     }catch(e){}
+    // Server save failed — hold data in browser storage and warn loudly.
+    localStorage.setItem('tamiya_race_db', JSON.stringify(DB));
+    setSaveWarning(true, '⚠ SAVE PROBLEM — results are NOT reaching the data file. A copy is held in browser storage. Do NOT close this tab: use Export Data on the home screen now, then restart the app.');
+    return;
   }
   localStorage.setItem('tamiya_race_db', JSON.stringify(DB));
 }
@@ -812,13 +884,27 @@ function exportData(){
 function importData(event){
   const file = event.target.files[0]; if(!file) return;
   const reader = new FileReader();
-  reader.onload = async e => {
-    try{
-      DB = JSON.parse(e.target.result);
-      await saveDB();
-      toast('Data imported successfully!','success');
-      renderHome();
-    }catch(err){ toast('Invalid file format','error'); }
+  reader.onload = e => {
+    let incoming;
+    try{ incoming = JSON.parse(e.target.result); }
+    catch(err){ toast('Not a valid JSON file — nothing was changed','error'); return; }
+    if(!incoming || typeof incoming!=='object' || !Array.isArray(incoming.seasons) || !Array.isArray(incoming.racers)){
+      toast('Not a Race Manager data file — nothing was changed','error'); return;
+    }
+    if((incoming.version||1) > SCHEMA_VERSION){
+      toast('That file is from a NEWER version of Race Manager — update the app first. Nothing was changed.','error'); return;
+    }
+    const summary = `${incoming.seasons.length} season${incoming.seasons.length!==1?'s':''}, ${incoming.racers.length} racer${incoming.racers.length!==1?'s':''}`;
+    openConfirm('Replace All Data?',
+      `The file contains ${summary}. This will REPLACE the current database. A safety copy of the current data is kept in browser storage until the next import.`,
+      async ()=>{
+        try{ localStorage.setItem('tamiya_race_db_preimport', JSON.stringify(DB)); }catch(err){}
+        DB = incoming;
+        if((DB.version||1) < SCHEMA_VERSION) await runMigrations();
+        else await saveDB();
+        toast('Data imported successfully!','success');
+        renderHome();
+      });
   };
   reader.readAsText(file);
   event.target.value='';
@@ -831,10 +917,10 @@ function uid(){ return Math.random().toString(36).slice(2,9); }
 function shuffle(a){ let b=[...a]; for(let i=b.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]; } return b; }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-function toast(msg, type=''){
+function toast(msg, type='', duration=2800){
   const el = document.getElementById('toast');
   el.textContent = msg; el.className = 'show '+(type||'');
-  clearTimeout(el._t); el._t = setTimeout(()=>el.className='',2800);
+  clearTimeout(el._t); el._t = setTimeout(()=>el.className='',duration);
 }
 
 function showScreen(id){
@@ -843,6 +929,26 @@ function showScreen(id){
 }
 
 function goHome(){ showScreen('homeScreen'); renderHome(); }
+
+// ── FULL SCREEN ─────────────────────────────────────────
+// Native app window (pywebview) where available, browser Fullscreen API
+// otherwise, so it works in the installed app AND in browser mode.
+function toggleFullScreen(){
+  try{
+    if(window.pywebview && window.pywebview.api && window.pywebview.api.toggle_fullscreen){
+      window.pywebview.api.toggle_fullscreen();
+      return;
+    }
+  }catch(e){}
+  try{
+    if(!document.fullscreenElement){ document.documentElement.requestFullscreen(); }
+    else { document.exitFullscreen(); }
+  }catch(e){ toast('Full screen not available','warn'); }
+}
+// F11 anywhere in the app
+document.addEventListener('keydown', e=>{
+  if(e.key === 'F11'){ e.preventDefault(); toggleFullScreen(); }
+});
 
 // Points scheme: position (1-indexed) → points
 const POINTS_SCHEME = [10,9,8,7,6,5,4,3,2,1]; // top 10, rest 0
@@ -911,6 +1017,23 @@ async function createSeason(){
   }
 }
 
+// Spell out exactly what closing does before it happens - it's the most
+// destructive-feeling button on the home screen, and it's one click away.
+function openCloseSeasonModal(){
+  const s = getCurrentSeason(); if(!s) return;
+  const events = (s.events||[]).filter(e=>e.type!=='test').length;
+  document.getElementById('closeSeasonWarn').innerHTML =
+    `<b>⚠ You are about to close "${esc(s.name)}".</b><br><br>`+
+    `It has <b>${events} recorded event${events===1?'':'s'}</b>. Closing will:`+
+    `<ul style="margin:8px 0 8px 18px;padding:0">`+
+    `<li>archive the season as read-only — no more results can be added</li>`+
+    `<li>leave you with no active season until you start a new one</li>`+
+    `</ul>`+
+    `Nothing is deleted, and you can put it back from `+
+    `<b>View All Seasons → Reopen</b> if you close it by mistake.`;
+  showModal('closeSeasonModal');
+}
+
 async function closeSeason(){
   const s = getCurrentSeason(); if(!s) return;
   s.endDate = document.getElementById('closeSeasonEnd').value.trim();
@@ -918,8 +1041,31 @@ async function closeSeason(){
   DB.currentSeason = null;
   await saveDB();
   closeModal();
-  toast('Season closed','success');
+  toast('Season closed — reopen it from View All Seasons if that was a mistake','success',5000);
   renderHome();
+}
+
+// Undo an accidental close. Only one season can be active at a time, so a
+// reopen is refused while another season is running rather than silently
+// swapping which one is live.
+async function reopenSeason(id){
+  const s = (DB.seasons||[]).find(x=>x.id===id); if(!s) return;
+  const current = getCurrentSeason();
+  if(current){
+    toast(`Close "${current.name}" first — only one season can be active at a time`,'warn',5000);
+    return;
+  }
+  openConfirm('Reopen Season',
+    `Reopen "${s.name}" and make it the active season again? `+
+    `Results can be added to it once more.`,
+    async ()=>{
+      s.closed = false;
+      s.endDate = '';
+      DB.currentSeason = s.id;
+      await saveDB();
+      toast(`"${s.name}" reopened`,'success');
+      goHome();
+    });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -966,13 +1112,16 @@ function renderHome(){
         <div class="season-hero-actions">
           <button class="btn btn-secondary" onclick="showScreen('pointsScreen');renderPoints('${season.id}')">📊 Season Standings</button>
           <button class="btn btn-secondary" onclick="openSeasonRosterModal()">👥 Season Racers</button>
-          <button class="btn btn-secondary btn-danger" onclick="showModal('closeSeasonModal')">Close Season</button>
+          <button class="btn btn-secondary btn-danger" onclick="openCloseSeasonModal()">Close Season</button>
         </div>
       </div>`
     : `<div class="season-hero">
         <div class="season-hero-info">
           <h2>No Active Season</h2>
           <p>Start a new season to begin recording race results and points</p>
+          ${(DB.seasons.length===0 && DB.racers.length===0)
+            ? `<p style="margin-top:8px;padding:8px 12px;background:rgba(64,144,224,.1);border:1px solid rgba(64,144,224,.25);border-radius:6px;font-size:12px;color:var(--text)">📦 <b>Upgrading from an older version?</b> Click <b>⬇ Import Data</b> (top right) and choose the <b>data\\racedata.json</b> file inside your old race-manager folder — seasons, racers and points all come across.</p>`
+            : ''}
         </div>
         <div class="season-hero-actions">
           <button class="btn btn-primary" onclick="openNewSeasonModal()">+ Start New Season</button>
@@ -1449,6 +1598,7 @@ function getPrevSeasonRacerIds(){
 }
 
 let _rosterActive = {};
+let _rosterJunior = {};
 let _seasonRosterPrevIds = null;
 
 function openSeasonRosterModal(source='edit'){
@@ -1460,18 +1610,20 @@ function openSeasonRosterModal(source='edit'){
   _seasonRosterPrevIds = (source==='newseason' && prev) ? getPrevSeasonRacerIds() : null;
 
   _rosterActive = {};
+  _rosterJunior = {};
   for(const r of DB.racers){
     _rosterActive[r.id] = _seasonRosterPrevIds
       ? _seasonRosterPrevIds.has(r.id)      // new season: tick prev-season racers only
       : r.active !== false;                 // edit: reflect current active state
+    _rosterJunior[r.id] = !!r.isJunior;
   }
 
   document.getElementById('seasonRosterTitle').textContent =
     source==='newseason' ? 'Season Roster Setup' : 'Edit Season Racers';
   document.getElementById('seasonRosterSub').textContent =
     (source==='newseason' && prev)
-      ? `Racers from "${prev.name}" are ticked. Untick anyone not returning this season.`
-      : 'Ticked racers appear in the race setup screen. Untick anyone sitting out this season.';
+      ? `Racers from "${prev.name}" are ticked. Untick anyone not returning this season. Use the JNR/ADL switch if a junior is returning as an adult.`
+      : 'Ticked racers appear in the race setup screen. Untick anyone sitting out this season. The JNR/ADL switch updates junior status.';
 
   renderSeasonRosterList();
   showModal('seasonRosterModal');
@@ -1504,10 +1656,14 @@ function renderSeasonRosterList(){
 
 function _seasonRosterRow(r){
   const on = !!_rosterActive[r.id];
+  const jnr = !!_rosterJunior[r.id];
   return `<div class="roster-item" style="opacity:${on?'1':'.45'}" onclick="toggleSeasonRacer('${r.id}')">
     <div class="roster-check" style="background:${on?'var(--green)':'var(--surface3)'};border-color:${on?'var(--green)':'var(--border2)'};color:#000">${on?'✓':''}</div>
     <span class="roster-name">${esc(r.name)}</span>
-    ${r.isJunior?`<span class="chip chip-junior" style="font-size:10px">JNR</span>`:''}
+    <div class="toggle${jnr?' junior-on':''}" onclick="event.stopPropagation();toggleSeasonJunior('${r.id}')" title="Toggle Junior/Adult — juniors can return as adults next season" style="flex-shrink:0">
+      <div class="toggle-track"><div class="toggle-thumb"></div></div>
+      <span style="color:${jnr?'var(--purple)':'var(--text)'};font-size:10px">${jnr?'JNR':'ADL'}</span>
+    </div>
     <span style="font-size:11px;color:${on?'var(--green)':'var(--muted)'};font-weight:600">${on?'Active':'Inactive'}</span>
   </div>`;
 }
@@ -1517,13 +1673,21 @@ function toggleSeasonRacer(id){
   renderSeasonRosterList();
 }
 
+function toggleSeasonJunior(id){
+  _rosterJunior[id] = !_rosterJunior[id];
+  renderSeasonRosterList();
+}
+
 function setAllSeasonRoster(active){
   for(const r of DB.racers) _rosterActive[r.id] = active;
   renderSeasonRosterList();
 }
 
 async function confirmSeasonRoster(){
-  for(const r of DB.racers) r.active = !!_rosterActive[r.id];
+  for(const r of DB.racers){
+    r.active = !!_rosterActive[r.id];
+    r.isJunior = !!_rosterJunior[r.id];
+  }
   await saveDB();
   closeModal();
   const n = DB.racers.filter(r=>r.active!==false).length;
@@ -1844,7 +2008,7 @@ function swapToRace(idx){
 // ═══════════════════════════════════════════════════════════════
 //  RENDER — RACE SCREEN
 // ═══════════════════════════════════════════════════════════════
-function renderRace(){ renderCurrent(); renderQueue(); renderStandings(); renderHistory(); updateRaceTopBar(); if(dispWin&&!dispWin.closed) writeDisplay(); }
+function renderRace(){ renderCurrent(); renderQueue(); renderStandings(); renderHistory(); updateRaceTopBar(); writeDisplay(); }
 
 function updateRaceTopBar(){
   const el = document.getElementById('raceTopInfo');
@@ -2145,7 +2309,7 @@ async function autoSaveResults(){
 
 async function finishClass(){
   closeModal();
-  if(dispWin&&!dispWin.closed) writeDisplay();
+  writeDisplay();
   goHome();
 }
 
@@ -2153,6 +2317,8 @@ function confirmAbortRace(){
   openConfirm('End Race Early?','All progress for this race will be lost. This cannot be undone.',()=>{
     delete DB.activeRace;
     saveDB().catch(()=>{});
+    R.currentRace=null; R.roundQueue=[]; R.podium=null;
+    writeDisplay(); // display drops back to the waiting state
     if(dispWin&&!dispWin.closed) dispWin.close();
     goHome();
   });
@@ -2230,6 +2396,7 @@ function saveEditResult(){
     renderRace();
     toast('Result updated','success');
     showPodiumModal();
+    saveActiveRace();
     return;
   }
 
@@ -2246,6 +2413,7 @@ function saveEditResult(){
   closeModal();
   toast('Result updated','success');
   serveNextRace();
+  saveActiveRace();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2422,17 +2590,23 @@ function _getSeasonStandings(seasonId){
   const classes = ['box','evo','pro'];
   const standings = {box:{}, evo:{}, pro:{}};
   const juniorEvo = {};
+  // Key by roster (database) id so a mid-season rename doesn't split points.
+  // Typed-in racers and pre-v9.28 events fall back to name → id lookup, then raw name.
+  const nameToId = {};
+  DB.racers.forEach(r=>{ nameToId[r.name.toLowerCase().trim()] = r.id; });
+  const resKey = res => res.rosterId || nameToId[(res.name||'').toLowerCase().trim()] || (res.name||'').toLowerCase().trim();
+  const resName = (key,res) => (DB.racers.find(r=>r.id===key)||{}).name || res.name;
   for(const ev of (season.events||[])){
     if(ev.type==='test'||ev.type==='special') continue;
     const cls = ev.classKey;
     if(!standings[cls]) continue;
     for(const res of (ev.results||[])){
-      const key = (res.name||'').toLowerCase().trim(); if(!key) continue;
-      if(!standings[cls][key]) standings[cls][key]={name:res.name,pts:0,events:0,isJunior:res.isJunior};
+      const key = resKey(res); if(!key) continue;
+      if(!standings[cls][key]) standings[cls][key]={name:resName(key,res),pts:0,events:0,isJunior:res.isJunior};
       standings[cls][key].pts += (res.points||0);
       standings[cls][key].events++;
       if(cls==='evo'&&res.isJunior){
-        if(!juniorEvo[key]) juniorEvo[key]={name:res.name,pts:0,events:0};
+        if(!juniorEvo[key]) juniorEvo[key]={name:resName(key,res),pts:0,events:0};
         juniorEvo[key].pts += (res.points||0);
         juniorEvo[key].events++;
       }
@@ -2741,13 +2915,18 @@ function renderSeasons(){
             <div style="color:var(--muted);font-size:12px">${esc(s.startDate||'')} — ${esc(s.endDate||'')} · ${(s.events||[]).filter(e=>e.type!=='test').length} events</div>
           </div>
           <button class="btn btn-secondary" onclick="showScreen('pointsScreen');renderPoints('${s.id}')">📊 View Standings</button>
+          <button class="btn btn-secondary" onclick="reopenSeason('${s.id}')" title="Make this the active season again">↩ Reopen</button>
         </div>
       </div>`).join('');
   }
+  const activeNote = getCurrentSeason()
+    ? `<div style="color:var(--muted);font-size:12px;margin-top:6px">A season is currently active — close it before reopening an archived one.</div>`
+    : '';
   document.getElementById('seasonsContent').innerHTML=`
     <div style="margin-bottom:16px">
       <div style="font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px">Season Archive</div>
-      <div style="color:var(--muted2);font-size:13px">Read-only historical season standings</div>
+      <div style="color:var(--muted2);font-size:13px">Read-only historical season standings — use Reopen if a season was closed by mistake</div>
+      ${activeNote}
     </div>${html}`;
 }
 
@@ -2756,14 +2935,63 @@ function renderSeasons(){
 // ═══════════════════════════════════════════════════════════════
 let dispWin=null;
 
+let _lastDisplayPush='';
+function pushDisplayContent(force){
+  // Feed the server's /display page (browser popup or native second window).
+  // The display polls this every second, so it self-heals and never goes stale.
+  if(!serverMode) return;
+  const h=getDisplayHTML();
+  if(!force && h===_lastDisplayPush) return;
+  _lastDisplayPush=h;
+  fetch('/display-content',{method:'POST',headers:{'Content-Type':'text/html'},body:h}).catch(()=>{});
+}
+
 function openDisplay(){
+  // Native app (installed exe): ask Python for a real window — fullscreen on
+  // the second monitor when one is present.
+  if(window.pywebview && window.pywebview.api && window.pywebview.api.open_display){
+    pushDisplayContent(true);
+    window.pywebview.api.open_display();
+    return;
+  }
+  // Browser + server: popup onto the server-fed display page
+  if(serverMode){
+    pushDisplayContent(true);
+    dispWin=window.open('/display','RaceDisplay','width=1280,height=720,resizable=yes');
+    if(!dispWin) alert('Please allow pop-ups for this page.');
+    return;
+  }
+  // No server (browser-storage mode): legacy self-polling popup
   dispWin=window.open('','RaceDisplay','width=1280,height=720,resizable=yes');
   if(!dispWin){ alert('Please allow pop-ups for this page.'); return; }
+  const shell=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Race Display</title>
+    <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#04060a;color:#fff;font-family:'Arial Narrow','Impact',system-ui,sans-serif;height:100vh;display:grid;grid-template-columns:1fr 1fr;gap:0;overflow:hidden}.pane{padding:clamp(24px,3.5vw,60px) clamp(20px,3vw,52px);height:100vh;overflow:hidden}.left{border-right:2px solid #0d1520}.right{opacity:.82}</style>
+    </head><body>
+    <script>
+      var last='';
+      setInterval(function(){
+        try{
+          var h = (window.opener && !window.opener.closed && window.opener.getDisplayHTML) ? window.opener.getDisplayHTML() : null;
+          if(h!==null && h!==last){ last=h; document.body.innerHTML=h; }
+        }catch(e){}
+      }, 1000);
+    <\/script>
+    </body></html>`;
+  dispWin.document.open(); dispWin.document.write(shell); dispWin.document.close();
   writeDisplay();
 }
 
 function writeDisplay(){
+  pushDisplayContent();
+  // Legacy popup (no-server mode) gets pushed directly; its poll is the safety net.
   if(!dispWin||dispWin.closed) return;
+  if(!serverMode){ try{ dispWin.document.body.innerHTML = getDisplayHTML(); }catch(e){} }
+}
+
+function getDisplayHTML(){
+  if(!R || !R.racers) return `<div class="pane left"><div style="color:#1a2030;font-size:clamp(20px,3.5vw,56px);padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">Waiting for racing to start...</div></div><div class="pane right"></div>`;
   const cr=R.currentRace, nextR=R.roundQueue?.[0]||null;
   const isFinal=R.currentRace&&R.currentRace.bracket==='final';
 
@@ -2776,8 +3004,9 @@ function writeDisplay(){
   let curHTML='';
   if(R.podium){
     const p=R.podium;
+    const classLabel={box:'📦 BOX CLASS',evo:'⚡ EVO CLASS',pro:'🏆 PRO CLASS'}[R.classKey]||(R.specialName?esc(R.specialName.toUpperCase()):'FINAL');
     curHTML=`<div>
-      <div style="font-size:clamp(14px,1.8vw,30px);font-weight:800;letter-spacing:.15em;color:#3dd68c;margin-bottom:clamp(14px,2.5vh,32px)">🏆 FINAL RESULTS</div>
+      <div style="font-size:clamp(14px,1.8vw,30px);font-weight:800;letter-spacing:.15em;color:#3dd68c;margin-bottom:clamp(14px,2.5vh,32px)">🏆 ${classLabel} — WINNERS</div>
       ${p.first?`<div style="display:flex;align-items:center;gap:clamp(12px,1.8vw,28px);background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.25);border-radius:16px;padding:clamp(12px,2vh,24px) clamp(16px,2vw,32px);margin-bottom:clamp(8px,1.5vh,18px)"><span style="font-size:clamp(40px,6vw,96px)">🥇</span><span style="font-size:clamp(60px,10vw,190px);font-weight:900;color:#ffd700;line-height:1">${esc(getName(p.first))}</span></div>`:''}
       ${p.second?`<div style="display:flex;align-items:center;gap:clamp(12px,1.8vw,28px);background:rgba(192,200,208,.07);border:1px solid rgba(192,200,208,.18);border-radius:16px;padding:clamp(10px,1.6vh,20px) clamp(16px,2vw,32px);margin-bottom:clamp(6px,1.2vh,14px)"><span style="font-size:clamp(30px,4.5vw,72px)">🥈</span><span style="font-size:clamp(46px,8vw,152px);font-weight:800;color:#c0c8d0;line-height:1">${esc(getName(p.second))}</span></div>`:''}
       ${p.third?`<div style="display:flex;align-items:center;gap:clamp(12px,1.8vw,28px);background:rgba(205,127,50,.07);border:1px solid rgba(205,127,50,.18);border-radius:16px;padding:clamp(10px,1.6vh,20px) clamp(16px,2vw,32px)"><span style="font-size:clamp(30px,4.5vw,72px)">🥉</span><span style="font-size:clamp(46px,8vw,152px);font-weight:800;color:#cd7f32;line-height:1">${esc(getName(p.third))}</span></div>`:''}
@@ -2793,21 +3022,26 @@ function writeDisplay(){
     curHTML=`<div style="color:#1a2030;font-size:clamp(20px,3.5vw,56px);padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">Preparing next race...</div>`;
   }
 
-  const nxtHTML=nextR
-    ?`<div style="font-size:clamp(13px,1.8vw,30px);font-weight:800;letter-spacing:.18em;color:#7090a8;margin-bottom:clamp(8px,1.5vh,18px)">UP NEXT</div>
-       <div style="margin-bottom:clamp(14px,2.5vh,28px)">${badge(nextR.bracket,false)}</div>
-       ${nextR.racers.map(id=>`<div style="font-size:clamp(46px,7vw,134px);font-weight:700;color:#c8dae8;margin-bottom:clamp(6px,1.2vh,14px);line-height:1.05">${esc(getName(id))}</div>`).join('')}`
-    :`<div style="color:#3a5060;font-size:clamp(16px,2.5vw,40px);padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">No race queued</div>`;
+  let nxtHTML;
+  if(R.podium){
+    // Winners stay on screen for prize-giving until the next race is started.
+    // EVO (or any event with juniors): class winners LEFT, Junior winners RIGHT.
+    const jp=R.juniorPodium;
+    nxtHTML = (jp&&(jp.first||jp.second||jp.third))
+      ?`<div style="font-size:clamp(14px,1.8vw,30px);font-weight:800;letter-spacing:.15em;color:#b090e8;margin-bottom:clamp(14px,2.5vh,32px)">👾 JUNIOR — WINNERS</div>
+        ${jp.first?`<div style="display:flex;align-items:center;gap:clamp(12px,1.8vw,28px);background:rgba(144,96,224,.12);border:1px solid rgba(144,96,224,.3);border-radius:16px;padding:clamp(12px,2vh,24px) clamp(16px,2vw,32px);margin-bottom:clamp(8px,1.5vh,18px)"><span style="font-size:clamp(40px,6vw,96px)">🥇</span><span style="font-size:clamp(60px,10vw,190px);font-weight:900;color:#c0a0f0;line-height:1">${esc(getName(jp.first))}</span></div>`:''}
+        ${jp.second?`<div style="display:flex;align-items:center;gap:clamp(12px,1.8vw,28px);background:rgba(144,96,224,.07);border:1px solid rgba(144,96,224,.2);border-radius:16px;padding:clamp(10px,1.6vh,20px) clamp(16px,2vw,32px);margin-bottom:clamp(6px,1.2vh,14px)"><span style="font-size:clamp(30px,4.5vw,72px)">🥈</span><span style="font-size:clamp(46px,8vw,152px);font-weight:800;color:#b0a0d0;line-height:1">${esc(getName(jp.second))}</span></div>`:''}
+        ${jp.third?`<div style="display:flex;align-items:center;gap:clamp(12px,1.8vw,28px);background:rgba(144,96,224,.05);border:1px solid rgba(144,96,224,.15);border-radius:16px;padding:clamp(10px,1.6vh,20px) clamp(16px,2vw,32px)"><span style="font-size:clamp(30px,4.5vw,72px)">🥉</span><span style="font-size:clamp(46px,8vw,152px);font-weight:800;color:#a098c0;line-height:1">${esc(getName(jp.third))}</span></div>`:''}`
+      :'';
+  } else {
+    nxtHTML=nextR
+      ?`<div style="font-size:clamp(13px,1.8vw,30px);font-weight:800;letter-spacing:.18em;color:#7090a8;margin-bottom:clamp(8px,1.5vh,18px)">UP NEXT</div>
+         <div style="margin-bottom:clamp(14px,2.5vh,28px)">${badge(nextR.bracket,false)}</div>
+         ${nextR.racers.map(id=>`<div style="font-size:clamp(46px,7vw,134px);font-weight:700;color:#c8dae8;margin-bottom:clamp(6px,1.2vh,14px);line-height:1.05">${esc(getName(id))}</div>`).join('')}`
+      :`<div style="color:#3a5060;font-size:clamp(16px,2.5vw,40px);padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">No race queued</div>`;
+  }
 
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#04060a;color:#fff;font-family:'Arial Narrow','Impact',system-ui,sans-serif;height:100vh;display:grid;grid-template-columns:1fr 1fr;gap:0;overflow:hidden}.pane{padding:clamp(24px,3.5vw,60px) clamp(20px,3vw,52px);height:100vh;overflow:hidden}.left{border-right:2px solid #0d1520}.right{opacity:.82}</style>
-    </head><body>
-    <div class="pane left">${curHTML}</div>
-    <div class="pane right">${nxtHTML}</div>
-    </body></html>`;
-
-  dispWin.document.open(); dispWin.document.write(html); dispWin.document.close();
+  return `<div class="pane left">${curHTML}</div><div class="pane right">${nxtHTML}</div>`;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2855,10 +3089,37 @@ async function init(){
 
   // Heartbeat — tells the server this tab is still open.
   // Server shuts down automatically when pings stop (tab closed).
+  // Version label + one-time notice after the server relocates data
   if(serverMode){
+    try{
+      const info = await (await fetch('/info')).json();
+      if(info.version && info.version!=='?'){
+        const vl = document.getElementById('appVersionLabel');
+        if(vl) vl.textContent = 'v'+(info.fullVersion||info.version);
+      }
+      if(info.migrated){
+        toast('✅ Your race data has moved to a safe location: '+info.dataDir+' — app updates can no longer touch it. The old copy was left in place as a backup.','success',12000);
+      }
+    }catch(e){}
+  }
+
+  if(serverMode){
+    let missedPings = 0, pingWarn = false;
     setInterval(async()=>{
-      try{ await fetch('/ping'); }catch(e){}
-    }, 5000);
+      try{
+        const r = await fetch('/ping');
+        if(r.ok){
+          missedPings = 0;
+          if(pingWarn){ pingWarn = false; setSaveWarning(false); saveDB(); } // server back — flush held data to disk
+          return;
+        }
+      }catch(e){}
+      missedPings++;
+      if(missedPings >= 2){
+        pingWarn = true;
+        setSaveWarning(true, '⚠ SERVER CONNECTION LOST — data is NOT being saved to the data file. Do NOT close this tab: use Export Data on the home screen now, then restart the app.');
+      }
+    }, 3000);
   }
 
   // Offer to resume a race that was interrupted by a crash or unexpected shutdown
