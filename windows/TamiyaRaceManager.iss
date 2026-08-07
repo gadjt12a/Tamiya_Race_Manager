@@ -27,7 +27,10 @@ CloseApplications=yes
 WizardStyle=modern
 
 [Files]
-Source: "..\dist\TamiyaRaceManager.exe"; DestDir: "{app}"; Flags: ignoreversion
+; PyInstaller onedir build: the exe plus its _internal\ support folder.
+; recursesubdirs+createallsubdirs are required - without them _internal\
+; is skipped and the installed exe won't start.
+Source: "..\dist\TamiyaRaceManager\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Tasks]
 Name: desktopicon; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"; Flags: checkedonce

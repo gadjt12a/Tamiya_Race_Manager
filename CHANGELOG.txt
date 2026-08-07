@@ -2,6 +2,22 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v9.39  (2026-08-07)  [v10-packaging branch]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  - FIXED: on some PCs the app refused to start and
+    threw a stack of error boxes ("Failed to load Tcl
+    DLL", "File already exists but should not"). The
+    v9.38 splash screen was the cause - it is gone.
+  - The app no longer unpacks itself into a temporary
+    folder every time it starts. It now installs as a
+    normal program folder, so it launches quicker and
+    can't be tripped up by leftover temp files or
+    anti-virus. Race data is unaffected as always.
+  - Portable zip users: unzip the whole folder and run
+    TamiyaRaceManager.exe from inside it. The exe needs
+    the _internal folder beside it.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v9.38  (2026-07-17)  [v10-packaging branch]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   - Splash screen: double-clicking the desktop icon now

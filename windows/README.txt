@@ -8,8 +8,16 @@ WHICH DOWNLOAD DO I WANT?
       no admin rights needed. Updating = run the newer installer.
 
   TamiyaRaceManager-WindowsPortable-<version>.zip
-      Just the app in a zip - nothing is installed. Unzip anywhere
-      (USB stick is fine) and double-click TamiyaRaceManager.exe.
+      Just the app in a zip - nothing is installed. Unzip the WHOLE
+      thing anywhere (USB stick is fine), open the TamiyaRaceManager
+      folder and double-click TamiyaRaceManager.exe.
+
+      IMPORTANT: extract the zip first - don't run the app from
+      inside Windows' zip preview. And keep TamiyaRaceManager.exe
+      together with the _internal folder next to it; the app will
+      not start if the exe is moved out on its own. To put a
+      shortcut on the desktop, right-click the exe > Show more
+      options > Send to > Desktop (create shortcut).
 
 FIRST RUN
 ---------

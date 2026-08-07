@@ -100,12 +100,17 @@ It builds, in order:
 
 | Output | What it is |
 |---|---|
-| `dist\TamiyaRaceManager.exe` | the app itself (intermediate) |
+| `dist\TamiyaRaceManager\` | the app itself — exe + `_internal\` (intermediate) |
 | `dist\installer\TamiyaRaceManager-Setup-<ver>.exe` | the Windows installer |
-| `dist\TamiyaRaceManager-WindowsPortable-<ver>.zip` | portable zip (exe + README) |
+| `dist\TamiyaRaceManager-WindowsPortable-<ver>.zip` | portable zip (app folder + README) |
 
-`windows\BUILD EXE (developer use only).bat` builds just the exe when you're
-iterating and don't need the installer.
+`windows\BUILD EXE (developer use only).bat` builds just the app folder when
+you're iterating and don't need the installer.
+
+**This is a PyInstaller *onedir* build** (since v9.39). `TamiyaRaceManager.exe`
+only runs with its `_internal\` folder beside it — never ship or copy the exe
+on its own. The installer handles this; for the portable zip, users must
+extract the whole folder before running.
 
 ## Build the Mac package
 
@@ -116,8 +121,8 @@ No Mac is needed to *build* it — but it should be *tested* on one
 
 ## Smoke test before publishing
 
-1. Run `dist\TamiyaRaceManager.exe` — app opens in its own window, version
-   in the top-left matches `app/VERSION`.
+1. Run `dist\TamiyaRaceManager\TamiyaRaceManager.exe` — app opens in its own
+   window, version in the top-left matches `app/VERSION`.
 2. Run the installer normally (not silent) — read the data-safety info page,
    finish, launch from the desktop icon.
 3. Open the Display window; run a quick 3-racer test race (Test mode —
@@ -129,6 +134,12 @@ No Mac is needed to *build* it — but it should be *tested* on one
 
 - **Keep the `.bat` files ASCII-only.** `cmd.exe` reads them in the ANSI
   codepage; fancy Unicode characters get mangled and can execute as garbage.
+- **Don't add `--splash`.** It was tried in v9.38 and removed in v9.39.
+  PyInstaller's splash is Tcl/Tk, which pulls `tcl86t.dll`, `tk86t.dll` and
+  the `_tcl_data`/`_tk_data` trees into an app that otherwise has no Tk at
+  all. On a test PC it produced a stack of "Failed to load Tcl DLL" and
+  "File already exists but should not" dialogs before the app would start.
+  Onedir launches fast enough that no splash is needed.
 - **The exe is unsigned**, so SmartScreen warns on first run of a fresh
   download ("More info" → "Run anyway"). Code signing is a future option
   (~US$100+/yr).

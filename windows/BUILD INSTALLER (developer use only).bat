@@ -19,16 +19,15 @@ echo.
 set ICONFLAG=
 if exist "app\icon.ico" set ICONFLAG=--icon "app\icon.ico"
 
-python -m PyInstaller --noconfirm --clean --onefile --noconsole ^
+python -m PyInstaller --noconfirm --clean --onedir --noconsole ^
   --name TamiyaRaceManager ^
   --add-data "app\race-manager.html;." ^
   --add-data "app\VERSION;." ^
   --collect-all webview ^
-  --splash "app\splash.png" ^
   %ICONFLAG% ^
   app\app.py
 
-if not exist "dist\TamiyaRaceManager.exe" (
+if not exist "dist\TamiyaRaceManager\TamiyaRaceManager.exe" (
     echo  EXE BUILD FAILED - see errors above.
     pause
     exit /b 1
@@ -57,7 +56,10 @@ if errorlevel 1 (
 
 echo.
 echo  [3/3] Building portable zip ...
-powershell -Command "Compress-Archive -Force -Path 'dist\TamiyaRaceManager.exe','windows\README.txt' -DestinationPath 'dist\TamiyaRaceManager-WindowsPortable-%APPVERSION%.zip'"
+REM  Zips the WHOLE TamiyaRaceManager folder - the exe needs _internal\
+REM  beside it. Users must extract the zip before running (not run it
+REM  from inside the zip viewer).
+powershell -Command "Compress-Archive -Force -Path 'dist\TamiyaRaceManager','windows\README.txt' -DestinationPath 'dist\TamiyaRaceManager-WindowsPortable-%APPVERSION%.zip'"
 
 echo.
 echo  ==========================================

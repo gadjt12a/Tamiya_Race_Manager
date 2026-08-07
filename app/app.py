@@ -21,8 +21,12 @@ DISPLAY_URL = f"http://127.0.0.1:{server.PORT}/display"
 
 
 def close_splash():
-    """Close the PyInstaller boot splash (shown instantly on double-click,
-    while the onefile exe unpacks). No-op outside a frozen splash build."""
+    """Close the PyInstaller boot splash, if this build has one.
+
+    Currently a no-op: the splash was dropped in v9.39 because PyInstaller
+    implements it in Tcl/Tk, which broke launches with 'Failed to load Tcl
+    DLL' errors. The onedir build starts fast enough not to need it. Hooks
+    are left in place so a future splash can be closed at the right moment."""
     try:
         import pyi_splash
         pyi_splash.close()
