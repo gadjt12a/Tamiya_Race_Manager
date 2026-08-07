@@ -1,6 +1,8 @@
 # v10 Testing Manual
 
-Hands-on tests that must pass before `v10-packaging` merges to `main`.
+Hands-on tests that must pass before v10.0 is tagged and released.
+(The packaging work merged to `main` on 2026-08-08 ahead of these — the
+merge was not gated on them, the release is.)
 These are the test-matrix items a script can't do — they need a human, real
 hardware, and eyes on screen. Run them against the **installed desktop app**
 (v9.39 or later — check the version in the app's top-left header, which now

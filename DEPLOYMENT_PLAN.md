@@ -1,6 +1,7 @@
 # Tamiya Race Manager — v10 Packaging & Deployment Plan
 
-*Created: 2026-07-16 · Branch: `v10-packaging` · Status: IN PROGRESS*
+*Created: 2026-07-16 · **Merged to `main` 2026-08-08** · Status: MERGED —
+not yet released (see Phase 6 for what's still open)*
 
 ---
 
@@ -20,7 +21,7 @@
 | Branch | Purpose |
 |---|---|
 | `main` | Stable v9.27 — what clubs run today. Only critical fixes land here until merge. |
-| `v10-packaging` | All work in this plan. Merged to `main` only after the full test matrix passes. |
+| `v10-packaging` | All work in this plan. **Merged to `main` on 2026-08-08** at v9.39, ahead of the full test matrix — Kris's call, so the OSX work happens on `main`. The branch is kept for history; new work goes on `main`. |
 
 Tag `v9.27` on `main` before merge so the last pre-installer version is always
 recoverable and downloadable.
@@ -269,12 +270,14 @@ install → run, all working.*
 - [ ] **Run the Mac package on an actual Mac.** It has been built many times
       and never once executed. Decide before merge whether v10.0 ships it,
       holds it for a point release, or ships it labelled experimental.
-- [ ] Merge `v10-packaging` → `main`, retitle release notes to final, tag
-      `v10.0`, publish GitHub release with all three packages attached.
-      **Also update `BUILD.md`**: its "Getting the source" section is
-      currently written for testing the unmerged branch (branch table,
-      hardcoded `v10-packaging` in the clone/zip commands) and goes stale
-      the moment v10 lands on `main`.
+- [x] Merge `v10-packaging` → `main` — done 2026-08-08 (`bf56cb3`), at
+      v9.39. `BUILD.md`'s "Getting the source" section rewritten for `main`
+      at the same time.
+- [ ] Retitle release notes to final, remove the DRAFT banner, bump
+      `app/VERSION` to `10.0`, tag `v10.0`, publish the GitHub release with
+      all three packages attached. **Blocked on:** the SmartScreen
+      screenshots, and a decision on whether the Mac package ships in v10.0
+      at all given it has never been run.
 
 ---
 
@@ -286,6 +289,7 @@ install → run, all working.*
 | **localStorage-mode data doesn't carry over.** A club that ran v9.x *without* Python (opened the HTML directly) has data in the browser under a `file://` origin. The packaged app serves from `localhost:8765` — a different origin — so that data will NOT appear automatically. | Only clubs that never had Python working (no `data/racedata.json` on disk) | Release notes + installer text: *before updating*, open the old version and use **Export Data**, then **Import Data** in the new version. This is the universal bridge and must be stated prominently. |
 | **Portable-zip users must extract the whole folder.** The onedir exe needs `_internal\` beside it; running it out of Windows' zip preview, or copying just the exe out, fails to start. | Anyone using the portable zip | Spelled out in `windows/README.txt` and the release notes, including how to make a desktop shortcut instead of moving the exe. |
 | **Upgrading over an existing install is untested.** `{app}` changes from a lone exe to exe + `_internal\`. Data lives elsewhere so it should be unaffected, but "should" is not "tested". | Every club already on v9.3x | Test before merge. Data is in `%LOCALAPPDATA%` and untouched by the installer either way; the pre-update export in the release notes remains the safety net. |
+| **Port 8765 conflict is not reliably detected on Windows.** Found 2026-08-08: another of Kris's tools (`T-Embed_CC1101_Plus` serialmon daemon, `--ctrl-port 8765`) was holding the port. Race Manager logged "server up" and opened its window as if fine, but no request to it ever answered. `create_server()` sets `allow_reuse_address = True`, and on Windows SO_REUSEADDR permits binding an address already in use — so the OSError the friendly port-conflict screen relies on never fires. The `/ping` guard didn't catch it either, since the other program isn't Race Manager. | Anyone running another tool on 8765 — on race night this looks like the app starting then being dead | **Not yet fixed.** Likely fix: drop `allow_reuse_address` on Windows, or probe the port with `SO_EXCLUSIVEADDRUSE` before binding, so the existing friendly error actually triggers. Note this contradicts the Phase 3 "friendly handling of port 8765 conflicts" tick, which only ever covered a *refused* bind. |
 | Downgrading (v10 file → v9 app) is not supported | Anyone rolling back | Keep the pre-upgrade backup + v9.27 zip download available; document that rolling back means restoring the pre-upgrade backup file, not the v10 file. |
 | SmartScreen warning on unsigned exe | All new installs | Documented click-through with screenshots; consider code signing later if budget allows. |
 | Club on a very old v9.x with a hand-edited/odd JSON | Rare | Import validation reports *what* is wrong instead of silently accepting; pre-upgrade backup always taken first. |
