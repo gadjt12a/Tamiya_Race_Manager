@@ -17,10 +17,73 @@ Everything builds on a Windows machine (including the Mac package).
    ```
    (Per-user install is fine; the build script finds it in
    `%LOCALAPPDATA%\Programs\Inno Setup 6` or Program Files.)
-4. Clone the repo:
+4. **Git** — Windows does *not* ship with it, so `git clone` fails on a fresh
+   PC with "'git' is not recognized". Check with `git --version`; if it's
+   missing, install it:
    ```
-   git clone https://github.com/gadjt12a/Tamiya_Race_Manager
+   winget install --id Git.Git -e
    ```
+   Then **close and reopen the terminal** (the installer adds Git to PATH, and
+   existing windows don't pick that up).
+5. Get the source (see next section).
+
+## Getting the source
+
+### With Git (recommended — lets you pull updates and switch branches)
+
+Clone, then check out the branch you actually want. `git clone` on its own
+gives you `main` only:
+
+```
+git clone https://github.com/gadjt12a/Tamiya_Race_Manager
+cd Tamiya_Race_Manager
+git checkout v10-packaging
+```
+
+Or do it in one step:
+
+```
+git clone -b v10-packaging https://github.com/gadjt12a/Tamiya_Race_Manager
+```
+
+Branches in use:
+
+| Branch | What it is |
+|---|---|
+| `main` | stable released v9.x |
+| `v10-packaging` | v10 installer/packaging work — **build test deployments from here** |
+
+Already cloned and on the wrong branch? Fetch and switch:
+
+```
+git fetch origin
+git checkout v10-packaging
+git pull
+```
+
+### Without Git (one-off test deployment)
+
+You don't need Git at all to build once — download a branch as a zip:
+
+1. Go to
+   `https://github.com/gadjt12a/Tamiya_Race_Manager/tree/v10-packaging`
+2. Green **Code** button → **Download ZIP** (this downloads the branch you're
+   viewing, not `main` — check the branch selector first).
+3. Right-click the zip → **Properties** → tick **Unblock** → OK, then extract.
+   Windows marks downloaded zips as blocked, and the `.bat` files may refuse
+   to run otherwise.
+
+Or from PowerShell, no browser needed:
+
+```powershell
+$b = "v10-packaging"
+Invoke-WebRequest "https://github.com/gadjt12a/Tamiya_Race_Manager/archive/refs/heads/$b.zip" -OutFile "$env:TEMP\trm.zip"
+Expand-Archive "$env:TEMP\trm.zip" -DestinationPath "$HOME\Downloads" -Force
+```
+
+That gives you `Tamiya_Race_Manager-v10-packaging\`. The zip has no `.git`
+folder, so you can't pull updates or commit from it — re-download for a newer
+build, or use the Git route instead.
 
 ## Releasing a new version
 
