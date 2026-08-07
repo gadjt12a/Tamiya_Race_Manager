@@ -3,7 +3,8 @@
 Hands-on tests that must pass before `v10-packaging` merges to `main`.
 These are the test-matrix items a script can't do — they need a human, real
 hardware, and eyes on screen. Run them against the **installed desktop app**
-(v9.37 or later — check the version in the app's top-left header).
+(v9.39 or later — check the version in the app's top-left header, which now
+reads `v<version>.<build>`, e.g. `v9.39.24`).
 
 **Before you start:** click **⬆ Export Data** and put the file somewhere safe.
 Some tests use your test data; you may want to Import it back afterwards.
@@ -120,8 +121,10 @@ battery, not plugged in (most aggressive sleep).
 **Purpose:** verify the first-run experience a club member gets, and capture
 the screenshots for the release notes.
 
-Copy `TamiyaRaceManager-Setup-9.37.exe` to a USB stick, take it to another
-Windows PC (a club member's laptop is perfect):
+Copy the current `TamiyaRaceManager-Setup-<version>.<build>.exe` from
+`dist\installer\` to a USB stick — take the newest one; the build number goes
+up with every change. Take it to another Windows PC (a club member's laptop
+is perfect):
 
 1. Run the installer. **📸 SCREENSHOT 1:** the blue **"Windows protected your
    PC"** SmartScreen dialog, exactly as it first appears.
@@ -140,6 +143,50 @@ Screenshot tips: PNG, whole dialog in frame, no personal info visible in the
 background. Put them in `Working_Files/Screenshots/` and I'll wire them into
 the release notes (they'll be committed to the repo at that point).
 
+⚠ You only get one shot at SmartScreen per machine — it stops warning after
+the first run. Capture the screenshots on the *first* launch there, not after
+you've had a play.
+
+## T8 — Upgrade over an existing install *(never tested)*
+
+**Purpose:** the case that matters most for clubs — the installer landing on
+a machine that already runs the app. Every test so far has been a fresh
+install or a clean clone. In v9.39 the install folder changed from a single
+exe to `TamiyaRaceManager.exe` + an `_internal\` folder, and that transition
+has never been exercised.
+
+**Before you start:** Export Data to a USB stick. This is the one test where
+that matters.
+
+1. Find (or install) a machine running an **older v9.3x** install. Note the
+   version in the header and run a quick race so there's real data.
+2. Check `%LOCALAPPDATA%\Programs\TamiyaRaceManager\` — on an old install it
+   should be a lone exe, no `_internal` folder.
+3. Run the new installer **without uninstalling first**. Let it close the
+   running app if it offers.
+4. Launch. Confirm: it starts, the header shows the new version.build, and
+   **all seasons, racers and points are exactly as before**.
+5. Re-check the install folder — it should now hold the exe *and*
+   `_internal\`, with no leftover stray files.
+6. Confirm `%LOCALAPPDATA%\TamiyaRaceManager\racedata.json` was not modified
+   by the install itself (check the file's timestamp before and after).
+
+## T9 — Reopen a closed season *(never tested with real data)*
+
+**Purpose:** the reopen feature works on an empty season; it has not met a
+season with recorded events.
+
+1. On a season with **several recorded events**, note the current standings
+   (screenshot them).
+2. Home screen → **Close Season**. Confirm the warning names the season and
+   reports the right event count.
+3. Confirm it's gone from Home and now appears under **View All Seasons**.
+4. Click **↩ Reopen**, confirm.
+5. Check: it's the active season again, every event is still there, and the
+   standings match your screenshot exactly.
+6. Then try reopening a *second* archived season while this one is active —
+   it should refuse and tell you to close the current one first.
+
 ---
 
 ## Results
@@ -153,3 +200,5 @@ the release notes (they'll be committed to the repo at that point).
 | T5 Crash recovery | | |
 | T6 Garbage import | | |
 | T7 Fresh machine + SmartScreen | | |
+| T8 Upgrade over existing install | | |
+| T9 Reopen a closed season | | |

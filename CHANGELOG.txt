@@ -42,6 +42,10 @@ Tamiya Race Manager — Change Log
     narrower: the season buttons wrap instead of being
     squashed off the edge, and the two columns stack
     rather than both being crushed.
+  - Docs brought up to date: "HOW TO USE" no longer points at
+    the old data location or the removed python-bundle folder,
+    and now covers Full Screen, reopening a season and the
+    native second-screen display.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v9.38  (2026-07-17)  [v10-packaging branch]

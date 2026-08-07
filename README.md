@@ -12,11 +12,11 @@ monitor. Runs entirely offline on one laptop.
 
 ## Downloads — pick your platform
 
-### 🪟 Windows (recommended, fully tested)
+### 🪟 Windows (recommended)
 | Package | What it is |
 |---|---|
 | `TamiyaRaceManager-Setup-<ver>.exe` | **Normal installer** — desktop icon, Start Menu, no admin rights needed. Updating = run the newer installer. |
-| `TamiyaRaceManager-WindowsPortable-<ver>.zip` | The same app in a zip — nothing installed; run from anywhere, USB included. |
+| `TamiyaRaceManager-WindowsPortable-<ver>.zip` | The same app in a zip — nothing installed; run from anywhere, USB included. Extract the **whole folder** and keep `TamiyaRaceManager.exe` together with the `_internal` folder beside it. |
 
 The app runs in its own window (no console, no browser tab). Full details:
 [`windows/README.txt`](windows/README.txt)
@@ -62,7 +62,10 @@ Requirements: Python 3, `pip install pyinstaller pywebview`, and
 - **Windows (installer + portable zip):** run `windows\BUILD INSTALLER (developer use only).bat`
 - **Mac package:** run `mac\BUILD MAC PACKAGE (developer use only).bat`
 
-Outputs land in `dist\`. The version everywhere comes from `app/VERSION`.
+Outputs land in `dist\` and are named `<version>.<build>` — the version from
+`app/VERSION` (bumped by hand) and the build number from
+`git rev-list --count HEAD`, so it identifies the commit rather than the
+machine that built it. See [`BUILD.md`](BUILD.md).
 
 See [`DEPLOYMENT_PLAN.md`](DEPLOYMENT_PLAN.md) for the v10 release plan, test
 matrix and data-safety design, and [`HOW TO USE.txt`](HOW%20TO%20USE.txt) for

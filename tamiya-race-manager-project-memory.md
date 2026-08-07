@@ -1,6 +1,8 @@
 # Tamiya Race Manager — Project Memory
 
-*Last updated: May 2026*
+*Last updated: 2026-08-07 (architecture section refreshed for the v10
+packaging work; the race-logic sections below have not been re-verified
+against the code and date from May 2026.)*
 
 ---
 
@@ -18,21 +20,44 @@ The app is a fully standalone, real-world-usable tool. No frameworks. Data persi
 ## Application Architecture
 
 ### Files
+Restructured into platform packages in v9.36 — the flat layout below the
+`app/` line is gone.
 ```
-race-manager/
-├── race-manager.html       # Main app (all HTML/CSS/JS in one file)
-├── server.py               # Python local HTTP server (data persistence + shutdown watchdog)
-├── START RACE MANAGER.bat  # Windows launcher (auto-detects Python, falls back to direct open)
-├── data/
-│   └── racedata.json       # Persistent data store
-└── (optional) README/help text built into app
+Tamiya_Race_Manager/
+├── app/                    # shared core, bundled into every package
+│   ├── race-manager.html   # the whole UI (all HTML/CSS/JS in one file)
+│   ├── server.py           # local HTTP server, data persistence, watchdog
+│   ├── app.py              # desktop entry point (pywebview window) — what the exe runs
+│   ├── VERSION             # release number, bumped by hand
+│   ├── BUILD               # generated at build time, gitignored
+│   └── icon.ico
+├── windows/                # installer script, build bats, Windows README
+├── mac/                    # launcher, package builder, Mac README (UNTESTED)
+└── dist/                   # build output, gitignored
 ```
+Live data no longer sits beside the app — see the data layer below.
 
 ### Data Layer
-- `server.py` runs on `localhost:8765`, serves static files + handles `/save` POST and `/ping` GET
-- Watchdog thread in server: if no ping received for 12 seconds (browser tab closed), server self-terminates
-- App falls back to `localStorage` if no server is detected
-- Export/Import data buttons on home screen for USB backup
+- `server.py` binds **127.0.0.1:8765 only** (not all interfaces): keeps the
+  app private to the machine and avoids a Windows Firewall prompt on first
+  run. Serves static files plus `/save`, `/ping`, `/info`, `/backup`,
+  `/shutdown`, `/display-content`.
+- Data lives in `%LOCALAPPDATA%\TamiyaRaceManager\` (override with
+  `TAMIYA_DATA_DIR`), **outside** the app folder, so installing, updating or
+  uninstalling can never touch it. Pre-v10 data beside the exe is *copied*,
+  never moved.
+- Watchdog: the countdown only starts once the browser's **first** ping has
+  arrived, and gives up waiting after 5 minutes. Gating it this way fixed a
+  field bug where antivirus/cold-start delays killed the server before the
+  first ping landed. In the desktop app, closing the window is the primary
+  exit; the watchdog is the fallback.
+- App falls back to `localStorage` if no server is detected.
+- Export/Import data buttons on home screen for USB backup.
+
+### Packaging
+PyInstaller **onedir** (`TamiyaRaceManager.exe` + `_internal\`), wrapped by
+an Inno Setup per-user installer. Packages are numbered
+`<VERSION>.<build>` where build is the git commit count. See `BUILD.md`.
 
 ---
 

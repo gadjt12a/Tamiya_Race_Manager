@@ -32,7 +32,15 @@ export is belt-and-braces, and good practice after every race night anyway.
    black console window, no browser tab.
 
 Prefer nothing installed? **`TamiyaRaceManager-WindowsPortable-10.0.zip`** is
-the same app in a zip — unzip anywhere (USB fine) and run the exe.
+the same app in a zip — unzip the **whole** folder anywhere (USB fine), open
+the `TamiyaRaceManager` folder and run the exe.
+
+⚠ Two things to know about the portable version: extract the zip properly
+first (don't run the app from inside Windows' zip preview), and keep
+`TamiyaRaceManager.exe` together with the `_internal` folder next to it — the
+app won't start if the exe is moved out on its own. Want it on the desktop?
+Right-click the exe → **Show more options** → **Send to** → **Desktop
+(create shortcut)**.
 
 ### Bringing your data across from the old zip version (one time)
 
@@ -71,6 +79,22 @@ to test it — please report anything broken. See the README inside the zip.
 - Import is validated and confirmed before anything is replaced; a data file
   from a *newer* app version is politely refused, never overwritten.
 
+### Getting around
+- **Full Screen button** on the Home and Race screens (or press **F11**) —
+  handy for putting the race screen up on the big monitor.
+- The window now opens **centred on your screen**, sized to fit it, instead
+  of drifting down and to the right.
+- The app **starts in about half a second**.
+- The home screen keeps its layout when you resize the window.
+
+### Seasons
+- Closing a season now **warns you properly first** — it names the season,
+  says how many events it has, and spells out what closing does.
+- **Closed a season by mistake?** "View All Seasons" now has a **Reopen**
+  button that makes it the active season again. Nothing is deleted when a
+  season is closed. (Only one season can be active, so close the current one
+  first.)
+
 ### Race night
 - **The 2nd-screen display no longer goes stale** — and after a class
   finishes, the **winners stay on screen** for call-ups and prize-giving
@@ -106,3 +130,8 @@ to test it — please report anything broken. See the README inside the zip.
 | `TamiyaRaceManager-Setup-10.0.exe` | Windows installer (recommended) |
 | `TamiyaRaceManager-WindowsPortable-10.0.zip` | Windows portable |
 | `TamiyaRaceManager-Mac-10.0.zip` | Mac / OSX (untested) |
+
+Downloads carry a build number after the version, e.g.
+`TamiyaRaceManager-Setup-10.0.25.exe`. It goes up every time the app
+changes, so if you're ever unsure which download a club laptop is running,
+the number in the app's title bar tells you.

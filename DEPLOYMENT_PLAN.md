@@ -106,6 +106,11 @@ against real test data (copy, idempotency, /save round-trip verified identical).
 beside the exe, bundled HTML serving, /info version, already-running guard,
 watchdog first-ping gating + tab-close detection). Icon still pending (Kris
 supplying artwork — candidates in Working_Files/Images/, untracked).*
+
+> **Superseded by v9.39 (Phase 7).** The onefile build below was replaced by
+> a **onedir** build. The exe now ships alongside an `_internal\` folder and
+> must never be moved or copied on its own.
+
 - [x] PyInstaller build: `TamiyaRaceManager.exe` (~8 MB onefile) bundling server +
       HTML + VERSION via `BUILD EXE (developer use only).bat`; `--icon` wired in,
       activates when `icon.ico` exists.
@@ -186,10 +191,55 @@ Scripted results from 2026-07-17 run against the v9.35 packaged exe.
 - [x] Three clean release artefacts: Windows installer, Windows portable zip
       (just the exe — the python-bundle machinery and its three bat files are
       removed as obsolete), Mac zip. All build into `dist\`.
+      *(v9.39: the portable zip now contains the whole app folder, not a bare
+      exe — the onedir build needs `_internal\` beside it.)*
 - [x] Root README.md rewritten as a platform picker; per-platform READMEs ship
       inside the packages.
 - [x] Rebuilt + smoke-tested from the new layout (exe serves v9.36); Mac zip
       contents verified; Mac launcher works in both packaged and repo layouts.
+
+### Phase 7 — Field-test fixes from the second PC (v9.39)
+*2026-08-07. Everything here came out of Kris deploying to a second machine.
+Re-verified by Kris on 2026-08-07: fresh `git clone` → build installer →
+install → run, all working.*
+- [x] **BUILD.md was unusable on a clean PC** — Windows has no git, so
+      `git clone` failed outright, and the clone command checked out `main`
+      with no way to reach `v10-packaging`. Added a git install step, a
+      branch-aware checkout section, and a no-git zip download path.
+- [x] **Launch failure: 14 error dialogs** ("Failed to load Tcl DLL",
+      "File already exists but should not"). Cause: the v9.38 `--splash` is
+      Tcl/Tk, dragging `tcl86t.dll`/`tk86t.dll`/`_tcl_data`/`_tk_data` into a
+      WebView2 app, tripped by a stale `_MEI` dir in `%TEMP%`.
+      Fixed by switching **onefile → onedir**, removing per-launch temp
+      extraction entirely. Installer 21.7 MB → 15.9 MB.
+- [x] **Splash abandoned after three attempts** — Tcl/Tk (broke launches),
+      an in-window HTML loading page (visible ~10 ms; WebView2 can't paint
+      until it has initialised), and a native Win32 window (declined as not
+      worth the machinery). Rationale recorded in `app/app.py`.
+- [x] **~2 s wasted on every launch.** `already_running()` probed
+      `localhost`, which resolves to IPv6 `::1` first while the server binds
+      IPv4 only, so every start burned a timeout on an address that could
+      never answer. Now probes `127.0.0.1` with a 0.35 s timeout:
+      **3.00 s → 0.48 s** to window. Timing `stamp()` lines kept in
+      `app.log` — this was misattributed to WebView2 twice by reasoning
+      instead of measuring.
+- [x] **Build numbering**: packages are now `<VERSION>.<build>` where build
+      is `git rev-list --count HEAD`, so the number tracks the *commit*, not
+      the machine or how many times a build was run. Written to gitignored
+      `app/BUILD`; shows in installer filename, app header, `app.log` and
+      the exe's Properties (which previously had no version info at all).
+- [x] Window opens **centred and sized to fit the screen** — Windows was
+      cascading it down-and-right, part-way off smaller screens.
+- [x] **Full Screen button** (Home + Race topbars, F11). Native pywebview
+      window, browser Fullscreen API fallback. *Confirmed working by Kris.*
+- [x] **Close Season now warns properly** — names the season, reports its
+      event count, spells out what closing does. *Confirmed by Kris.*
+- [x] **Reopen an accidentally closed season** from the Season Archive.
+      Refuses while another season is active. *Confirmed by Kris on the test
+      PC; not yet exercised against a season with recorded events.*
+- [x] Home screen holds its alignment when the window is resized (hero
+      buttons wrap, `minmax(0,…)` columns, <900px stacking breakpoint).
+      *Confirmed by Kris.*
 
 ### Phase 6 — Release & merge
 - [x] Tag `v9.27` on `main` (last zip-style release, kept downloadable) —
@@ -205,9 +255,26 @@ Scripted results from 2026-07-17 run against the v9.35 packaged exe.
       exe).
 - [ ] Kris's manual test matrix items pass — step-by-step guide in
       `TESTING_MANUAL.md` (T1–T7, incl. the SmartScreen screenshot list).
-      Icon licence: resolved in v9.37.
+      Icon licence: resolved in v9.37. **Partial:** fresh clone → build →
+      install → run confirmed on a second PC 2026-08-07; the T1–T7 results
+      table is still empty.
+- [ ] **Upgrade over an existing v9.3x install** — never tested. `{app}`
+      goes from a lone exe to exe + `_internal\`. Every test so far has been
+      a fresh install or a clean clone. This is the one that touches
+      machines clubs already run.
+- [ ] **Reopen a season that has recorded events**, then confirm the
+      standings still read correctly.
+- [ ] Print / PDF export from inside the WebView2 window (test matrix #13)
+      — still the most likely thing to misbehave.
+- [ ] **Run the Mac package on an actual Mac.** It has been built many times
+      and never once executed. Decide before merge whether v10.0 ships it,
+      holds it for a point release, or ships it labelled experimental.
 - [ ] Merge `v10-packaging` → `main`, retitle release notes to final, tag
       `v10.0`, publish GitHub release with all three packages attached.
+      **Also update `BUILD.md`**: its "Getting the source" section is
+      currently written for testing the unmerged branch (branch table,
+      hardcoded `v10-packaging` in the clone/zip commands) and goes stale
+      the moment v10 lands on `main`.
 
 ---
 
@@ -217,6 +284,8 @@ Scripted results from 2026-07-17 run against the v9.35 packaged exe.
 |---|---|---|
 | **Zip → installer upgrades don't auto-migrate.** The installed exe lives in `%LOCALAPPDATA%\Programs\`, so it can't see data in the old zip folder — the app boots looking empty. Data is safe but *looks* lost. | Every club moving from zip to installer | First-run hint on the home screen + installer info page: use **Import Data** with the old folder's `data\racedata.json`. Old file is never touched. (Auto-migration still works when the exe runs from inside the old folder.) |
 | **localStorage-mode data doesn't carry over.** A club that ran v9.x *without* Python (opened the HTML directly) has data in the browser under a `file://` origin. The packaged app serves from `localhost:8765` — a different origin — so that data will NOT appear automatically. | Only clubs that never had Python working (no `data/racedata.json` on disk) | Release notes + installer text: *before updating*, open the old version and use **Export Data**, then **Import Data** in the new version. This is the universal bridge and must be stated prominently. |
+| **Portable-zip users must extract the whole folder.** The onedir exe needs `_internal\` beside it; running it out of Windows' zip preview, or copying just the exe out, fails to start. | Anyone using the portable zip | Spelled out in `windows/README.txt` and the release notes, including how to make a desktop shortcut instead of moving the exe. |
+| **Upgrading over an existing install is untested.** `{app}` changes from a lone exe to exe + `_internal\`. Data lives elsewhere so it should be unaffected, but "should" is not "tested". | Every club already on v9.3x | Test before merge. Data is in `%LOCALAPPDATA%` and untouched by the installer either way; the pre-update export in the release notes remains the safety net. |
 | Downgrading (v10 file → v9 app) is not supported | Anyone rolling back | Keep the pre-upgrade backup + v9.27 zip download available; document that rolling back means restoring the pre-upgrade backup file, not the v10 file. |
 | SmartScreen warning on unsigned exe | All new installs | Documented click-through with screenshots; consider code signing later if budget allows. |
 | Club on a very old v9.x with a hand-edited/odd JSON | Rare | Import validation reports *what* is wrong instead of silently accepting; pre-upgrade backup always taken first. |

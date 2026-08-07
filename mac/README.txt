@@ -1,10 +1,11 @@
 TAMIYA RACE MANAGER - MAC (OSX)
 ===============================
 
-*** PLEASE NOTE: the Mac version is currently UNTESTED - the
-*** developers run Windows. It uses the same core app, but expect
-*** rough edges and please report problems. The Windows version is
-*** the recommended, fully tested experience.
+*** PLEASE NOTE: the Mac version has NEVER been run on a Mac. It is
+*** built and packaged on Windows, and no one has yet launched it on
+*** macOS even once. It uses the same core app, but treat it as
+*** experimental and please report anything broken. The Windows
+*** version is the tested one - use that if you have the choice.
 
 WHAT'S IN THIS PACKAGE
 ----------------------
