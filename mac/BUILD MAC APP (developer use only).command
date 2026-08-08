@@ -81,29 +81,33 @@ echo "$BUILDNO" > app/BUILD
 echo "  Building v${APPVERSION}.${BUILDNO} ..."
 echo ""
 
-# ── Icon (optional) ───────────────────────────────────────────
+# ── Build arguments ───────────────────────────────────────────
+# Assembled into the positional parameters ("$@") rather than a bash
+# array. macOS still ships bash 3.2, where expanding an EMPTY array
+# under `set -u` fails with "unbound variable" - bash 4.4+ allows it.
+# "$@" is safe when empty in every version, so this stays 3.2-clean.
+#
+# --windowed produces the .app bundle. Note --add-data uses a COLON
+# separator on macOS, where Windows uses a semicolon.
+set -- --noconfirm --clean --windowed \
+    --name TamiyaRaceManager \
+    --add-data "app/race-manager.html:." \
+    --add-data "app/VERSION:." \
+    --add-data "app/BUILD:." \
+    --collect-all webview
+
 # macOS needs .icns; app/icon.ico is Windows-only. If icon.icns isn't
 # there we build without one rather than failing - see BUILD.md for how
 # to generate it from a PNG with sips + iconutil.
-ICONFLAG=()
 if [ -f "app/icon.icns" ]; then
-    ICONFLAG=(--icon "app/icon.icns")
+    set -- "$@" --icon "app/icon.icns"
     echo "  Using app/icon.icns"
 else
     echo "  NOTE: app/icon.icns not found - building with the default icon."
 fi
 
 # ── Build ─────────────────────────────────────────────────────
-# --windowed produces the .app bundle. Note --add-data uses a COLON
-# separator on macOS, where Windows uses a semicolon.
-"$PY" -m PyInstaller --noconfirm --clean --windowed \
-    --name TamiyaRaceManager \
-    --add-data "app/race-manager.html:." \
-    --add-data "app/VERSION:." \
-    --add-data "app/BUILD:." \
-    --collect-all webview \
-    "${ICONFLAG[@]}" \
-    app/app.py
+"$PY" -m PyInstaller "$@" app/app.py
 
 if [ ! -d "dist/TamiyaRaceManager.app" ]; then
     echo ""

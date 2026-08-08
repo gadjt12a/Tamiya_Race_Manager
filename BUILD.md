@@ -294,6 +294,17 @@ Notes:
 
 - **Keep the `.bat` files ASCII-only.** `cmd.exe` reads them in the ANSI
   codepage; fancy Unicode characters get mangled and can execute as garbage.
+- **The `.command` scripts must stay bash 3.2 compatible.** macOS still
+  ships bash 3.2 (2007 — it's a licensing thing), so anything you test in a
+  modern bash may still fail there. The one that bit us: expanding an
+  *empty* array under `set -u` raises "unbound variable" in bash < 4.4 but
+  is fine in 4.4+. Build optional arguments into the positional parameters
+  with `set -- "$@" …` instead, which is safe when empty in every version.
+- **Anything authored on Windows for the Mac needs three checks**, none of
+  which are visible until it runs on macOS: LF line endings (`.gitattributes`
+  handles it), the executable bit (`git update-index --chmod=+x`), and
+  forward-slash paths inside any zip (build with `tar`/`ditto`, not
+  `Compress-Archive`). All three have broken the Mac package before.
 - **There is no loading screen, and adding one is harder than it looks.**
   The full reasoning and the measured start-up breakdown are in the module
   docstring at the top of `app/app.py` — read that before attempting a
