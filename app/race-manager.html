@@ -1559,11 +1559,11 @@ function openManageRoster(){
 }
 
 function renderManageRoster(){
-  const search = (document.getElementById('rosterSearchInput')?.value||'').toLowerCase().trim();
+  const search = ((document.getElementById('rosterSearchInput')||{}).value||'').toLowerCase().trim();
   const racers = DB.racers.filter(r=>
-    !rosterEdits[r.id]?.deleted &&
-    (!search || rosterEdits[r.id]?.name.toLowerCase().includes(search))
-  ).sort((a,b)=>(rosterEdits[a.id]?.name||a.name).localeCompare(rosterEdits[b.id]?.name||b.name));
+    !(rosterEdits[r.id]&&rosterEdits[r.id].deleted) &&
+    (!search || (rosterEdits[r.id]&&rosterEdits[r.id].name.toLowerCase().includes(search)))
+  ).sort((a,b)=>((rosterEdits[a.id]&&rosterEdits[a.id].name)||a.name).localeCompare((rosterEdits[b.id]&&rosterEdits[b.id].name)||b.name));
   const el = document.getElementById('manageRosterList');
   if(!el) return;
   if(!racers.length){
@@ -1596,7 +1596,7 @@ function rosterEditDelete(id){
 }
 
 function markAllJunior(isJunior){
-  const search = (document.getElementById('rosterSearchInput')?.value||'').toLowerCase().trim();
+  const search = ((document.getElementById('rosterSearchInput')||{}).value||'').toLowerCase().trim();
   DB.racers.forEach(r=>{
     if(rosterEdits[r.id] && !rosterEdits[r.id].deleted){
       if(!search || rosterEdits[r.id].name.toLowerCase().includes(search)){
@@ -1988,7 +1988,7 @@ function computeJuniorPodium(){
   if(R.classKey!=='evo'&&R.mode!=='special'){ R.juniorPodium=null; return; }
   const juniors = R.racers.filter(r=>r.isJunior);
   if(!juniors.length){ R.juniorPodium=null; return; }
-  const podOrder=[R.podium?.first,R.podium?.second,R.podium?.third].filter(Boolean);
+  const podOrder=[R.podium&&R.podium.first,R.podium&&R.podium.second,R.podium&&R.podium.third].filter(Boolean);
   const jSorted=[...juniors].sort((a,b)=>{
     const ai=podOrder.indexOf(a.id), bi=podOrder.indexOf(b.id);
     if(ai>=0&&bi>=0) return ai-bi;
@@ -1996,9 +1996,9 @@ function computeJuniorPodium(){
     return (R.wins[b.id]-R.wins[a.id])||(R.losses[a.id]-R.losses[b.id]);
   });
   R.juniorPodium={
-    first:jSorted[0]?.id||null,
-    second:jSorted[1]?.id||null,
-    third:jSorted[2]?.id||null
+    first:(jSorted[0]&&jSorted[0].id)||null,
+    second:(jSorted[1]&&jSorted[1].id)||null,
+    third:(jSorted[2]&&jSorted[2].id)||null
   };
 }
 
@@ -2264,7 +2264,7 @@ function showPodiumModal(){
 
 function computeFinalStandings(){
   // Sort all racers by: champion > 2nd > 3rd > then by wins desc, losses asc
-  const podOrder=[R.podium?.first,R.podium?.second,R.podium?.third].filter(Boolean);
+  const podOrder=[R.podium&&R.podium.first,R.podium&&R.podium.second,R.podium&&R.podium.third].filter(Boolean);
   const sorted=[...R.racers].sort((a,b)=>{
     const ai=podOrder.indexOf(a.id),bi=podOrder.indexOf(b.id);
     if(ai>=0&&bi>=0) return ai-bi;
@@ -2667,13 +2667,13 @@ function _getSeasonStandings(seasonId){
 
 // ── Shared HTML report builder ────────────────────────────────
 function _buildNightHTML(d, inline=false){
-  const podNames = (id) => id ? esc(d.racers.find(r=>r.id===id)?.name||'?') : '—';
+  const podNames = (id) => id ? esc((d.racers.find(r=>r.id===id)||{}).name||'?') : '—';
   const isEvo = d.classKey==='evo';
 
   const podiumRows = [
-    d.podium?.first  ? `<tr><td>🥇</td><td>${podNames(d.podium.first)}</td></tr>` : '',
-    d.podium?.second ? `<tr><td>🥈</td><td>${podNames(d.podium.second)}</td></tr>` : '',
-    d.podium?.third  ? `<tr><td>🥉</td><td>${podNames(d.podium.third)}</td></tr>` : '',
+    (d.podium&&d.podium.first)  ? `<tr><td>🥇</td><td>${podNames(d.podium.first)}</td></tr>` : '',
+    (d.podium&&d.podium.second) ? `<tr><td>🥈</td><td>${podNames(d.podium.second)}</td></tr>` : '',
+    (d.podium&&d.podium.third)  ? `<tr><td>🥉</td><td>${podNames(d.podium.third)}</td></tr>` : '',
   ].join('');
 
   const juniorSection = isEvo && d.juniorPodium && (d.juniorPodium.first||d.juniorPodium.second||d.juniorPodium.third) ? `
@@ -2775,19 +2775,19 @@ function exportNightHTML(){
 function exportNightCSV(){
   const d = _getNightData();
   const isEvo = d.classKey==='evo';
-  const podName = id => id ? (d.racers.find(r=>r.id===id)?.name||'?') : '';
+  const podName = id => id ? ((d.racers.find(r=>r.id===id)||{}).name||'?') : '';
   const lines = [
     [`${d.classLabel} — ${d.date}`],[],
     ['PODIUM'],['Place','Racer'],
-    ['1st', podName(d.podium?.first)],
-    ['2nd', podName(d.podium?.second)],
-    ['3rd', podName(d.podium?.third)],
+    ['1st', podName(d.podium&&d.podium.first)],
+    ['2nd', podName(d.podium&&d.podium.second)],
+    ['3rd', podName(d.podium&&d.podium.third)],
   ];
   if(isEvo && d.juniorPodium){
     lines.push([],['JUNIOR PODIUM'],['Place','Racer'],
-      ['1st', podName(d.juniorPodium?.first)],
-      ['2nd', podName(d.juniorPodium?.second)],
-      ['3rd', podName(d.juniorPodium?.third)]);
+      ['1st', podName(d.juniorPodium&&d.juniorPodium.first)],
+      ['2nd', podName(d.juniorPodium&&d.juniorPodium.second)],
+      ['3rd', podName(d.juniorPodium&&d.juniorPodium.third)]);
   }
   lines.push([],['FULL RESULTS'],
     isEvo ? ['Position','Racer','Junior','Wins','Losses','Points']
@@ -2938,9 +2938,9 @@ function showSpecialEventsView(){
           <div style="margin-bottom:8px">
             <div style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;margin-bottom:4px">${clsLabel[r.classKey]||r.classKey} · ${r.date}</div>
             <div style="font-size:13px">
-              ${r.podium?.first?`🥇 ${esc(r.results?.find(x=>x.racerId===r.podium.first)?.name||'?')}`:''} 
-              ${r.podium?.second?`🥈 ${esc(r.results?.find(x=>x.racerId===r.podium.second)?.name||'?')}`:''} 
-              ${r.podium?.third?`🥉 ${esc(r.results?.find(x=>x.racerId===r.podium.third)?.name||'?')}`:''} 
+              ${(r.podium&&r.podium.first)?`🥇 ${esc(((r.results&&r.results.find(x=>x.racerId===r.podium.first))||{}).name||'?')}`:''}
+              ${(r.podium&&r.podium.second)?`🥈 ${esc(((r.results&&r.results.find(x=>x.racerId===r.podium.second))||{}).name||'?')}`:''}
+              ${(r.podium&&r.podium.third)?`🥉 ${esc(((r.results&&r.results.find(x=>x.racerId===r.podium.third))||{}).name||'?')}`:''}
             </div>
           </div>`).join('')}
       </div>
@@ -3040,7 +3040,7 @@ function writeDisplay(){
 
 function getDisplayHTML(){
   if(!R || !R.racers) return `<div class="pane left"><div style="color:#1a2030;font-size:clamp(20px,3.5vw,56px);padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">Waiting for racing to start...</div></div><div class="pane right"></div>`;
-  const cr=R.currentRace, nextR=R.roundQueue?.[0]||null;
+  const cr=R.currentRace, nextR=(R.roundQueue&&R.roundQueue[0])||null;
   const isFinal=R.currentRace&&R.currentRace.bracket==='final';
 
   const badge=(br,fin)=>fin
@@ -3174,9 +3174,9 @@ async function init(){
   if(DB.activeRace){
     const race = DB.activeRace;
     const className = {box:'Box Class',evo:'EVO Class',pro:'Pro Class'}[race.classKey]||race.classKey;
-    const raceCount = race.history?.length||0;
+    const raceCount = (race.history&&race.history.length)||0;
     document.getElementById('resumeInfo').textContent =
-      `${className} · ${race.racers?.length||0} racers · ${raceCount} race${raceCount!==1?'s':''} completed`;
+      `${className} · ${(race.racers&&race.racers.length)||0} racers · ${raceCount} race${raceCount!==1?'s':''} completed`;
     showModal('resumeModal');
   }
 }

@@ -306,6 +306,25 @@ Notes:
 
 ## Gotchas
 
+- **Keep `race-manager.html`'s JavaScript at ES2019.** No optional chaining
+  (`?.`), no nullish coalescing (`??`), no logical assignment. The macOS
+  app renders through the system WebView, which on macOS 10.13 predates
+  ES2020 — and because the app is one big `<script>` block, a single
+  unsupported token is a *parse* error that kills the entire app: no
+  content, every button dead, blank page. This is not hypothetical; it
+  happened, and `?.` had to be removed from 38 places.
+
+  **Test in the app's WebView, not in Safari.** Safari gets updated
+  separately and is several years ahead of the WebView on the same
+  machine — a feature test that passes in Safari proves nothing about the
+  bundled app. That mistake sent this investigation the wrong way twice.
+
+  To check before shipping, if node is available:
+  ```
+  npx acorn --ecma2019 <the script block>   # must parse clean
+  ```
+  Failing that, the app now paints a red error panel at the bottom of the
+  window on any JS error, which is how this was finally caught.
 - **Keep the `.bat` files ASCII-only.** `cmd.exe` reads them in the ANSI
   codepage; fancy Unicode characters get mangled and can execute as garbage.
 - **The macOS `.app` needs an App Transport Security exception, or it opens
