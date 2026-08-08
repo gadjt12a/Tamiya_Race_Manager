@@ -1,9 +1,14 @@
 # Building Tamiya Race Manager from source
 
 How to produce all three release packages from a clean checkout.
-Everything builds on a Windows machine (including the Mac package).
+All three **build** on a Windows machine, including the Mac package —
+it only stages files and zips them, so no Mac is needed to produce it.
 
-## One-time setup
+Working on the Mac version *itself* is different: you don't build
+anything on the Mac, you run the source directly. See
+[Working on a Mac](#working-on-a-mac) below.
+
+## One-time setup (Windows)
 
 1. **Windows 10/11** with [Python 3.11+](https://www.python.org/downloads/)
    on PATH (`python --version` to check).
@@ -116,10 +121,82 @@ extract the whole folder before running.
 
 ## Build the Mac package
 
-Run **`mac\BUILD MAC PACKAGE (developer use only).bat`**. Output:
-`dist\TamiyaRaceManager-Mac-<ver>.zip` (launcher + `app/` + Mac README).
-No Mac is needed to *build* it — but it should be *tested* on one
-(currently untested; the Mac README says so).
+Run **`mac\BUILD MAC PACKAGE (developer use only).bat`** (on Windows).
+Output: `dist\TamiyaRaceManager-Mac-<ver>.<build>.zip` — the launcher,
+`app/` (server, HTML, VERSION, BUILD) and the Mac README.
+
+It only stages files and zips them, so no Mac is needed to *build* it.
+It has never been *run* on one — see below.
+
+---
+
+## Working on a Mac
+
+Nothing is compiled for the Mac: it runs `app/server.py` under the Mac's
+own Python 3 and opens the app in the default browser. There is no
+desktop window (no pywebview/WebView2) and no exe.
+
+### One-time setup (macOS)
+
+1. **Git** — macOS doesn't ship it outright, but the Xcode Command Line
+   Tools do. In Terminal:
+   ```
+   git --version
+   ```
+   If it's missing, macOS offers to install the tools; or force it with:
+   ```
+   xcode-select --install
+   ```
+2. **Python 3** — check with:
+   ```
+   python3 --version
+   ```
+   Recent macOS includes it (the Command Line Tools above also provide
+   it). Otherwise install from [python.org](https://www.python.org/downloads/),
+   or `brew install python3` if you use Homebrew.
+
+   Nothing else is needed — no pip packages. PyInstaller, pywebview and
+   Inno Setup are Windows-build-only.
+
+3. **Clone the repo:**
+   ```
+   git clone https://github.com/gadjt12a/Tamiya_Race_Manager
+   cd Tamiya_Race_Manager
+   ```
+
+### Running it from the repo
+
+```
+./mac/Start\ Race\ Manager.command
+```
+
+Or double-click `Start Race Manager.command` in Finder. Two macOS
+speed-bumps on first run:
+
+- **"cannot be opened because it is from an unidentified developer"** —
+  right-click the file → **Open** → **Open**. One-off per machine.
+- **"permission denied"** — the execute bit is missing (a zip built on
+  Windows doesn't preserve it):
+  ```
+  chmod +x "mac/Start Race Manager.command"
+  ```
+
+The launcher finds the app in either layout: `app/` beside it (packaged
+zip) or `../app/` (repo checkout). It tries `python3` first, then
+`python`, and prints install instructions if neither is Python 3.
+
+Closing the browser tab shuts the server down via the watchdog.
+
+### Testing the actual package
+
+To test what a club would download, build the zip on Windows, copy it
+across, unzip, `chmod +x` the launcher, and run that — the repo checkout
+exercises a different code path (`../app/`) to the packaged one.
+
+### Mac data location
+
+`~/Library/Application Support/TamiyaRaceManager/` (`racedata.json` +
+`backups/`), outside the app folder, same guarantee as Windows.
 
 ## Smoke test before publishing
 
@@ -136,10 +213,10 @@ No Mac is needed to *build* it — but it should be *tested* on one
 
 - **Keep the `.bat` files ASCII-only.** `cmd.exe` reads them in the ANSI
   codepage; fancy Unicode characters get mangled and can execute as garbage.
-- **The loading screen is `LOADING_HTML` in `app/app.py`**, shown in the real
-  window before the server starts, then swapped for the app by `boot()`.
-  Note `webview.start(boot, main_win)` passes the window *into* the callback,
-  so `boot` must accept that argument.
+- **There is no loading screen, and adding one is harder than it looks.**
+  The full reasoning and the measured start-up breakdown are in the module
+  docstring at the top of `app/app.py` — read that before attempting a
+  fourth try.
 - **Don't add `--splash`.** It was tried in v9.38 and removed in v9.39.
   PyInstaller's splash is Tcl/Tk, which pulls `tcl86t.dll`, `tk86t.dll` and
   the `_tcl_data`/`_tk_data` trees into an app that otherwise has no Tk at

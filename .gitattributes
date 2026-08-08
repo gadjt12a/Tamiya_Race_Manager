@@ -1,0 +1,15 @@
+# Line endings matter for the Mac launcher.
+#
+# "Start Race Manager.command" is a bash script run by macOS. With CRLF
+# endings the shebang reads as "/bin/bash\r" and macOS refuses it with
+#   bad interpreter: /bin/bash^M
+# on the very first double-click. It is authored and packaged on Windows,
+# so force LF for shell scripts regardless of the local git config.
+*.command text eol=lf
+*.sh      text eol=lf
+
+# .bat files are read by cmd.exe and must keep CRLF.
+*.bat     text eol=crlf
+
+# Deliberately no "* text=auto": that would renormalise every existing
+# file in the repo in one noisy commit.
