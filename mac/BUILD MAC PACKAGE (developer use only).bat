@@ -33,7 +33,15 @@ copy /y "app\VERSION" "%STAGE%\app\" >nul
 REM  Without BUILD the app reports build 0 on the Mac
 copy /y "app\BUILD" "%STAGE%\app\" >nul
 
-powershell -Command "Compress-Archive -Force -Path 'dist\mac-stage\TamiyaRaceManager' -DestinationPath 'dist\TamiyaRaceManager-Mac-%APPVERSION%.%BUILDNO%.zip'"
+REM  Built with tar, NOT Compress-Archive. PowerShell 5.1's
+REM  Compress-Archive writes BACKSLASH path separators inside the zip,
+REM  which violates the zip spec (it requires forward slashes). Some macOS
+REM  extractors then produce flat files literally named
+REM  "TamiyaRaceManager\app\server.py" instead of a folder tree, and the
+REM  launcher cannot find app/server.py. Windows 10+ ships bsdtar, which
+REM  writes correct forward slashes.
+if exist "dist\TamiyaRaceManager-Mac-%APPVERSION%.%BUILDNO%.zip" del /q "dist\TamiyaRaceManager-Mac-%APPVERSION%.%BUILDNO%.zip"
+tar -a -c -f "dist\TamiyaRaceManager-Mac-%APPVERSION%.%BUILDNO%.zip" -C "dist\mac-stage" "TamiyaRaceManager"
 rmdir /s /q "dist\mac-stage"
 
 if not exist "dist\TamiyaRaceManager-Mac-%APPVERSION%.%BUILDNO%.zip" (
