@@ -294,6 +294,14 @@ Notes:
 
 - **Keep the `.bat` files ASCII-only.** `cmd.exe` reads them in the ANSI
   codepage; fancy Unicode characters get mangled and can execute as garbage.
+- **The macOS `.app` needs an App Transport Security exception, or it opens
+  a black window.** The UI is served over `http://127.0.0.1:8765`, and
+  WKWebView refuses plain `http` by default — silently, no error, just a
+  blank view. PyInstaller's generated `Info.plist` has no exception, so the
+  build script adds `NSAllowsLocalNetworking` / `NSAllowsArbitraryLoads`
+  with `PlistBuddy` and re-signs the bundle afterwards (editing a bundle
+  invalidates its signature). This does not affect the Python-zip package,
+  which runs in a real browser with no such restriction.
 - **The `.command` scripts must stay bash 3.2 compatible.** macOS still
   ships bash 3.2 (2007 — it's a licensing thing), so anything you test in a
   modern bash may still fail there. The one that bit us: expanding an

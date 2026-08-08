@@ -116,6 +116,29 @@ if [ ! -d "dist/TamiyaRaceManager.app" ]; then
     exit 1
 fi
 
+# ── App Transport Security ────────────────────────────────────
+# WITHOUT THIS THE APP OPENS A BLACK WINDOW. The UI is served over
+# http://127.0.0.1:8765, and WKWebView refuses plain http by default -
+# silently, with no error, just a blank view. PyInstaller's generated
+# Info.plist has no ATS exception, so it has to be added afterwards.
+#
+# The app only ever talks to its own loopback server; it makes no
+# internet requests at all.
+PLIST="dist/TamiyaRaceManager.app/Contents/Info.plist"
+echo ""
+echo "  Adding App Transport Security exception for 127.0.0.1 ..."
+/usr/libexec/PlistBuddy -c "Delete :NSAppTransportSecurity" "$PLIST" >/dev/null 2>&1
+/usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity dict" "$PLIST" >/dev/null
+/usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsLocalNetworking bool true" "$PLIST" >/dev/null
+/usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsArbitraryLoads bool true" "$PLIST" >/dev/null
+
+# Editing anything inside the bundle invalidates its signature, so
+# re-sign (ad-hoc, same as PyInstaller does) or macOS may refuse to run it.
+echo "  Re-signing the bundle ..."
+codesign --force --deep --sign - "dist/TamiyaRaceManager.app" 2>/dev/null || {
+    echo "  WARNING: re-signing failed. The app may be refused by Gatekeeper."
+}
+
 # ── Zip it ────────────────────────────────────────────────────
 # ditto, not zip: it preserves the execute bits and macOS metadata
 # inside the .app bundle. A plain zip can produce an app that won't

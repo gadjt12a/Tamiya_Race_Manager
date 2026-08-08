@@ -132,9 +132,12 @@ class Api:
 
 
 def run():
-    # Windowed (no-console) builds have no stdout - send prints to a log file
-    # next to the data so field problems can be diagnosed.
-    if sys.stdout is None or sys.stderr is None:
+    # Send prints to a log file next to the data so field problems can be
+    # diagnosed. On Windows a --noconsole build has no stdout at all, but a
+    # macOS .app bundle DOES have one - it just goes nowhere. Checking
+    # `frozen` as well means the Mac app actually writes a log; without it
+    # a black-screen launch left nothing at all to diagnose.
+    if getattr(sys, "frozen", False) or sys.stdout is None or sys.stderr is None:
         try:
             server.DATA_DIR.mkdir(parents=True, exist_ok=True)
             log = open(server.DATA_DIR / "app.log", "a", encoding="utf-8", buffering=1)
