@@ -124,13 +124,25 @@ fi
 #
 # The app only ever talks to its own loopback server; it makes no
 # internet requests at all.
+# Key choice matters, and the obvious ones are wrong:
+#   - NSAllowsLocalNetworking does NOT cover loopback. It covers *.local,
+#     unqualified hostnames and link-local (169.254/16) - not 127.0.0.1.
+#   - Worse, its mere PRESENCE makes macOS ignore NSAllowsArbitraryLoads.
+#     Setting both (as this script first did) therefore blocks loopback
+#     while looking like it permits everything.
+# What works: NSAllowsArbitraryLoadsInWebContent (intended for embedded
+# web views) plus an explicit exception domain for the loopback address.
 PLIST="dist/TamiyaRaceManager.app/Contents/Info.plist"
 echo ""
 echo "  Adding App Transport Security exception for 127.0.0.1 ..."
 /usr/libexec/PlistBuddy -c "Delete :NSAppTransportSecurity" "$PLIST" >/dev/null 2>&1
 /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity dict" "$PLIST" >/dev/null
-/usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsLocalNetworking bool true" "$PLIST" >/dev/null
-/usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsArbitraryLoads bool true" "$PLIST" >/dev/null
+/usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsArbitraryLoadsInWebContent bool true" "$PLIST" >/dev/null
+/usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSExceptionDomains dict" "$PLIST" >/dev/null
+for host in 127.0.0.1 localhost; do
+    /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSExceptionDomains:${host} dict" "$PLIST" >/dev/null
+    /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSExceptionDomains:${host}:NSExceptionAllowsInsecureHTTPLoads bool true" "$PLIST" >/dev/null
+done
 
 # Editing anything inside the bundle invalidates its signature, so
 # re-sign (ad-hoc, same as PyInstaller does) or macOS may refuse to run it.

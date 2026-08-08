@@ -298,10 +298,20 @@ Notes:
   a black window.** The UI is served over `http://127.0.0.1:8765`, and
   WKWebView refuses plain `http` by default — silently, no error, just a
   blank view. PyInstaller's generated `Info.plist` has no exception, so the
-  build script adds `NSAllowsLocalNetworking` / `NSAllowsArbitraryLoads`
-  with `PlistBuddy` and re-signs the bundle afterwards (editing a bundle
-  invalidates its signature). This does not affect the Python-zip package,
-  which runs in a real browser with no such restriction.
+  build script adds one with `PlistBuddy` and re-signs the bundle
+  afterwards (editing a bundle invalidates its signature).
+
+  **The obvious keys are the wrong ones**, which cost a long debugging
+  session: `NSAllowsLocalNetworking` does *not* cover loopback — it covers
+  `*.local`, unqualified hostnames and link-local `169.254/16` — and its
+  mere presence makes macOS **ignore** `NSAllowsArbitraryLoads`. Setting
+  both therefore blocks `127.0.0.1` while appearing to allow everything.
+  What works is `NSAllowsArbitraryLoadsInWebContent` plus an explicit
+  `NSExceptionDomains` entry for `127.0.0.1`.
+
+  None of this affects the Python-zip package, which runs in a real
+  browser. **Safari is exempt from ATS too**, so "it loads fine in Safari"
+  does not mean the bundled app will — that difference is the giveaway.
 - **The `.command` scripts must stay bash 3.2 compatible.** macOS still
   ships bash 3.2 (2007 — it's a licensing thing), so anything you test in a
   modern bash may still fail there. The one that bit us: expanding an
