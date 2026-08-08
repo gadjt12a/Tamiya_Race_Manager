@@ -68,7 +68,13 @@ def window_geometry(want_w=1360, want_h=860):
     down-and-right from wherever the last one landed - so the app kept
     opening off-centre and part-way off smaller screens. Returns
     (width, height, x, y), or (want_w, want_h, None, None) if the screen
-    can't be measured, in which case pywebview falls back to OS placement."""
+    can't be measured, in which case pywebview falls back to OS placement.
+
+    Windows-only measurement. macOS centres new windows sensibly by itself,
+    and ctypes.windll doesn't exist there - so return the fallback quietly
+    rather than logging a failure on every Mac launch."""
+    if os.name != "nt":
+        return want_w, want_h, None, None
     try:
         import ctypes
         user32 = ctypes.windll.user32

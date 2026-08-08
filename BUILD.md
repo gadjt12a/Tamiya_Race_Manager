@@ -193,6 +193,59 @@ To test what a club would download, build the zip on Windows, copy it
 across, unzip, `chmod +x` the launcher, and run that — the repo checkout
 exercises a different code path (`../app/`) to the packaged one.
 
+### Building the native macOS app (on the Mac)
+
+The Python-zip package above needs the club to install Python 3 first —
+stock macOS hasn't shipped a usable `python3` since 12.3, so a Mac user's
+first experience is being told to go and install something. The native
+`.app` removes that: Python is bundled, same as the Windows exe.
+
+**PyInstaller cannot cross-compile** — a macOS app can only be built on
+macOS. That's why this is a separate script from the Windows build.
+
+On the Mac, once you have Python 3 and a clone (see setup above):
+
+```
+python3 -m pip install pyinstaller pywebview
+./mac/BUILD\ MAC\ APP\ \(developer\ use\ only\).command
+```
+
+Or just double-click **`BUILD MAC APP (developer use only).command`** in
+Finder (`chmod +x` it first if Finder refuses).
+
+Output:
+
+| Output | What it is |
+|---|---|
+| `dist/TamiyaRaceManager.app` | the app bundle |
+| `dist/TamiyaRaceManager-Mac-<ver>.<build>.zip` | the shippable zip |
+
+Notes:
+
+- The zip is made with `ditto`, not `zip` — it preserves the execute bits
+  and metadata inside the bundle. A plain `zip` can produce an `.app` that
+  won't launch once unzipped.
+- **The app is unsigned**, so the first launch on any Mac needs
+  right-click → **Open** → **Open**. Double-clicking is refused until
+  that's been done once. Same trade-off as SmartScreen on Windows.
+- `--add-data` uses a **colon** separator on macOS and a **semicolon** on
+  Windows. That difference is why the two build scripts can't be shared.
+- **Icon:** macOS needs `app/icon.icns`; `app/icon.ico` is Windows-only.
+  The script builds without an icon if `.icns` is missing rather than
+  failing. To generate one from a square PNG on the Mac:
+  ```
+  mkdir icon.iconset
+  sips -z 16 16   source.png --out icon.iconset/icon_16x16.png
+  sips -z 32 32   source.png --out icon.iconset/icon_32x32.png
+  sips -z 128 128 source.png --out icon.iconset/icon_128x128.png
+  sips -z 256 256 source.png --out icon.iconset/icon_256x256.png
+  sips -z 512 512 source.png --out icon.iconset/icon_512x512.png
+  iconutil -c icns icon.iconset -o app/icon.icns
+  ```
+- The app uses pywebview, which on macOS renders through WebKit rather
+  than WebView2. Expect rendering differences from Windows, and check the
+  second-screen display window in particular.
+
 ### Mac data location
 
 `~/Library/Application Support/TamiyaRaceManager/` (`racedata.json` +
