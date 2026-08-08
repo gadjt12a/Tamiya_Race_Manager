@@ -69,6 +69,22 @@ body::before{
 .tnav:hover{color:var(--text);background:var(--surface2)}
 .tnav.active{color:var(--accent);background:var(--accentdim)}
 .topbar-right{display:flex;gap:8px;margin-left:auto}
+/* Safari before 14.1 (macOS 10.13/10.14) ignores `gap` on FLEX containers -
+   it supports it on grid only - so buttons end up jammed together.
+   There is no direct feature query for flex-gap: Safari 13 reports
+   `gap`/`row-gap` as supported because grid has it. `inset` shipped in
+   Safari 14.1, the same release that added flex gap, so it is a reliable
+   proxy for "old enough to lack flex gap". */
+@supports not (inset: 0px){
+  .topbar-right > * { margin-left:8px }
+  .topbar-right > *:first-child { margin-left:0 }
+  .topbar-nav > * { margin-left:4px }
+  .topbar-nav > *:first-child { margin-left:0 }
+  .season-hero-actions > * { margin-left:8px }
+  .season-hero-actions > *:first-child { margin-left:0 }
+  .modal-actions > * { margin-left:8px }
+  .modal-actions > *:first-child { margin-left:0 }
+}
 .icon-btn{
   background:var(--surface2);border:1px solid var(--border);color:var(--muted2);
   padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer;
@@ -761,6 +777,37 @@ table.pts-table tr:hover td{background:var(--surface2)}
 
 <!-- Toast -->
 <div id="toast"></div>
+
+<!-- Error reporter. Deliberately a SEPARATE script block, before the main
+     one: a parse error in the block below would stop its own handlers ever
+     being registered, so this has to be installed first. Without it, an old
+     browser shows a blank page with nothing to go on - which cost a day on
+     macOS 10.13. -->
+<script>
+window.__trmError = function(msg, detail){
+  try{
+    var d = document.getElementById('__trmErrBox');
+    if(!d){
+      d = document.createElement('div');
+      d.id = '__trmErrBox';
+      d.style.cssText = 'position:fixed;z-index:99999;left:0;right:0;bottom:0;'+
+        'max-height:60%;overflow:auto;background:#3a0d0d;color:#ffd9d9;'+
+        'font:12px/1.5 monospace;padding:12px 14px;border-top:3px solid #e05555;'+
+        'white-space:pre-wrap';
+      (document.body || document.documentElement).appendChild(d);
+    }
+    d.textContent += (d.textContent ? '\n\n' : '') + msg + (detail ? '\n' + detail : '');
+  }catch(_){}
+};
+window.addEventListener('error', function(e){
+  window.__trmError('JS ERROR: ' + (e.message || 'unknown'),
+    (e.filename || '') + ':' + (e.lineno || '?') + ':' + (e.colno || '?') +
+    ((e.error && e.error.stack) ? '\n' + e.error.stack : ''));
+});
+window.addEventListener('unhandledrejection', function(e){
+  window.__trmError('UNHANDLED PROMISE: ' + ((e.reason && e.reason.message) || e.reason));
+});
+</script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════
