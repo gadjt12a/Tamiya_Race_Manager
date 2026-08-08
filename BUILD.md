@@ -213,6 +213,20 @@ python3 -m pip install pyinstaller pywebview
 Or just double-click **`BUILD MAC APP (developer use only).command`** in
 Finder (`chmod +x` it first if Finder refuses).
 
+**On macOS 10.13/10.14, pin `pywebview==4.4.1`.** pywebview 5+ opens a
+window that never renders anything on High Sierra — no error, no console
+output, just a blank view. It looks exactly like a packaging bug and is
+not one: a one-line pywebview script displaying a plain HTML string is
+blank on 6.2.1 and renders correctly on 4.4.1, with no server, bundle or
+ATS involved. The build script warns if it sees this combination.
+
+```
+python3.13 -m pip install "pywebview==4.4.1"
+```
+
+Newer pywebview is the right choice on newer macOS — this pin is only for
+the older releases.
+
 **Use a Python version that has pyobjc wheels — 3.12 or 3.13.** pywebview
 talks to Cocoa/WebKit through pyobjc, which ships compiled wheels per
 Python version and is slow to publish them for brand-new releases.

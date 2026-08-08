@@ -68,6 +68,31 @@ for mod in PyInstaller webview; do
     fi
 done
 
+# pywebview 5+ builds a window that never renders on macOS 10.13/10.14 -
+# no error, just a blank view, which looks exactly like a packaging bug
+# and is not one. 4.4.1 renders correctly. Warn rather than block, since
+# newer pywebview is the right choice on newer macOS.
+OSVER=$(sw_vers -productVersion 2>/dev/null || echo "0")
+OSMINOR=$(echo "$OSVER" | cut -d. -f1-2)
+PWV=$("$PY" -c "import webview; print(webview.__version__)" 2>/dev/null || echo "?")
+echo "  pywebview: $PWV   macOS: $OSVER"
+case "$OSMINOR" in
+    10.13|10.14)
+        case "$PWV" in
+            1.*|2.*|3.*|4.*) ;;
+            *)
+                echo ""
+                echo "  WARNING: pywebview $PWV on macOS $OSVER will build an app whose"
+                echo "  window opens BLANK. This is a pywebview incompatibility, not a"
+                echo "  packaging fault. Install a version that works here:"
+                echo "      $PY -m pip install 'pywebview==4.4.1'"
+                echo ""
+                read -r -p "  Press Enter to build anyway, or Ctrl-C to stop..."
+                ;;
+        esac
+        ;;
+esac
+
 # ── Version + build number ────────────────────────────────────
 APPVERSION=$(tr -d '[:space:]' < app/VERSION)
 
