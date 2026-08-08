@@ -213,6 +213,34 @@ python3 -m pip install pyinstaller pywebview
 Or just double-click **`BUILD MAC APP (developer use only).command`** in
 Finder (`chmod +x` it first if Finder refuses).
 
+**Use a Python version that has pyobjc wheels — 3.12 or 3.13.** pywebview
+talks to Cocoa/WebKit through pyobjc, which ships compiled wheels per
+Python version and is slow to publish them for brand-new releases.
+Building against a too-new Python was tried on 2026-08-08 with 3.14 and
+`pip install pywebview` crashed the interpreter outright ("Python quit
+unexpectedly"), after which even `python3 -c "print('ok')"` crashed —
+a broken native module can take the interpreter down at start-up rather
+than raising an error. None of that is visible on Windows, where
+pywebview uses WebView2 and needs no pyobjc at all.
+
+Several Pythons can coexist. The script picks the newest *working* one it
+knows about (3.13 → 3.12 → 3.11 → `python3`), testing each by running it,
+so a broken install is skipped rather than chosen. To force a specific
+one:
+
+```
+./mac/BUILD\ MAC\ APP\ \(developer\ use\ only\).command python3.13
+PY=/full/path/to/python3 ./mac/BUILD\ MAC\ APP\ \(developer\ use\ only\).command
+```
+
+Install the build tools into *that* interpreter, not whatever `python3`
+happens to be:
+
+```
+python3.13 -m pip install pyinstaller pywebview
+python3.13 -c "import webview; print('webview ok')"
+```
+
 Output:
 
 | Output | What it is |

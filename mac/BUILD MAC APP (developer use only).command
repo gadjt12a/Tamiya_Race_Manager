@@ -11,6 +11,13 @@
 #
 # Requires: Python 3, then  python3 -m pip install pyinstaller pywebview
 #
+# Which Python? By default it looks for a working one, newest-known-good
+# first, because "python3" on a Mac is whatever was installed last and
+# that is not always the one with the build tools in it. Override with:
+#
+#     ./BUILD\ MAC\ APP...command python3.13
+#     PY=/full/path/to/python3 ./BUILD\ MAC\ APP...command
+#
 set -u
 cd "$(dirname "$0")/.."
 
@@ -21,19 +28,41 @@ echo "  =========================================="
 echo ""
 
 # ── Python ────────────────────────────────────────────────────
-if ! command -v python3 &>/dev/null; then
-    echo "  ERROR: python3 not found."
-    echo "  Install it from https://www.python.org/downloads/ and try again."
-    read -r -p "  Press Enter to close..."
-    exit 1
+# A broken or half-installed interpreter can CRASH rather than error
+# (a bad pyobjc has been seen taking python down at startup), so every
+# candidate is tested by actually running it before it's chosen.
+usable() {
+    command -v "$1" &>/dev/null && "$1" -c "print(1)" &>/dev/null
+}
+
+PY="${1:-${PY:-}}"
+if [ -n "$PY" ]; then
+    if ! usable "$PY"; then
+        echo "  ERROR: '$PY' is not a working Python 3."
+        echo "  It is missing, or it crashes on start-up."
+        read -r -p "  Press Enter to close..."
+        exit 1
+    fi
+else
+    for cand in python3.13 python3.12 python3.11 python3; do
+        if usable "$cand"; then PY="$cand"; break; fi
+    done
+    if [ -z "$PY" ]; then
+        echo "  ERROR: no working Python 3 found."
+        echo "  Install one from https://www.python.org/downloads/ and try again."
+        echo "  (If 'python3' exists but crashes, that install is broken -"
+        echo "   install another version and pass it: $0 python3.13)"
+        read -r -p "  Press Enter to close..."
+        exit 1
+    fi
 fi
-echo "  Python: $(python3 --version)"
+echo "  Python: $("$PY" --version)  [$(command -v "$PY")]"
 
 for mod in PyInstaller webview; do
-    if ! python3 -c "import $mod" &>/dev/null; then
+    if ! "$PY" -c "import $mod" &>/dev/null; then
         echo ""
-        echo "  ERROR: Python module '$mod' is missing. Install both with:"
-        echo "      python3 -m pip install pyinstaller pywebview"
+        echo "  ERROR: Python module '$mod' is missing from $PY. Install both with:"
+        echo "      $PY -m pip install pyinstaller pywebview"
         read -r -p "  Press Enter to close..."
         exit 1
     fi
@@ -67,7 +96,7 @@ fi
 # ── Build ─────────────────────────────────────────────────────
 # --windowed produces the .app bundle. Note --add-data uses a COLON
 # separator on macOS, where Windows uses a semicolon.
-python3 -m PyInstaller --noconfirm --clean --windowed \
+"$PY" -m PyInstaller --noconfirm --clean --windowed \
     --name TamiyaRaceManager \
     --add-data "app/race-manager.html:." \
     --add-data "app/VERSION:." \
