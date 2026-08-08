@@ -34,11 +34,20 @@
   --silver:#c0c8d0;
   --bronze:#cd7f32;
 }
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe UI','Barlow',sans-serif;font-size:clamp(13px,1.05vw,16px);font-weight:400;overflow:hidden}
+/* Every clamp() in this file is preceded by a plain fallback declaration.
+   clamp() arrived in Safari 13.1; the WebView the macOS app renders in is
+   older, and an unsupported value makes the browser DROP THE WHOLE
+   DECLARATION - which silently destroys layout rather than degrading it.
+   The fallback uses the clamp's preferred (middle) value, so modern
+   browsers are unaffected and old ones get the intended proportions
+   without the min/max limits. */
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe UI','Barlow',sans-serif;font-size:14px;font-size:1.05vw;font-size:clamp(13px,1.05vw,16px);font-weight:400;overflow:hidden}
 
 /* ── NOISE TEXTURE OVERLAY ─────────────────────────────── */
 body::before{
-  content:'';position:fixed;inset:0;
+  /* top/right/bottom/left before inset: `inset` is Safari 14.1+, and older
+     WebKit drops it, leaving the element with auto offsets. */
+  content:'';position:fixed;top:0;right:0;bottom:0;left:0;inset:0;
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
   pointer-events:none;z-index:0;opacity:0.4;
 }
@@ -76,14 +85,39 @@ body::before{
    Safari 14.1, the same release that added flex gap, so it is a reliable
    proxy for "old enough to lack flex gap". */
 @supports not (inset: 0px){
-  .topbar-right > * { margin-left:8px }
-  .topbar-right > *:first-child { margin-left:0 }
-  .topbar-nav > * { margin-left:4px }
-  .topbar-nav > *:first-child { margin-left:0 }
-  .season-hero-actions > * { margin-left:8px }
-  .season-hero-actions > *:first-child { margin-left:0 }
-  .modal-actions > * { margin-left:8px }
-  .modal-actions > *:first-child { margin-left:0 }
+  /* Stylesheet flex rows */
+  .topbar > * + *,
+  .topbar-right > * + *,
+  .season-hero-actions > * + *,
+  .modal-actions > * + *,
+  .racer-item > * + *,
+  .roster-item > * + *,
+  .racer-row > * + *,
+  .s-row > * + *,
+  .junior-row > * + * { margin-left:8px }
+  .topbar-nav > * + * { margin-left:4px }
+  .class-tabs > * + * { margin-left:6px }
+  .roster-tags > * + * { margin-left:3px }
+  .place-btns > * + * { margin-left:5px }
+  .icon-btn > * + * { margin-left:5px }
+
+  /* Inline-styled flex rows. Most of the app's layout is generated in JS
+     with style="display:flex;...;gap:Npx", which no class selector can
+     reach - hence matching on the style attribute itself. Restricted to
+     display:flex so grid containers, where gap DOES work here, are not
+     given double spacing. */
+  [style*="display:flex"][style*="gap:3px"]  > * + * { margin-left:3px }
+  [style*="display:flex"][style*="gap:4px"]  > * + * { margin-left:4px }
+  [style*="display:flex"][style*="gap:5px"]  > * + * { margin-left:5px }
+  [style*="display:flex"][style*="gap:6px"]  > * + * { margin-left:6px }
+  [style*="display:flex"][style*="gap:8px"]  > * + * { margin-left:8px }
+  [style*="display:flex"][style*="gap:10px"] > * + * { margin-left:10px }
+  [style*="display:flex"][style*="gap:12px"] > * + * { margin-left:12px }
+  [style*="display:flex"][style*="gap:14px"] > * + * { margin-left:14px }
+  [style*="display:flex"][style*="gap:16px"] > * + * { margin-left:16px }
+  [style*="display:flex"][style*="gap:24px"] > * + * { margin-left:24px }
+  /* vw gaps come from the clamp() fallbacks on the display screen */
+  [style*="display:flex"][style*="gap:1.8vw"] > * + * { margin-left:1.8vw }
 }
 .icon-btn{
   background:var(--surface2);border:1px solid var(--border);color:var(--muted2);
@@ -265,7 +299,11 @@ select option{background:var(--surface2)}
 #raceScreen{overflow:hidden}
 #raceScreen .content{
   flex:1;display:grid;
-  grid-template-columns:clamp(320px,28vw,480px) 1fr clamp(220px,20vw,340px);
+  /* Fallback FIRST - without it, old WebKit drops this declaration
+     entirely, the three columns collapse into one, and the race screen
+     becomes an unscrollable single column inside overflow:hidden. */
+  grid-template-columns:28vw 1fr 20vw;
+  grid-template-columns:28vw 1fr 20vw;grid-template-columns:clamp(320px,28vw,480px) 1fr clamp(220px,20vw,340px);
   gap:0;min-height:0;overflow:hidden;
 }
 .race-col{
@@ -375,7 +413,11 @@ table.pts-table tr:hover td{background:var(--surface2)}
    MODALS
 ═══════════════════════════════════════════════════════ */
 .modal-overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;
+  /* top/right/bottom/left MUST come before inset. `inset` is Safari 14.1+;
+     older WebKit drops the declaration, the overlay gets auto offsets and
+     collapses, and every modal becomes invisible - which looked like the
+     End Race and Names buttons "not working". */
+  position:fixed;top:0;right:0;bottom:0;left:0;inset:0;background:rgba(0,0,0,.65);z-index:200;
   display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);
 }
 .modal{
@@ -3015,7 +3057,7 @@ function openDisplay(){
   const shell=`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Race Display</title>
-    <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#04060a;color:#fff;font-family:'Arial Narrow','Impact',system-ui,sans-serif;height:100vh;display:grid;grid-template-columns:1fr 1fr;gap:0;overflow:hidden}.pane{padding:clamp(24px,3.5vw,60px) clamp(20px,3vw,52px);height:100vh;overflow:hidden}.left{border-right:2px solid #0d1520}.right{opacity:.82}</style>
+    <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#04060a;color:#fff;font-family:'Arial Narrow','Impact',system-ui,sans-serif;height:100vh;display:grid;grid-template-columns:1fr 1fr;gap:0;overflow:hidden}.pane{padding:3.5vw 3vw;padding:clamp(24px,3.5vw,60px) clamp(20px,3vw,52px);height:100vh;overflow:hidden}.left{border-right:2px solid #0d1520}.right{opacity:.82}</style>
     </head><body>
     <script>
       var last='';
@@ -3039,35 +3081,35 @@ function writeDisplay(){
 }
 
 function getDisplayHTML(){
-  if(!R || !R.racers) return `<div class="pane left"><div style="color:#1a2030;font-size:clamp(20px,3.5vw,56px);padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">Waiting for racing to start...</div></div><div class="pane right"></div>`;
+  if(!R || !R.racers) return `<div class="pane left"><div style="color:#1a2030;font-size:3.5vw;font-size:clamp(20px,3.5vw,56px);padding:12vh 0;padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">Waiting for racing to start...</div></div><div class="pane right"></div>`;
   const cr=R.currentRace, nextR=(R.roundQueue&&R.roundQueue[0])||null;
   const isFinal=R.currentRace&&R.currentRace.bracket==='final';
 
   const badge=(br,fin)=>fin
-    ?`<span style="display:inline-block;padding:clamp(5px,.7vw,12px) clamp(14px,1.8vw,32px);border-radius:16px;font-size:clamp(14px,1.8vw,30px);font-weight:800;background:rgba(255,215,0,.18);color:#ffd700;border:1px solid rgba(255,215,0,.3);letter-spacing:.06em">🏆 FINAL RACE</span>`
+    ?`<span style="display:inline-block;padding:.7vw 1.8vw;padding:clamp(5px,.7vw,12px) clamp(14px,1.8vw,32px);border-radius:16px;font-size:1.8vw;font-size:clamp(14px,1.8vw,30px);font-weight:800;background:rgba(255,215,0,.18);color:#ffd700;border:1px solid rgba(255,215,0,.3);letter-spacing:.06em">🏆 FINAL RACE</span>`
     :br==='main'
-    ?`<span style="display:inline-block;padding:clamp(5px,.7vw,12px) clamp(14px,1.8vw,32px);border-radius:16px;font-size:clamp(14px,1.8vw,30px);font-weight:800;background:rgba(64,144,224,.15);color:#60b0ff;border:1px solid rgba(64,144,224,.25);letter-spacing:.06em">MAIN BRACKET</span>`
-    :`<span style="display:inline-block;padding:clamp(5px,.7vw,12px) clamp(14px,1.8vw,32px);border-radius:16px;font-size:clamp(14px,1.8vw,30px);font-weight:800;background:rgba(232,160,32,.15);color:#f0c060;border:1px solid rgba(232,160,32,.25);letter-spacing:.06em">2ND CHANCE</span>`;
+    ?`<span style="display:inline-block;padding:.7vw 1.8vw;padding:clamp(5px,.7vw,12px) clamp(14px,1.8vw,32px);border-radius:16px;font-size:1.8vw;font-size:clamp(14px,1.8vw,30px);font-weight:800;background:rgba(64,144,224,.15);color:#60b0ff;border:1px solid rgba(64,144,224,.25);letter-spacing:.06em">MAIN BRACKET</span>`
+    :`<span style="display:inline-block;padding:.7vw 1.8vw;padding:clamp(5px,.7vw,12px) clamp(14px,1.8vw,32px);border-radius:16px;font-size:1.8vw;font-size:clamp(14px,1.8vw,30px);font-weight:800;background:rgba(232,160,32,.15);color:#f0c060;border:1px solid rgba(232,160,32,.25);letter-spacing:.06em">2ND CHANCE</span>`;
 
   let curHTML='';
   if(R.podium){
     const p=R.podium;
     const classLabel={box:'📦 BOX CLASS',evo:'⚡ EVO CLASS',pro:'🏆 PRO CLASS'}[R.classKey]||(R.specialName?esc(R.specialName.toUpperCase()):'FINAL');
     curHTML=`<div>
-      <div style="font-size:clamp(14px,1.8vw,30px);font-weight:800;letter-spacing:.15em;color:#3dd68c;margin-bottom:clamp(14px,2.5vh,32px)">🏆 ${classLabel} — WINNERS</div>
-      ${p.first?`<div style="display:flex;align-items:center;gap:clamp(12px,1.8vw,28px);background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.25);border-radius:16px;padding:clamp(12px,2vh,24px) clamp(16px,2vw,32px);margin-bottom:clamp(8px,1.5vh,18px)"><span style="font-size:clamp(40px,6vw,96px)">🥇</span><span style="font-size:clamp(60px,10vw,190px);font-weight:900;color:#ffd700;line-height:1">${esc(getName(p.first))}</span></div>`:''}
-      ${p.second?`<div style="display:flex;align-items:center;gap:clamp(12px,1.8vw,28px);background:rgba(192,200,208,.07);border:1px solid rgba(192,200,208,.18);border-radius:16px;padding:clamp(10px,1.6vh,20px) clamp(16px,2vw,32px);margin-bottom:clamp(6px,1.2vh,14px)"><span style="font-size:clamp(30px,4.5vw,72px)">🥈</span><span style="font-size:clamp(46px,8vw,152px);font-weight:800;color:#c0c8d0;line-height:1">${esc(getName(p.second))}</span></div>`:''}
-      ${p.third?`<div style="display:flex;align-items:center;gap:clamp(12px,1.8vw,28px);background:rgba(205,127,50,.07);border:1px solid rgba(205,127,50,.18);border-radius:16px;padding:clamp(10px,1.6vh,20px) clamp(16px,2vw,32px)"><span style="font-size:clamp(30px,4.5vw,72px)">🥉</span><span style="font-size:clamp(46px,8vw,152px);font-weight:800;color:#cd7f32;line-height:1">${esc(getName(p.third))}</span></div>`:''}
+      <div style="font-size:1.8vw;font-size:clamp(14px,1.8vw,30px);font-weight:800;letter-spacing:.15em;color:#3dd68c;margin-bottom:2.5vh;margin-bottom:clamp(14px,2.5vh,32px)">🏆 ${classLabel} — WINNERS</div>
+      ${p.first?`<div style="display:flex;align-items:center;gap:1.8vw;gap:clamp(12px,1.8vw,28px);background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.25);border-radius:16px;padding:2vh 2vw;padding:clamp(12px,2vh,24px) clamp(16px,2vw,32px);margin-bottom:1.5vh;margin-bottom:clamp(8px,1.5vh,18px)"><span style="font-size:6vw;font-size:clamp(40px,6vw,96px)">🥇</span><span style="font-size:10vw;font-size:clamp(60px,10vw,190px);font-weight:900;color:#ffd700;line-height:1">${esc(getName(p.first))}</span></div>`:''}
+      ${p.second?`<div style="display:flex;align-items:center;gap:1.8vw;gap:clamp(12px,1.8vw,28px);background:rgba(192,200,208,.07);border:1px solid rgba(192,200,208,.18);border-radius:16px;padding:1.6vh 2vw;padding:clamp(10px,1.6vh,20px) clamp(16px,2vw,32px);margin-bottom:1.2vh;margin-bottom:clamp(6px,1.2vh,14px)"><span style="font-size:4.5vw;font-size:clamp(30px,4.5vw,72px)">🥈</span><span style="font-size:8vw;font-size:clamp(46px,8vw,152px);font-weight:800;color:#c0c8d0;line-height:1">${esc(getName(p.second))}</span></div>`:''}
+      ${p.third?`<div style="display:flex;align-items:center;gap:1.8vw;gap:clamp(12px,1.8vw,28px);background:rgba(205,127,50,.07);border:1px solid rgba(205,127,50,.18);border-radius:16px;padding:1.6vh 2vw;padding:clamp(10px,1.6vh,20px) clamp(16px,2vw,32px)"><span style="font-size:4.5vw;font-size:clamp(30px,4.5vw,72px)">🥉</span><span style="font-size:8vw;font-size:clamp(46px,8vw,152px);font-weight:800;color:#cd7f32;line-height:1">${esc(getName(p.third))}</span></div>`:''}
     </div>`;
   } else if(cr){
     curHTML=`
-      <div style="font-size:clamp(13px,1.8vw,30px);font-weight:800;letter-spacing:.18em;color:#4090e0;margin-bottom:clamp(8px,1.5vh,18px)">NOW RACING</div>
-      <div style="margin-bottom:clamp(14px,2.5vh,28px)">${badge(cr.bracket,isFinal)}</div>
+      <div style="font-size:1.8vw;font-size:clamp(13px,1.8vw,30px);font-weight:800;letter-spacing:.18em;color:#4090e0;margin-bottom:1.5vh;margin-bottom:clamp(8px,1.5vh,18px)">NOW RACING</div>
+      <div style="margin-bottom:2.5vh;margin-bottom:clamp(14px,2.5vh,28px)">${badge(cr.bracket,isFinal)}</div>
       ${cr.racers.map((id,i)=>`
-        <div style="font-size:${cr.racers.length>2?'clamp(60px,9.5vw,182px)':'clamp(72px,11.5vw,220px)'};font-weight:900;color:#fff;margin-bottom:clamp(4px,1vh,14px);line-height:1.0;letter-spacing:-.01em">${esc(getName(id))}</div>
-        ${i<cr.racers.length-1?`<div style="font-size:clamp(14px,2vw,32px);color:#2a3a50;margin-bottom:clamp(4px,1vh,14px);font-weight:700">VS</div>`:''}`).join('')}`;
+        <div style="font-size:${cr.racers.length>2?'clamp(60px,9.5vw,182px)':'clamp(72px,11.5vw,220px)'};font-weight:900;color:#fff;margin-bottom:1vh;margin-bottom:clamp(4px,1vh,14px);line-height:1.0;letter-spacing:-.01em">${esc(getName(id))}</div>
+        ${i<cr.racers.length-1?`<div style="font-size:2vw;font-size:clamp(14px,2vw,32px);color:#2a3a50;margin-bottom:1vh;margin-bottom:clamp(4px,1vh,14px);font-weight:700">VS</div>`:''}`).join('')}`;
   } else {
-    curHTML=`<div style="color:#1a2030;font-size:clamp(20px,3.5vw,56px);padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">Preparing next race...</div>`;
+    curHTML=`<div style="color:#1a2030;font-size:3.5vw;font-size:clamp(20px,3.5vw,56px);padding:12vh 0;padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">Preparing next race...</div>`;
   }
 
   let nxtHTML;
@@ -3076,17 +3118,17 @@ function getDisplayHTML(){
     // EVO (or any event with juniors): class winners LEFT, Junior winners RIGHT.
     const jp=R.juniorPodium;
     nxtHTML = (jp&&(jp.first||jp.second||jp.third))
-      ?`<div style="font-size:clamp(14px,1.8vw,30px);font-weight:800;letter-spacing:.15em;color:#b090e8;margin-bottom:clamp(14px,2.5vh,32px)">👾 JUNIOR — WINNERS</div>
-        ${jp.first?`<div style="display:flex;align-items:center;gap:clamp(12px,1.8vw,28px);background:rgba(144,96,224,.12);border:1px solid rgba(144,96,224,.3);border-radius:16px;padding:clamp(12px,2vh,24px) clamp(16px,2vw,32px);margin-bottom:clamp(8px,1.5vh,18px)"><span style="font-size:clamp(40px,6vw,96px)">🥇</span><span style="font-size:clamp(60px,10vw,190px);font-weight:900;color:#c0a0f0;line-height:1">${esc(getName(jp.first))}</span></div>`:''}
-        ${jp.second?`<div style="display:flex;align-items:center;gap:clamp(12px,1.8vw,28px);background:rgba(144,96,224,.07);border:1px solid rgba(144,96,224,.2);border-radius:16px;padding:clamp(10px,1.6vh,20px) clamp(16px,2vw,32px);margin-bottom:clamp(6px,1.2vh,14px)"><span style="font-size:clamp(30px,4.5vw,72px)">🥈</span><span style="font-size:clamp(46px,8vw,152px);font-weight:800;color:#b0a0d0;line-height:1">${esc(getName(jp.second))}</span></div>`:''}
-        ${jp.third?`<div style="display:flex;align-items:center;gap:clamp(12px,1.8vw,28px);background:rgba(144,96,224,.05);border:1px solid rgba(144,96,224,.15);border-radius:16px;padding:clamp(10px,1.6vh,20px) clamp(16px,2vw,32px)"><span style="font-size:clamp(30px,4.5vw,72px)">🥉</span><span style="font-size:clamp(46px,8vw,152px);font-weight:800;color:#a098c0;line-height:1">${esc(getName(jp.third))}</span></div>`:''}`
+      ?`<div style="font-size:1.8vw;font-size:clamp(14px,1.8vw,30px);font-weight:800;letter-spacing:.15em;color:#b090e8;margin-bottom:2.5vh;margin-bottom:clamp(14px,2.5vh,32px)">👾 JUNIOR — WINNERS</div>
+        ${jp.first?`<div style="display:flex;align-items:center;gap:1.8vw;gap:clamp(12px,1.8vw,28px);background:rgba(144,96,224,.12);border:1px solid rgba(144,96,224,.3);border-radius:16px;padding:2vh 2vw;padding:clamp(12px,2vh,24px) clamp(16px,2vw,32px);margin-bottom:1.5vh;margin-bottom:clamp(8px,1.5vh,18px)"><span style="font-size:6vw;font-size:clamp(40px,6vw,96px)">🥇</span><span style="font-size:10vw;font-size:clamp(60px,10vw,190px);font-weight:900;color:#c0a0f0;line-height:1">${esc(getName(jp.first))}</span></div>`:''}
+        ${jp.second?`<div style="display:flex;align-items:center;gap:1.8vw;gap:clamp(12px,1.8vw,28px);background:rgba(144,96,224,.07);border:1px solid rgba(144,96,224,.2);border-radius:16px;padding:1.6vh 2vw;padding:clamp(10px,1.6vh,20px) clamp(16px,2vw,32px);margin-bottom:1.2vh;margin-bottom:clamp(6px,1.2vh,14px)"><span style="font-size:4.5vw;font-size:clamp(30px,4.5vw,72px)">🥈</span><span style="font-size:8vw;font-size:clamp(46px,8vw,152px);font-weight:800;color:#b0a0d0;line-height:1">${esc(getName(jp.second))}</span></div>`:''}
+        ${jp.third?`<div style="display:flex;align-items:center;gap:1.8vw;gap:clamp(12px,1.8vw,28px);background:rgba(144,96,224,.05);border:1px solid rgba(144,96,224,.15);border-radius:16px;padding:1.6vh 2vw;padding:clamp(10px,1.6vh,20px) clamp(16px,2vw,32px)"><span style="font-size:4.5vw;font-size:clamp(30px,4.5vw,72px)">🥉</span><span style="font-size:8vw;font-size:clamp(46px,8vw,152px);font-weight:800;color:#a098c0;line-height:1">${esc(getName(jp.third))}</span></div>`:''}`
       :'';
   } else {
     nxtHTML=nextR
-      ?`<div style="font-size:clamp(13px,1.8vw,30px);font-weight:800;letter-spacing:.18em;color:#7090a8;margin-bottom:clamp(8px,1.5vh,18px)">UP NEXT</div>
-         <div style="margin-bottom:clamp(14px,2.5vh,28px)">${badge(nextR.bracket,false)}</div>
-         ${nextR.racers.map(id=>`<div style="font-size:clamp(46px,7vw,134px);font-weight:700;color:#c8dae8;margin-bottom:clamp(6px,1.2vh,14px);line-height:1.05">${esc(getName(id))}</div>`).join('')}`
-      :`<div style="color:#3a5060;font-size:clamp(16px,2.5vw,40px);padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">No race queued</div>`;
+      ?`<div style="font-size:1.8vw;font-size:clamp(13px,1.8vw,30px);font-weight:800;letter-spacing:.18em;color:#7090a8;margin-bottom:1.5vh;margin-bottom:clamp(8px,1.5vh,18px)">UP NEXT</div>
+         <div style="margin-bottom:2.5vh;margin-bottom:clamp(14px,2.5vh,28px)">${badge(nextR.bracket,false)}</div>
+         ${nextR.racers.map(id=>`<div style="font-size:7vw;font-size:clamp(46px,7vw,134px);font-weight:700;color:#c8dae8;margin-bottom:1.2vh;margin-bottom:clamp(6px,1.2vh,14px);line-height:1.05">${esc(getName(id))}</div>`).join('')}`
+      :`<div style="color:#3a5060;font-size:2.5vw;font-size:clamp(16px,2.5vw,40px);padding:12vh 0;padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">No race queued</div>`;
   }
 
   return `<div class="pane left">${curHTML}</div><div class="pane right">${nxtHTML}</div>`;

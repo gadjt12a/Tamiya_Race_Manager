@@ -141,14 +141,14 @@ server_ref = None
 # The coordinator app POSTs its display HTML here; the /display page (browser
 # popup or native window) polls it every second. Server-mediated, so the display
 # never depends on a window.opener reference and can never go stale.
-display_html = ('<div class="pane left"><div style="color:#1a2030;font-size:clamp(20px,3.5vw,56px);'
-                'padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">'
+display_html = ('<div class="pane left"><div style="color:#1a2030;font-size:3.5vw;font-size:clamp(20px,3.5vw,56px);'
+                'padding:12vh 0;padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">'
                 'Waiting for racing to start...</div></div><div class="pane right"></div>')
 
 DISPLAY_PAGE = """<!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Race Display</title>
-<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#04060a;color:#fff;font-family:'Arial Narrow','Impact',system-ui,sans-serif;height:100vh;display:grid;grid-template-columns:1fr 1fr;gap:0;overflow:hidden;cursor:none}.pane{padding:clamp(24px,3.5vw,60px) clamp(20px,3vw,52px);height:100vh;overflow:hidden}.left{border-right:2px solid #0d1520}.right{opacity:.82}</style>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#04060a;color:#fff;font-family:'Arial Narrow','Impact',system-ui,sans-serif;height:100vh;display:grid;grid-template-columns:1fr 1fr;gap:0;overflow:hidden;cursor:none}.pane{padding:3.5vw 3vw;padding:clamp(24px,3.5vw,60px) clamp(20px,3vw,52px);height:100vh;overflow:hidden}.left{border-right:2px solid #0d1520}.right{opacity:.82}</style>
 </head><body>
 <script>
 var last='';
