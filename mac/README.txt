@@ -1,11 +1,18 @@
 TAMIYA RACE MANAGER - MAC (OSX)
 ===============================
 
-*** PLEASE NOTE: the Mac version has NEVER been run on a Mac. It is
-*** built and packaged on Windows, and no one has yet launched it on
-*** macOS even once. It uses the same core app, but treat it as
-*** experimental and please report anything broken. The Windows
-*** version is the tested one - use that if you have the choice.
+*** PLEASE NOTE: the Mac version was first run successfully on a Mac
+*** on 2026-08-08 - a full race, exports, printing, data storage and
+*** shutdown all behaved correctly. It has been tested on ONE Mac, by
+*** the developer, and never yet at a real race night.
+***
+*** It also runs differently from Windows: the app opens in your web
+*** BROWSER with a Terminal window behind it, and the audience display
+*** is a browser pop-up rather than a second app window. You need
+*** Python 3 installed (see REQUIREMENTS below); the Windows version
+*** bundles everything and needs nothing.
+***
+*** Please report anything broken.
 
 WHAT'S IN THIS PACKAGE
 ----------------------

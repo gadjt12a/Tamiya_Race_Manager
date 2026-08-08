@@ -275,7 +275,12 @@ using the same three buttons in the top right.
 
 The app supports a second monitor for audience display.
 
-  1. Click "📺 Display" in the race coordinator top bar
+You can open it from the HOME screen before racing starts, so the
+projector is set up and ready - it shows "Waiting for racing to
+start..." until the first race begins. The same button is in the
+race coordinator top bar once a race is running.
+
+  1. Click "📺 Display" (home screen or race top bar)
   2. With a second monitor connected, the display opens
      full-screen on it automatically
   3. The display shows the current race and next race up

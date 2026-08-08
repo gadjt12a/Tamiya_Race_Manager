@@ -206,6 +206,12 @@ Dave, Snake, Barry, Billy, Zara, Nick, Nate, Kirsten, Ryan, Anton, Stella
 
 ## Known Remaining / Future Items
 
+**Top bar is getting crowded** (raised by Kris, 2026-08-09). The home
+screen top bar now carries Display, Full Screen, Export Data and Import
+Data, and `.topbar-right` doesn't wrap. Likely direction: move
+Import/Export into a Setup/Settings tab and keep the top bar for
+race-night actions. Deferred, not urgent.
+
 At time of last session:
 - Special Events points wiring — partially built, needs verification
 - Delayed race swap — button exists, needs end-to-end test

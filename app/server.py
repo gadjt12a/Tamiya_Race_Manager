@@ -41,6 +41,19 @@ try:
 except Exception:
     APP_BUILD = "0"
 
+if APP_BUILD == "0" and not getattr(sys, "frozen", False):
+    # Running from a source checkout: app/BUILD is written by the build
+    # scripts and is gitignored, so it isn't there. Ask git directly rather
+    # than showing a misleading "<version>.0" in the header.
+    try:
+        import subprocess
+        APP_BUILD = subprocess.run(
+            ["git", "rev-list", "--count", "HEAD"],
+            cwd=str(RESOURCE_DIR), capture_output=True, text=True, timeout=3
+        ).stdout.strip() or "0"
+    except Exception:
+        APP_BUILD = "0"
+
 # What the app header, console and installer all show, e.g. "9.39.412"
 FULL_VERSION = f"{APP_VERSION}.{APP_BUILD}"
 

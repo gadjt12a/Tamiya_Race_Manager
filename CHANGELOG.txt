@@ -48,6 +48,15 @@ Tamiya Race Manager — Change Log
     native second-screen display.
   - Housekeeping: removed the unused splash image left behind
     when the splash screen was dropped.
+  - NEW: the "📺 Display" button is now on the HOME screen too,
+    so you can get the audience screen up on the projector
+    before racing starts. It shows "Waiting for racing to
+    start..." until the first race begins.
+  - Mac: first ever successful run on a Mac (2026-08-08).
+    Race night, exports, printing, data location and shutdown
+    all behaved. See the Mac README for what is still untested.
+  - When run from a source checkout the version header now
+    shows the real build number instead of ".0".
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v9.38  (2026-07-17)  [v10-packaging branch]
