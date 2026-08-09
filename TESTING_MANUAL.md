@@ -156,18 +156,18 @@ the release notes (they'll be committed to the repo at that point).
 the first run. Capture the screenshots on the *first* launch there, not after
 you've had a play.
 
-## T8 — Upgrade over an existing install *(largely done — this is now a spot-check)*
+## T8 — Upgrade over an existing install *(PASS — 2026-08-09)*
 
-**Already covered.** Kris deployed every v9.3x build by running the new
-installer over the top of the previous install (declining the
-replace-desktop-shortcut option), and it installed and opened correctly every
-time — including across the v9.39 onefile → onedir change, which is the
-transition this test was written for. Data was never at risk: the installer
-writes only to `%LOCALAPPDATA%\Programs\`, while race data lives in
+**Done.** Kris deployed every v9.3x build by running the new installer over
+the top of the previous install (declining the replace-desktop-shortcut
+option). It installed and opened correctly every time — including across the
+v9.39 onefile → onedir change, which is the transition this test was written
+for — and the data and install folder were checked afterwards. Data was never
+the exposure in any case: the installer writes only to
+`%LOCALAPPDATA%\Programs\`, while race data lives in
 `%LOCALAPPDATA%\TamiyaRaceManager\`.
 
-What's left is the part that was never explicitly *looked at* rather than
-merely working. Do it once on the next over-the-top install:
+Re-run it whenever the `{app}` layout changes again. The steps:
 
 **Before you start:** Export Data to a USB stick.
 
@@ -240,11 +240,11 @@ the `.app` in one sitting, and no other Mac has been tried at all.
 |---|---|---|
 | T1 Full race night | | |
 | T2 Display / second screen | | |
-| T3 Exports & import in window | | |
+| T3 Exports & import in window | PASS — Kris, incl. print / PDF from inside the WebView2 window (matrix #13) | 2026-08-09 |
 | T4 Sleep mid-event | | |
 | T5 Crash recovery | | |
 | T6 Garbage import | | |
 | T7 Fresh machine + SmartScreen | | |
-| T8 Upgrade over existing install | PASS (install + launch) — Kris, every v9.3x build installed over the top, incl. onefile→onedir. Data-intact check and leftover-file check still to do once | 2026-08-09 |
-| T9 Reopen a closed season | | |
+| T8 Upgrade over existing install | PASS — Kris, every v9.3x build installed over the top, incl. onefile→onedir; data intact and install folder checked afterwards | 2026-08-09 |
+| T9 Reopen a closed season | PASS — Kris, on a season with recorded events; standings correct after reopening | 2026-08-09 |
 | T10 The Mac app (state macOS version + chip) | | |

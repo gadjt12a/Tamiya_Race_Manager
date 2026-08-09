@@ -156,8 +156,9 @@ and serves v9.32 from the proper data home.*
       same page; legacy opener-poll popup kept for no-server mode.
 - [x] Fallbacks: WebView2/GUI failure → browser mode; windowed build logs to
       `%LOCALAPPDATA%\TamiyaRaceManager\app.log`; zip/console mode unchanged.
-- [ ] Kris to run test matrix #13 (exports/print/import + display inside the
-      native window — WebView2 handles downloads/popups differently to Chrome).
+- [x] Test matrix #13 (exports/print/import + display inside the native
+      window — WebView2 handles downloads/popups differently to Chrome).
+      *Confirmed by Kris 2026-08-09, print / PDF included.*
 
 > **Icon licensing: RESOLVED (v9.37).** `app/icon.ico` is now generated from
 > Kris's licence-clean `Race_App_Icon.png` artwork. The earlier watermarked
@@ -237,7 +238,8 @@ install → run, all working.*
       event count, spells out what closing does. *Confirmed by Kris.*
 - [x] **Reopen an accidentally closed season** from the Season Archive.
       Refuses while another season is active. *Confirmed by Kris on the test
-      PC; not yet exercised against a season with recorded events.*
+      PC, and again 2026-08-09 against a season with recorded events —
+      standings read correctly after reopening.*
 - [x] Home screen holds its alignment when the window is resized (hero
       buttons wrap, `minmax(0,…)` columns, <900px stacking breakpoint).
       *Confirmed by Kris.*
@@ -311,10 +313,13 @@ Mac available for testing. Verified by him on that machine unless noted.*
 - [ ] Fill in SmartScreen screenshots (needs a machine that hasn't seen the
       exe).
 - [ ] Kris's manual test matrix items pass — step-by-step guide in
-      `TESTING_MANUAL.md` (T1–T7, incl. the SmartScreen screenshot list).
-      Icon licence: resolved in v9.37. **Partial:** fresh clone → build →
-      install → run confirmed on a second PC 2026-08-07; the T1–T7 results
-      table is still empty.
+      `TESTING_MANUAL.md`. Icon licence: resolved in v9.37. **Partial:**
+      fresh clone → build → install → run confirmed on a second PC
+      2026-08-07; T3, T8 and T9 recorded PASS on 2026-08-09. T1, T2, T4–T7
+      and T10 have no result recorded yet — several have effectively been
+      exercised during development, but "it worked while I was doing
+      something else" is not a test result, so they stay blank until run
+      and written down.
 - [x] **Upgrade over an existing install** — **exercised repeatedly, and it
       works.** Kris (2026-08-09): *every* Windows deployment through the
       v9.3x series was done by building the installer and running it over the
@@ -322,13 +327,12 @@ Mac available for testing. Verified by him on that machine unless noted.*
       option each time. It installed and opened correctly every time. That
       spans the v9.39 onefile → onedir change, which is the transition this
       item was written to worry about.
-      **What this does and does not cover.** Install + launch: confirmed
-      many times over. Data surviving the upgrade: never the exposure —
-      race data lives in `%LOCALAPPDATA%\TamiyaRaceManager\` and the
-      installer writes only to `%LOCALAPPDATA%\Programs\`. Not formally
-      checked: whether files from an older layout are left behind in `{app}`
-      (Inno Setup does not remove files that a newer version stopped
-      shipping; harmless, since the exe and `_internal\` are overwritten).
+      Data intact and the install folder checked afterwards (Kris,
+      2026-08-09) — race data was never the exposure in any case, living in
+      `%LOCALAPPDATA%\TamiyaRaceManager\` while the installer writes only to
+      `%LOCALAPPDATA%\Programs\`. Re-run when the `{app}` layout next
+      changes; Inno Setup does not remove files a newer version stopped
+      shipping.
       *Separately: no v9.3x was ever distributed publicly — the only tag is
       `v9.27` and there has never been a GitHub release — so the above is
       developer-machine evidence, which for this particular item is the same
@@ -336,10 +340,11 @@ Mac available for testing. Verified by him on that machine unless noted.*
       *The zip → installer path is a different thing and is still live: the
       club machines run zip-style v9.x, whose data the installed app cannot
       see. That is covered by the Import Data step and stays in the risks.*
-- [ ] **Reopen a season that has recorded events**, then confirm the
-      standings still read correctly.
-- [ ] Print / PDF export from inside the WebView2 window (test matrix #13)
-      — still the most likely thing to misbehave.
+- [x] **Reopen a season that has recorded events**, then confirm the
+      standings still read correctly. *Done by Kris 2026-08-09 — correct.*
+- [x] Print / PDF export from inside the WebView2 window (test matrix #13)
+      — flagged as the most likely thing to misbehave; it didn't.
+      *Done by Kris 2026-08-09.*
 - [x] **Run the Mac package on an actual Mac** — done 2026-08-08 on the club's
       MacBook Pro (13-inch, Late 2011), macOS 10.13.6. See Phase 8. v10.0
       ships the Mac app labelled *tested on one Mac, never at a race night*.
@@ -348,9 +353,12 @@ Mac available for testing. Verified by him on that machine unless noted.*
       at the same time.
 - [ ] Retitle release notes to final, remove the DRAFT banner, bump
       `app/VERSION` to `10.0`, tag `v10.0`, publish the GitHub release with
-      all three packages attached. **Blocked on:** the SmartScreen
-      screenshots, and a decision on whether the Mac package ships in v10.0
-      at all given it has never been run.
+      all three packages attached. **Blocked on one thing only, as of
+      2026-08-09: the SmartScreen screenshots.** They need a Windows machine
+      that has never run the app — the warning appears once per machine and
+      the chance is spent on first launch, so don't launch it there casually.
+      *(The Mac question is settled: it has been run, and v10.0 ships it
+      labelled as tested on one Mac and never at a race night.)*
 
 ---
 
