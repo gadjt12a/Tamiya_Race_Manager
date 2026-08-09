@@ -1290,9 +1290,14 @@ function renderHome(){
 
   // Night multiplier strip — shown when a season is active
   const multHTML = season ? `
-    <div class="panel" style="grid-column:1/-1;margin-bottom:0">
+    <!-- overflow:visible and an explicit min-height on the row, because the
+         old WebKit in the macOS app does not derive a flex container's
+         height from its items: the row collapsed, .panel's overflow:hidden
+         cut the buttons in half, and min-height on the buttons alone did
+         not help. Belt and braces - either one would probably do. -->
+    <div class="panel" style="grid-column:1/-1;margin-bottom:0;overflow:visible">
       <div class="panel-hdr" style="font-size:11px;letter-spacing:.1em">Tonight's Points Multiplier</div>
-      <div style="display:flex;gap:10px;padding:14px 16px">
+      <div style="display:flex;gap:10px;padding:14px 16px;min-height:110px">
         <button onclick="toggleNightMultiplier('double')" style="flex:1;min-height:82px;padding:18px 12px;border-radius:8px;cursor:pointer;
           font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:.06em;
           background:${nightDoublePoints?'var(--accent)':'var(--surface2)'};
