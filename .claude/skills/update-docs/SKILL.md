@@ -71,9 +71,12 @@ Before saying anything is pushed, confirm it:
   `*.spec`, `app/BUILD`, `Working_Files/` (contains licence-unclear source
   images). `.gitignore` covers these — verify with `git ls-files` rather
   than assuming, and check nothing was force-added.
-- Know which branch the work belongs on. `main` is the stable v9.x line
-  clubs actually run; `v10-packaging` is the packaging work. Docs on `main`
-  must not describe v10 features that have not merged.
+- Know which branch the work belongs on. **`v10-packaging` was merged into
+  `main` on 2026-08-08 (`bf56cb3`) and all work now happens on `main`;** the
+  branch is kept only for history. `main` therefore carries the v10 code,
+  unreleased — `app/VERSION` is still `9.39`, the only tag is `v9.27`, and
+  there has never been a GitHub release. Do not describe anything on `main`
+  as shipped.
 
 ## Memory
 
@@ -89,12 +92,21 @@ Memory lives outside the repo and is never part of the commit.
 
 - **Never mark something verified that has not been.** "It builds",
   "it launched on my machine" and "a club ran a race night on it" are three
-  different claims. The standing example: the Mac package has been built
-  many times and has **never once been run on a Mac** — no doc may imply
-  otherwise until someone actually runs it.
+  different claims. The standing example, as of 2026-08-09: the Mac app
+  has been run on **exactly one Mac** — a 2011 MacBook Pro on macOS 10.13.6
+  — by the developer, and **never at a race night**. No Mac newer than that
+  has ever run it. No doc may round that up to "tested on Mac".
+  *(This example needs replacing once it stops being true. It has already
+  been wrong once: it used to say the Mac package had never been run at
+  all, and stayed in this file after that ceased to be the case.)*
 - **Carry caveats into the docs.** If a flow was only syntax-checked, or
-  only tested on a fresh install and never on an upgrade over an existing
-  one, the doc says so.
+  only exercised on the developer's machines and never in the field, the
+  doc says so.
+- **Cut both ways.** The rule above stops overclaiming; this one stops the
+  opposite. An item recorded as untested may simply never have been written
+  down — the upgrade-over-existing-install test sat open for weeks while
+  Kris had in fact been doing it on every single deployment. Before
+  declaring something untested or unreachable, ask him.
 - **Do not rewrite history.** Old `CHANGELOG.txt` entries describe what was
   true then — the v9.38 splash entry stays even though v9.39 removed it.
   Correct current-state docs instead.

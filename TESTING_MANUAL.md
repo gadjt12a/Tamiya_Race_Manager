@@ -130,10 +130,23 @@ but it is the kind of thing that comes back.
 **Purpose:** verify the first-run experience a club member gets, and capture
 the screenshots for the release notes.
 
-Copy the current `TamiyaRaceManager-Setup-<version>.<build>.exe` from
-`dist\installer\` to a USB stick — take the newest one; the build number goes
-up with every change. Take it to another Windows PC (a club member's laptop
-is perfect):
+**Why this is still outstanding (2026-08-09):** it isn't procrastination —
+none of the deployments so far have been *capable* of triggering the warning.
+Every one has been an over-the-top install on a machine that already trusts
+the app, and SmartScreen doesn't fire on those. It needs a genuinely fresh
+Windows PC, and the trigger is a **downloaded** exe: SmartScreen keys off the
+mark-of-the-web that a browser attaches to the download. **An exe copied from
+a USB stick may not carry that mark and may not warn at all** — so if the USB
+route produces no dialog, that is expected, and the exe needs downloading via
+a browser on the target machine instead.
+
+Get the current `TamiyaRaceManager-Setup-<version>.<build>.exe` onto another
+Windows PC (a club member's laptop is perfect) — the newest build; the number
+goes up with every change. **Prefer downloading it there in a browser** over
+copying it from a USB stick, for the mark-of-the-web reason above: the
+download is what makes SmartScreen fire, and it's also what a club will
+actually do. If there's no way to download it, a USB copy is worth trying —
+just don't conclude the warning is gone if nothing appears.
 
 1. Run the installer. **📸 SCREENSHOT 1:** the blue **"Windows protected your
    PC"** SmartScreen dialog, exactly as it first appears.

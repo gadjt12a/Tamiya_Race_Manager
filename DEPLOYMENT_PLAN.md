@@ -357,6 +357,11 @@ Mac available for testing. Verified by him on that machine unless noted.*
       2026-08-09: the SmartScreen screenshots.** They need a Windows machine
       that has never run the app — the warning appears once per machine and
       the chance is spent on first launch, so don't launch it there casually.
+      Still outstanding for a concrete reason, not neglect: every deployment
+      so far has been an over-the-top install on a machine that already
+      trusts the app, which cannot trigger it. It also wants a **downloaded**
+      exe — SmartScreen keys off the mark-of-the-web a browser attaches, and
+      a USB copy may not carry it. See T7.
       *(The Mac question is settled: it has been run, and v10.0 ships it
       labelled as tested on one Mac and never at a race night.)*
 
