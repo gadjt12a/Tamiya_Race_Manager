@@ -95,6 +95,13 @@ battery, not plugged in (most aggressive sleep).
 4. Confirm another race result, then check the data file timestamp updated:
    `%LOCALAPPDATA%\TamiyaRaceManager\racedata.json` (modified = just now).
 
+**Also test plain idling, not just sleep.** Leave the app open and
+completely untouched — click on another window, go and do something else —
+for **15 minutes**, then come back and confirm a race. The app must still
+be there and still save. This is the failure Kris hit on the Mac: the
+watchdog shot an app that was merely sitting between races. It is fixed,
+but it is the kind of thing that comes back.
+
 ## T5 — Crash recovery *(matrix #9, replaces #8 for the desktop app)*
 
 **Purpose:** a crash mid-event loses nothing.
@@ -189,6 +196,37 @@ season with recorded events.
 6. Then try reopening a *second* archived season while this one is active —
    it should refuse and tell you to close the current one first.
 
+## T10 — The Mac app *(partially done — see notes)*
+
+**Purpose:** the Mac build is the least-exercised thing shipping in v10.
+Run this on every Mac you can get hold of, and say which macOS version and
+which chip (Intel or Apple Silicon) in the result.
+
+1. Unzip the download. Drag `TamiyaRaceManager.app` to Applications.
+2. **Double-click it first, on purpose**, and note exactly what macOS says —
+   "cannot be verified", or the false "is damaged and can't be opened".
+   That wording is what clubs will phone about, and it varies by version.
+3. Right-click → **Open** → **Open**. Confirm it now launches, and that
+   plain double-clicking works from then on.
+4. Confirm the window renders the app — **not a black or blank window**.
+   A blank window is the High Sierra rendering failure; check pywebview's
+   version before anything else (see `BUILD.md`).
+5. Run a full class. Watch for **anything cut off** — panel contents sliced
+   top and bottom is the old-WebKit flex bug and has appeared twice.
+6. Check every button shows an icon, not an empty box.
+7. Open the Display window, Export Data, Export HTML/CSV, and Print.
+8. Leave it idle 15 minutes (as in T4), then confirm another race.
+9. Check `~/Library/Application Support/TamiyaRaceManager/racedata.json`
+   and its `backups/` folder exist and are current.
+10. Close the window and confirm the process is gone: `pgrep -fl Tamiya`
+    should print nothing.
+
+*Already known, 2026-08-08/09 on a MacBook Pro (13-inch, Late 2011), macOS
+10.13.6:* the launcher package ran a full race night with exports, printing
+and shutdown all correct, and the `.app` launches, renders and runs races
+after the compatibility fixes. Steps 5–10 have not been run end-to-end on
+the `.app` in one sitting, and no other Mac has been tried at all.
+
 ---
 
 ## Results
@@ -204,3 +242,4 @@ season with recorded events.
 | T7 Fresh machine + SmartScreen | | |
 | T8 Upgrade over existing install | | |
 | T9 Reopen a closed season | | |
+| T10 The Mac app (state macOS version + chip) | | |

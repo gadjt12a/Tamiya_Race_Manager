@@ -242,6 +242,61 @@ install → run, all working.*
       buttons wrap, `minmax(0,…)` columns, <900px stacking breakpoint).
       *Confirmed by Kris.*
 
+### Phase 8 — Mac (macOS) support, for real (v9.39)
+*2026-08-08/09. Everything here came out of Kris running the app on the club's
+MacBook Pro (13-inch, Late 2011), macOS 10.13.6 High Sierra, Intel — the only
+Mac available for testing. Verified by him on that machine unless noted.*
+
+- [x] **First ever successful run on a Mac** (2026-08-08, launcher package):
+      full race night, exports, printing, data location, shutdown.
+- [x] **Native `.app` build** — `mac/BUILD MAC APP (developer use only).command`,
+      run **on the Mac** (PyInstaller cannot cross-compile OS or architecture).
+      Selects a working interpreter by *running* each candidate, builds
+      `--windowed`, patches Info.plist, ad-hoc signs, zips with `ditto` (a
+      plain `zip` loses the execute bits inside the bundle and the app won't
+      launch after unzipping).
+- [x] **Four separate Windows-authoring-for-Unix failures**, each of which
+      broke the package on arrival: CRLF line endings in `.command` files
+      (fixed with `.gitattributes`), backslash path separators from
+      `Compress-Archive` (switched to `tar`), missing execute bit (`git
+      update-index --chmod=+x`), and an empty-array expansion that bash 3.2
+      rejects under `set -u`. Listed in `BUILD.md` as a pre-flight check.
+- [x] **Black window on launch** — App Transport Security. The working key is
+      `NSAllowsArbitraryLoadsInWebContent` plus an `NSExceptionDomains` entry;
+      `NSAllowsLocalNetworking` looks right and is wrong — it *suppresses*
+      `NSAllowsArbitraryLoads` and doesn't cover loopback at all.
+- [x] **pywebview 6.x renders nothing on High Sierra.** 4.4.1 works. The build
+      script warns when it sees 5+ on 10.13/10.14. Cost a full round of
+      misdiagnosis: the black window was blamed on ATS, then on JavaScript.
+- [x] **macOS 10.13 web-engine compatibility pass.** Safari 11's engine is
+      ES2019 and pre-`inset`. Fixed: all 38 optional-chaining sites (a single
+      one aborts the whole script and blanks the app), 58 `clamp()` fallbacks,
+      `top/right/bottom/left` before `inset`, flex and grid `gap` fallbacks,
+      and two emoji newer than Emoji 5.0 that rendered as empty boxes.
+      An on-screen JS error reporter was added first, in its own earlier
+      `<script>` block, and is what caught the optional chaining.
+      **Lesson recorded in `BUILD.md`: test in the app's WebView, not in
+      Safari.** Ruling optional chaining out in Safari was testing the wrong
+      engine and sent the diagnosis backwards.
+- [x] **Old WebKit does not size a flex container from its items** — hit twice
+      (points multiplier, season hero), each time presenting as "content is cut
+      off". `min-height` must go on the *container*; on the children it does
+      nothing. The season-hero fix was initially scoped to old engines only and
+      then had to be moved into the main rule when Kris saw the same clipping
+      on Windows: the hero was under-height on both, the old engine just showed
+      it first.
+- [x] **Watchdog was killing the app when left idle** (2026-08-09) — a
+      race-night killer. The page pings every 5 s and the watchdog gave up
+      after 12 s, but WebViews throttle background timers to roughly once a
+      minute, so an app open-but-untouched between races got shot. The desktop
+      app no longer runs a watchdog at all (window close is the exit route);
+      browser mode keeps it, at 180 s. *Verified on Windows: still serving
+      after 60 s idle.*
+- [ ] **Anything newer than macOS 10.13.** No modern Mac is available. Apple
+      Silicon and macOS 10.15+ Gatekeeper behaviour are both untested and
+      both carry accepted risks — see the risk table.
+- [ ] **A real race night on the Mac.**
+
 ### Phase 6 — Release & merge
 - [x] Tag `v9.27` on `main` (last zip-style release, kept downloadable) —
       done 2026-07-16.
@@ -251,7 +306,8 @@ install → run, all working.*
 - [x] `RELEASE_NOTES_v10.md` (DRAFT) — club-facing: pre-update checklist,
       SmartScreen click-through (screenshot placeholders pending a fresh
       machine), zip→installer import step, browser-storage-mode caveat,
-      what's-new, downgrade policy, Mac untested disclaimer.
+      what's-new, downgrade policy, and the Mac section (native `.app`,
+      the false "is damaged" Gatekeeper message, Intel-only caveat).
 - [ ] Fill in SmartScreen screenshots (needs a machine that hasn't seen the
       exe).
 - [ ] Kris's manual test matrix items pass — step-by-step guide in
@@ -267,9 +323,9 @@ install → run, all working.*
       standings still read correctly.
 - [ ] Print / PDF export from inside the WebView2 window (test matrix #13)
       — still the most likely thing to misbehave.
-- [ ] **Run the Mac package on an actual Mac.** It has been built many times
-      and never once executed. Decide before merge whether v10.0 ships it,
-      holds it for a point release, or ships it labelled experimental.
+- [x] **Run the Mac package on an actual Mac** — done 2026-08-08 on the club's
+      MacBook Pro (13-inch, Late 2011), macOS 10.13.6. See Phase 8. v10.0
+      ships the Mac app labelled *tested on one Mac, never at a race night*.
 - [x] Merge `v10-packaging` → `main` — done 2026-08-08 (`bf56cb3`), at
       v9.39. `BUILD.md`'s "Getting the source" section rewritten for `main`
       at the same time.

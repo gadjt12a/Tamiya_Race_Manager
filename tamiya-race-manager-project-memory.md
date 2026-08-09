@@ -1,7 +1,8 @@
 # Tamiya Race Manager — Project Memory
 
-*Last updated: 2026-08-08. Architecture refreshed for the v10 packaging
-work; race logic and points re-verified against `app/race-manager.html`.*
+*Last updated: 2026-08-09. Architecture refreshed for the v10 packaging
+work; race logic and points re-verified against `app/race-manager.html`;
+Mac support and the watchdog removal folded in.*
 
 ---
 
@@ -31,7 +32,8 @@ Tamiya_Race_Manager/
 │   ├── BUILD               # generated at build time, gitignored
 │   └── icon.ico
 ├── windows/                # installer script, build bats, Windows README
-├── mac/                    # launcher, package builder, Mac README (UNTESTED)
+├── mac/                    # .app build script (run on the Mac), launcher,
+│                           # legacy package builder, Mac README
 └── dist/                   # build output, gitignored
 ```
 Live data no longer sits beside the app — see the data layer below.
@@ -45,18 +47,29 @@ Live data no longer sits beside the app — see the data layer below.
   `TAMIYA_DATA_DIR`), **outside** the app folder, so installing, updating or
   uninstalling can never touch it. Pre-v10 data beside the exe is *copied*,
   never moved.
-- Watchdog: the countdown only starts once the browser's **first** ping has
-  arrived, and gives up waiting after 5 minutes. Gating it this way fixed a
-  field bug where antivirus/cold-start delays killed the server before the
-  first ping landed. In the desktop app, closing the window is the primary
-  exit; the watchdog is the fallback.
+- Watchdog: **browser mode only.** The desktop app runs none — closing the
+  window is the exit route, and a heartbeat can say nothing the window does
+  not. It was removed after it shut the app down when left idle between
+  races: WebViews throttle background timers to ~once a minute, well past
+  the old 12 s timeout. Browser mode keeps it (a closed tab really is
+  undetectable) at 180 s, with the countdown starting only once the
+  browser's **first** ping has arrived and giving up after 5 minutes if
+  none ever does — that gating fixed an earlier field bug where AV /
+  cold-start delays killed the server before the first ping landed.
 - App falls back to `localStorage` if no server is detected.
 - Export/Import data buttons on home screen for USB backup.
 
 ### Packaging
 PyInstaller **onedir** (`TamiyaRaceManager.exe` + `_internal\`), wrapped by
-an Inno Setup per-user installer. Packages are numbered
-`<VERSION>.<build>` where build is the git commit count. See `BUILD.md`.
+an Inno Setup per-user installer. On macOS, a PyInstaller `--windowed`
+`.app` built **on the Mac** (no cross-compilation), ad-hoc signed, not
+notarized, Intel-only. Packages are numbered `<VERSION>.<build>` where
+build is the git commit count. See `BUILD.md`.
+
+The Mac target is macOS 10.13 (the club's test machine), whose WebView is
+ES2019 and pre-`inset` — `race-manager.html` is written to that floor
+deliberately. `BUILD.md`'s gotchas list is the authority; the short
+version is that one unsupported token blanks the entire app.
 
 ---
 
@@ -144,7 +157,8 @@ Each class has its own racer list, bracket, and points table.
 | Feature | Notes |
 |---|---|
 | ✏️ Edit Names | Edit racer names mid-event without affecting bracket logic |
-| 📺 Display Window | Pop-up second screen (requires browser pop-ups allowed) |
+| 📺 Display Window | Second screen, from the home screen or the race top bar. A native second window in the desktop app (auto-fullscreen on monitor 2); a browser pop-up in browser mode, which needs pop-ups allowed |
+| 🖥️ Full Screen | Home + race top bars, or F11 |
 | Export HTML | Self-contained webpage, good for emailing |
 | Export CSV | Opens in Excel, full results + race history |
 | Print / PDF | Print-ready page, use "Save as PDF" |

@@ -126,7 +126,14 @@ Output: `dist\TamiyaRaceManager-Mac-<ver>.<build>.zip` — the launcher,
 `app/` (server, HTML, VERSION, BUILD) and the Mac README.
 
 It only stages files and zips them, so no Mac is needed to *build* it.
-It has never been *run* on one — see below.
+Run successfully on a Mac on 2026-08-08 (macOS 10.13.6, Intel).
+
+**This is now the fallback, not the main Mac download.** The native `.app`
+(below) is what clubs should get; this package is for Macs the `.app` won't
+run on. **Both scripts write the same filename** —
+`dist\TamiyaRaceManager-Mac-<ver>.<build>.zip` — so from the same commit
+whichever runs second overwrites the first. Rename or move one before
+publishing, and check what's actually inside the zip you upload.
 
 ---
 
@@ -185,7 +192,11 @@ The launcher finds the app in either layout: `app/` beside it (packaged
 zip) or `../app/` (repo checkout). It tries `python3` first, then
 `python`, and prints install instructions if neither is Python 3.
 
-Closing the browser tab shuts the server down via the watchdog.
+Closing the browser tab shuts the server down via the watchdog — the
+browser-mode-only fallback for a tab close being otherwise undetectable.
+**The desktop app deliberately runs no watchdog**: closing the window is
+the exit route, and the heartbeat could tell it nothing the window does
+not. See the gotcha below before reinstating one.
 
 ### Testing the actual package
 
@@ -306,6 +317,16 @@ Notes:
 
 ## Gotchas
 
+- **Never make a heartbeat responsible for keeping the app alive.**
+  Browsers and WebViews throttle timers in unfocused or background
+  windows — a `setInterval` asking for every 5 s can be slowed to roughly
+  once a minute. The watchdog's 12 s timeout therefore shut the app down
+  when it was simply left open and untouched between races, which on race
+  night is the worst possible failure. The desktop app no longer runs the
+  watchdog at all; browser mode does, at `HEARTBEAT_TIMEOUT = 180`. The
+  cost of a generous timeout is a server lingering after a tab closes,
+  which nobody notices; the cost of a tight one is losing the app
+  mid-event.
 - **Old WebKit does not size a flex container from its items.** A row of
   flex children collapses to less than its contents, and because `.panel`
   and `.season-hero` set `overflow:hidden` (for their rounded corners and

@@ -120,6 +120,9 @@ to us.
 - If saving ever fails mid-event, a **red warning banner** appears with
   recovery instructions instead of data silently going nowhere.
 - Laptop lid closed during a break? The app survives sleep/wake now.
+- **The app stays up when you leave it alone.** An earlier version could shut
+  itself down if it sat untouched between races — it is now the window that
+  closes the app, and nothing else.
 - Import is validated and confirmed before anything is replaced; a data file
   from a *newer* app version is politely refused, never overwritten.
 
@@ -164,6 +167,11 @@ to us.
 ### Mac
 - **The Mac version is now a proper Mac app** — no Python to install, opens in
   its own window like the Windows version. See the install notes above.
+- **Older Macs are supported.** A batch of fixes went in for the web engine on
+  macOS 10.13, where parts of the app had been rendering blank, cutting off
+  panel contents, or showing empty boxes instead of button icons.
+- A launcher-plus-Python package is still available as a fallback for any Mac
+  the app itself won't run on. Most people should take the app.
 
 ---
 

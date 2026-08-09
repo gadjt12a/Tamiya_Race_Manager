@@ -7,34 +7,40 @@ HOW TO USE
  GETTING STARTED
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-WINDOWS (first time setup — admin only):
-  1. Extract the zip on an internet-connected machine
-  2. Double-click "BUILD PYTHON BUNDLE (admin use only).bat"
-  3. Wait for it to finish (~15MB download)
-  4. Re-zip the race-manager folder — this is your distribution copy
-  5. That zip now works on ANY Windows PC, no internet ever needed
+Nothing to install alongside it — no Python, no internet, no
+admin rights. The app runs in its own window on both platforms.
+
+WINDOWS (first time):
+  Run "TamiyaRaceManager-Setup-<version>.exe".
+  Windows will warn about an unrecognised app — click "More
+  info" then "Run anyway" (see TROUBLESHOOTING below).
+  You get a desktop icon and a Start Menu entry.
+
+  Prefer not to install? Use the portable zip instead: extract
+  the WHOLE folder and run TamiyaRaceManager.exe from inside
+  it. The exe needs the "_internal" folder beside it — moving
+  the exe out on its own stops it working. Make a shortcut
+  rather than moving it.
 
 WINDOWS (every event):
-  Double-click "START RACE MANAGER.bat"
-  The app opens in your browser automatically.
-  Closes automatically when you close the browser tab.
-  No installation. No internet. No admin rights needed.
+  Double-click the desktop icon.
 
-MAC (first time only):
-  Right-click "Start Race Manager.command" → Open → Open
-  This is a one-off macOS security check.
-  After that, just double-click it normally.
+MAC (first time):
+  Unzip the download, drag TamiyaRaceManager.app to your
+  Applications folder, then RIGHT-CLICK it → Open → Open.
+  macOS refuses the first plain double-click, and may claim
+  the app "is damaged" — it isn't; the app just isn't
+  registered with Apple. Right-click → Open gets past it, and
+  you only do this once.
 
 MAC (every event):
-  Double-click "Start Race Manager.command"
-  If it says Python is not installed, go to python.org/downloads,
-  install Python 3, then try again. Modern Macs (2019+) usually
-  have Python 3 already.
+  Double-click TamiyaRaceManager.
 
 MOVING TO A DIFFERENT COMPUTER:
-  Copy the entire race-manager folder to the new machine.
-  On Windows, the python-bundle folder comes with it — no setup needed.
-  All your race data moves with it automatically.
+  Install the app on the new machine, then "Export Data" on
+  the old one and "Import Data" on the new one. Your data does
+  NOT live in the app folder, so copying the app across does
+  not bring the racing with it.
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -295,7 +301,7 @@ monitor. In Chrome: click the pop-up blocked icon in the
 address bar and select "Always allow pop-ups from this site".
 
 FULL SCREEN
-  Click "⛶ Full Screen" in the top bar (or press F11) to fill
+  Click "🖥️ Full Screen" in the top bar (or press F11) to fill
   the screen with the app — useful on the coordinator laptop
   or when showing the race screen on a big monitor.
   Press F11 again to go back.
@@ -355,9 +361,16 @@ Windows warns "Windows protected your PC" on first run:
   then "Run anyway". This only happens the first time.
 
 App won't start (Mac):
-  Make sure you right-clicked and selected Open the first time.
-  If Python is missing, install it from python.org/downloads.
-  NOTE: the Mac version has never been tested on a Mac.
+  Make sure you right-clicked and selected Open → Open the
+  first time, rather than double-clicking. If macOS says the
+  app "is damaged and can't be opened", that message is wrong
+  — it means the app isn't registered with Apple. Right-click
+  → Open, or System Settings → Privacy & Security → "Open
+  Anyway".
+  NOTE: the Mac app has been run successfully on one Mac
+  (macOS 10.13, Intel) by the developer, and never yet at a
+  real race night. Newer macOS versions and Apple Silicon
+  Macs are untested.
 
 Nothing appears to happen for a moment after double-clicking:
   Normal — it takes about a second to appear. There is no
@@ -398,7 +411,7 @@ Pop-up blocked (second screen):
   ✏️ Edit Last    Edit the most recently confirmed race result
   🔄 Swap Race    Delay current race, run a different queued race first
   📺 Display      Open the audience display on a second screen
-  ⛶ Full Screen   Fill the screen with the app (or press F11)
+  🖥️ Full Screen  Fill the screen with the app (or press F11)
   ✏️ Names        Edit racer names mid-event (doesn't affect logic)
   ✕ End Race      Abort the current class (no results saved)
 

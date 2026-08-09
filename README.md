@@ -21,10 +21,16 @@ monitor. Runs entirely offline on one laptop.
 The app runs in its own window (no console, no browser tab). Full details:
 [`windows/README.txt`](windows/README.txt)
 
-### 🍎 Mac / OSX (**untested** — we develop on Windows)
+### 🍎 Mac / OSX (**lightly tested** — we develop on Windows)
 | Package | What it is |
 |---|---|
-| `TamiyaRaceManager-Mac-<ver>.zip` | Launcher + app. Needs Python 3; opens in your browser. |
+| `TamiyaRaceManager-Mac-<ver>.zip` | `TamiyaRaceManager.app` — a real Mac app. No Python to install; runs in its own window like the Windows version. |
+
+Run successfully on **one** Mac (macOS 10.13 High Sierra, Intel) by the
+developer on 2026-08-08, never yet at a real race night. Newer macOS versions
+and Apple Silicon are untested; the app is Intel-only and runs under Rosetta 2
+on M-series Macs. It is **not notarized**, so macOS blocks the first launch and
+may falsely claim it "is damaged" — right-click → **Open** → **Open**.
 
 Please report problems. Details: [`mac/README.txt`](mac/README.txt)
 
@@ -60,7 +66,12 @@ Requirements: Python 3, `pip install pyinstaller pywebview`, and
 [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`winget install JRSoftware.InnoSetup`).
 
 - **Windows (installer + portable zip):** run `windows\BUILD INSTALLER (developer use only).bat`
-- **Mac package:** run `mac\BUILD MAC PACKAGE (developer use only).bat`
+- **Mac app:** run `mac/BUILD MAC APP (developer use only).command` **on a Mac**
+  — PyInstaller cannot cross-compile, so the `.app` can only be built on macOS
+  (and only for the architecture of the machine that builds it).
+- **Mac Python-zip (legacy fallback):** `mac\BUILD MAC PACKAGE (developer use only).bat`
+  builds the older launcher-plus-source package on Windows for Macs where the
+  `.app` won't run. Both write to the same filename — see `BUILD.md`.
 
 Outputs land in `dist\` and are named `<version>.<build>` — the version from
 `app/VERSION` (bumped by hand) and the build number from
