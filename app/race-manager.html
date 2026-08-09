@@ -101,6 +101,12 @@ body::before{
   .place-btns > * + * { margin-left:5px }
   .icon-btn > * + * { margin-left:5px }
 
+  /* MUST come after `.topbar > * + *` above, which otherwise overwrites
+     the auto margin (same specificity, later rule wins) and drops the
+     right-hand button group back to the left of the bar. */
+  .topbar > .topbar-right { margin-left:auto }
+  .topbar-nav { margin-left:8px }
+
   /* Inline-styled flex rows. Most of the app's layout is generated in JS
      with style="display:flex;...;gap:Npx", which no class selector can
      reach - hence matching on the style attribute itself. Restricted to
