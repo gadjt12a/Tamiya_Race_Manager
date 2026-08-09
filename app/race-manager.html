@@ -107,6 +107,14 @@ body::before{
   .topbar > .topbar-right { margin-left:auto }
   .topbar-nav { margin-left:8px }
 
+  /* Same trap as the points-multiplier panel: this engine does not derive
+     a flex container's height from its items, so .season-hero collapsed to
+     less than its contents and overflow:hidden trimmed the top and bottom
+     off the action buttons. overflow:hidden has to stay - it is what clips
+     the decorative flag - so give the row room instead. */
+  .season-hero { min-height:118px }
+  .season-hero-actions { margin:6px 0 }
+
   /* Inline-styled flex rows. Most of the app's layout is generated in JS
      with style="display:flex;...;gap:Npx", which no class selector can
      reach - hence matching on the style attribute itself. Restricted to

@@ -306,6 +306,16 @@ Notes:
 
 ## Gotchas
 
+- **Old WebKit does not size a flex container from its items.** A row of
+  flex children collapses to less than its contents, and because `.panel`
+  and `.season-hero` set `overflow:hidden` (for their rounded corners and
+  the decorative flag), the overflowing content is silently *cut off*
+  rather than pushed out. Hit twice: the ×2/×3 multiplier buttons and the
+  season hero's action buttons, both sliced in half on macOS 10.13.
+  `min-height` on the *children* does nothing — the container never
+  consults them. Fix at the **container**: give it a `min-height`, or set
+  `overflow:visible` on that specific element. If a panel's contents look
+  trimmed on an old Mac, this is why.
 - **Keep `race-manager.html`'s JavaScript at ES2019.** No optional chaining
   (`?.`), no nullish coalescing (`??`), no logical assignment. The macOS
   app renders through the system WebView, which on macOS 10.13 predates
