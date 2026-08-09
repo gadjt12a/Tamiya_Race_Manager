@@ -53,11 +53,55 @@ old race-manager folder → done. Seasons, racers and points all come across.
 storage mode"): open the OLD version first, click **Export Data**, and import
 that file instead — there is no data file on disk in that mode.
 
-## Installing (Mac / OSX) — ⚠ untested
+## Installing (Mac / OSX)
 
-**`TamiyaRaceManager-Mac-10.0.zip`** contains the same core app (needs
-Python 3, runs in your browser). We develop on Windows and have not been able
-to test it — please report anything broken. See the README inside the zip.
+**`TamiyaRaceManager-Mac-10.0.zip`** — unzip it and drag
+**TamiyaRaceManager** to your Applications folder (or anywhere you like).
+Everything is included; you do **not** need to install Python.
+
+### ⚠ First launch on a Mac — please read
+
+The app is not registered with Apple (that costs an annual fee we don't pay
+for a free club app), so macOS will not open it on the first attempt. **This
+is expected and the app is fine.**
+
+Depending on your macOS version you'll see one of:
+
+- *"TamiyaRaceManager can't be opened because it is from an unidentified
+  developer"*
+- *"Apple could not verify TamiyaRaceManager is free of malware"*
+- **"TamiyaRaceManager is damaged and can't be opened. You should move it to
+  the Bin."** — ⚠ **This message is wrong.** The app is not damaged. macOS
+  says this about any unregistered app you've downloaded. Do **not** delete
+  it.
+
+**To open it (one time only):**
+
+1. **Right-click** (or Control-click) the app → choose **Open**
+2. The warning appears again, now with an **Open** button → click **Open**
+
+That's it. From then on it opens normally with a double-click. You only have
+to do this once per Mac.
+
+If right-click → Open doesn't offer an **Open** button, go to  **System
+Settings → Privacy & Security**, scroll down, and click **Open Anyway** next
+to the message about TamiyaRaceManager.
+
+### What we've tested
+
+Tested on **macOS 10.13 (High Sierra) on an Intel Mac** — a full race night,
+the second-screen display, exports, printing, and data storage all working.
+
+Two honest caveats:
+
+- **Apple Silicon (M1/M2/M3…) is untested.** The app is an Intel build, so it
+  runs through Rosetta 2. macOS will offer to install Rosetta the first time
+  if you don't have it — accept, and the app should run normally. We have no
+  Apple Silicon Mac to confirm this on.
+- **Newer macOS versions are untested.** We build and test on an older Mac.
+
+Please tell us how you get on either way — Mac feedback is genuinely useful
+to us.
 
 ---
 
@@ -108,6 +152,18 @@ to test it — please report anything broken. See the README inside the zip.
   next season as adults without re-entry.
 - New seasons pre-tick last season's racers — regulars carry over in one
   click.
+- The **📺 Display** button is now on the **home screen** too, so you can get
+  the projector set up while racers are still registering, rather than having
+  to start setting up the first race first. It shows "Waiting for racing to
+  start…" until the first race begins, and if the display window ends up
+  behind the main window, pressing Display again brings it back to the front.
+- Fixed: after finishing and saving a race, closing and reopening the app
+  wrongly offered to resume that already-saved race. Nothing was ever lost or
+  duplicated.
+
+### Mac
+- **The Mac version is now a proper Mac app** — no Python to install, opens in
+  its own window like the Windows version. See the install notes above.
 
 ---
 
@@ -120,8 +176,11 @@ to test it — please report anything broken. See the README inside the zip.
   Windows 11 / current Windows 10). If missing, the app opens in your
   browser instead — everything still works.
 - The exe is **not code-signed** (cost) — hence the one-time SmartScreen
-  prompt above.
-- The **Mac package is untested** — feedback wanted.
+  prompt above. The Mac app is likewise not registered with Apple, hence its
+  one-time right-click → Open. Both are annual fees we don't think are worth
+  it for a free club app; if that ever changes, the warnings go away.
+- **Mac: Apple Silicon and newer macOS are untested.** Tested on macOS 10.13
+  Intel. See the Mac install section above.
 
 ## Files in this release
 
@@ -129,7 +188,7 @@ to test it — please report anything broken. See the README inside the zip.
 |---|---|
 | `TamiyaRaceManager-Setup-10.0.exe` | Windows installer (recommended) |
 | `TamiyaRaceManager-WindowsPortable-10.0.zip` | Windows portable |
-| `TamiyaRaceManager-Mac-10.0.zip` | Mac / OSX (untested) |
+| `TamiyaRaceManager-Mac-10.0.zip` | Mac / OSX |
 
 Downloads carry a build number after the version, e.g.
 `TamiyaRaceManager-Setup-10.0.25.exe`. It goes up every time the app
