@@ -156,31 +156,32 @@ the release notes (they'll be committed to the repo at that point).
 the first run. Capture the screenshots on the *first* launch there, not after
 you've had a play.
 
-## T8 — Upgrade over an existing install *(not applicable for v10.0 — read this before deleting it)*
+## T8 — Upgrade over an existing install *(largely done — this is now a spot-check)*
 
-**Skip this test for the v10.0 release.** No v9.3x install exists anywhere:
-the only tag is `v9.27` (zip-style, no installer) and there has never been a
-GitHub release, so there is no machine for a new installer to land on. The
-`{app}` transition from a lone exe to exe + `_internal\` will never happen in
-the field.
+**Already covered.** Kris deployed every v9.3x build by running the new
+installer over the top of the previous install (declining the
+replace-desktop-shortcut option), and it installed and opened correctly every
+time — including across the v9.39 onefile → onedir change, which is the
+transition this test was written for. Data was never at risk: the installer
+writes only to `%LOCALAPPDATA%\Programs\`, while race data lives in
+`%LOCALAPPDATA%\TamiyaRaceManager\`.
 
-**This becomes required again the moment v10.0 ships**, because from then on
-installer-over-installer *is* how every club updates. Run it before v10.1,
-against a real v10.0 install. The steps below are written for that.
+What's left is the part that was never explicitly *looked at* rather than
+merely working. Do it once on the next over-the-top install:
 
-**Before you start:** Export Data to a USB stick. This is the one test where
-that matters.
+**Before you start:** Export Data to a USB stick.
 
-1. Find a machine running the **previously released** version. Note the
-   version in the header and run a quick race so there's real data.
-2. Note what is in `%LOCALAPPDATA%\Programs\TamiyaRaceManager\` before you
-   start, so you can tell what the installer changed.
+1. On the machine with the current install, run a quick race so there's real
+   data, and note the version in the header.
+2. List `%LOCALAPPDATA%\Programs\TamiyaRaceManager\` before you start.
 3. Run the new installer **without uninstalling first**. Let it close the
    running app if it offers.
 4. Launch. Confirm: it starts, the header shows the new version.build, and
-   **all seasons, racers and points are exactly as before**.
-5. Re-check the install folder — exe and `_internal\` both present and
-   current, with no leftover files from the previous version.
+   **all seasons, racers and points are exactly as before** — this is the
+   step that has been assumed rather than checked.
+5. Compare the install folder against your list from step 2. Inno Setup does
+   not delete files a newer version stopped shipping, so note any strays.
+   They're harmless, but worth knowing about before clubs accumulate them.
 6. Confirm `%LOCALAPPDATA%\TamiyaRaceManager\racedata.json` was not modified
    by the install itself (check the file's timestamp before and after).
 
@@ -244,6 +245,6 @@ the `.app` in one sitting, and no other Mac has been tried at all.
 | T5 Crash recovery | | |
 | T6 Garbage import | | |
 | T7 Fresh machine + SmartScreen | | |
-| T8 Upgrade over existing install | N/A for v10.0 — no prior install exists | 2026-08-09 |
+| T8 Upgrade over existing install | PASS (install + launch) — Kris, every v9.3x build installed over the top, incl. onefile→onedir. Data-intact check and leftover-file check still to do once | 2026-08-09 |
 | T9 Reopen a closed season | | |
 | T10 The Mac app (state macOS version + chip) | | |
