@@ -107,13 +107,8 @@ body::before{
   .topbar > .topbar-right { margin-left:auto }
   .topbar-nav { margin-left:8px }
 
-  /* Same trap as the points-multiplier panel: this engine does not derive
-     a flex container's height from its items, so .season-hero collapsed to
-     less than its contents and overflow:hidden trimmed the top and bottom
-     off the action buttons. overflow:hidden has to stay - it is what clips
-     the decorative flag - so give the row room instead. */
-  .season-hero { min-height:118px }
-  .season-hero-actions { margin:6px 0 }
+  /* (the season-hero height fix lives in the main rule below - it is needed
+     on Windows too, not only on old WebKit) */
 
   /* Inline-styled flex rows. Most of the app's layout is generated in JS
      with style="display:flex;...;gap:Npx", which no class selector can
@@ -243,6 +238,12 @@ select option{background:var(--surface2)}
   /* wrap instead of squashing the action buttons into each other - the
      overflow:hidden below would otherwise clip them off the edge */
   flex-wrap:wrap;gap:16px;
+  /* min-height, not just padding: overflow:hidden (which clips the
+     decorative flag in ::before) will otherwise trim the top and bottom off
+     the action buttons whenever the row is taller than the text beside it.
+     Needed on Windows as well as old WebKit, so it lives here rather than
+     in the @supports fallback block. */
+  min-height:118px;
   position:relative;overflow:hidden;
 }
 .season-hero::before{
@@ -254,7 +255,7 @@ select option{background:var(--surface2)}
   color:var(--accent);letter-spacing:.04em;margin-bottom:4px;
 }
 .season-hero-info p{color:var(--muted2);font-size:13px}
-.season-hero-actions{display:flex;gap:8px;flex-wrap:wrap}
+.season-hero-actions{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
 
 /* ════════════════════════════════════════════════════════
    SETUP / RACE NIGHT SCREEN
@@ -541,7 +542,7 @@ table.pts-table tr:hover td{background:var(--surface2)}
     <div class="topbar-sep"></div>
     <div class="topbar-right">
       <button class="icon-btn js-display-btn" onclick="openDisplay()" title="Open the audience display - set the projector up before racing starts">📺 Display</button>
-      <button class="icon-btn" onclick="toggleFullScreen()" title="Full screen (F11)">Full Screen</button>
+      <button class="icon-btn" onclick="toggleFullScreen()" title="Full screen (F11)">🖥️ Full Screen</button>
       <button class="icon-btn" onclick="exportData()">⬆ Export Data</button>
       <label class="icon-btn" style="cursor:pointer">⬇ Import Data<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
     </div>
@@ -571,7 +572,7 @@ table.pts-table tr:hover td{background:var(--surface2)}
     <button class="class-tab" data-class="evo" onclick="selectClass('evo')">⚡ EVO Class</button>
     <button class="class-tab" data-class="pro" onclick="selectClass('pro')">🏆 Pro Class</button>
     <button class="class-tab" data-class="special" onclick="selectClass('special')" style="margin-left:auto">★ Special Event</button>
-    <button class="class-tab" data-class="test" onclick="selectClass('test')" style="color:var(--muted)">🧪 Test Race</button>
+    <button class="class-tab" data-class="test" onclick="selectClass('test')" style="color:var(--muted)">🔬 Test Race</button>
   </div>
   <div class="content" id="setupContent">
     <!-- filled by renderSetup() -->
@@ -589,7 +590,7 @@ table.pts-table tr:hover td{background:var(--surface2)}
     <div class="topbar-right">
       <button class="icon-btn" id="swapHint" onclick="toggleSwapMode()" style="display:none">🔄 Swap Race</button>
       <button class="icon-btn" onclick="editLastResult()" id="editLastBtn" style="display:none">✏️ Edit Last</button>
-      <button class="icon-btn" onclick="toggleFullScreen()" title="Full screen (F11)">Full Screen</button>
+      <button class="icon-btn" onclick="toggleFullScreen()" title="Full screen (F11)">🖥️ Full Screen</button>
       <button class="icon-btn js-display-btn" onclick="openDisplay()">📺 Display</button>
       <button class="icon-btn" onclick="openEditNames()">✏️ Names</button>
       <button class="icon-btn" id="showResultsBtn" onclick="showPodiumModal()" style="display:none">🏆 Show Results</button>
@@ -1264,7 +1265,7 @@ function renderHome(){
         </div>
         <div class="panel" style="cursor:pointer;opacity:.7" onclick="startClassSetup('box','test')">
           <div style="padding:12px 16px;display:flex;align-items:center;gap:12px">
-            <div style="font-size:24px">🧪</div>
+            <div style="font-size:24px">🔬</div>
             <div style="flex:1">
               <div style="font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--muted2)">Test Race</div>
               <div style="color:var(--muted);font-size:12px">No recording, no points</div>
@@ -1272,7 +1273,7 @@ function renderHome(){
           </div>
         </div>
       </div>` : `<div class="warn-banner">Start a season first to run official race events.</div>
-      <button class="btn btn-secondary" onclick="startClassSetup('box','test')">🧪 Run Test Race (No Season Needed)</button>`}
+      <button class="btn btn-secondary" onclick="startClassSetup('box','test')">🔬 Run Test Race (No Season Needed)</button>`}
     </div>`;
 
   // Past events this season
@@ -1392,7 +1393,7 @@ function _proceedStartClassSetup(classKey, mode){
   setupState.rosterFilter = '';
   showScreen('setupScreen');
   document.getElementById('setupSeasonLabel').textContent =
-    mode==='test' ? '🧪 Test Race (no recording)' :
+    mode==='test' ? '🔬 Test Race (no recording)' :
     mode==='special' ? '★ '+setupState.specialName :
     (getCurrentSeason()||{name:''}).name || '';
   // Set active tab
@@ -1438,7 +1439,7 @@ function renderSetupContent(){
   const addedIds = new Set(setupState.racerEntries.map(r=>r.rosterId).filter(Boolean));
 
   const rosterHTML = setupState.mode==='test'
-    ? `<div class="empty"><div class="empty-icon">🧪</div>Test mode — no roster tracking</div>`
+    ? `<div class="empty"><div class="empty-icon">🔬</div>Test mode — no roster tracking</div>`
     : `<div style="margin-bottom:8px">
         <input type="text" placeholder="Search roster..." value="${esc(setupState.rosterFilter)}"
           oninput="setupState.rosterFilter=this.value;renderSetupContent()" style="margin-bottom:6px">

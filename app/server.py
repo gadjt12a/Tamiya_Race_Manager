@@ -130,8 +130,17 @@ def backup_data_file():
 
 # ── Heartbeat watchdog ─────────────────────────────────────────────────────────
 # The browser page sends a /ping every 5 seconds while open.
-# If we don't receive a ping for 12 seconds, the tab has been closed → shut down.
-HEARTBEAT_TIMEOUT = 12
+# If no ping arrives for HEARTBEAT_TIMEOUT seconds, the tab has been closed and
+# the server shuts down.
+#
+# 12 seconds was FAR too tight and killed the app during a race night while it
+# sat untouched. Browsers and WebViews throttle background timers hard - a
+# window that is not focused can have its setInterval slowed to roughly once a
+# minute - so an idle-but-open app stopped pinging often enough and the
+# watchdog shot it. The only cost of a generous timeout is the server
+# lingering a little longer after the tab really is closed, which nobody
+# notices; the cost of it being too short is losing the app mid-event.
+HEARTBEAT_TIMEOUT = 180
 NO_BROWSER_TIMEOUT = 300  # if no browser EVER connects, give up after 5 min
 last_ping = time.time()
 first_ping_seen = False   # countdown only starts once the browser has connected

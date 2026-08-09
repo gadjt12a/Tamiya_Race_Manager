@@ -188,8 +188,13 @@ def run():
 
     server.server_ref = httpd
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
-    # Watchdog still runs as a fallback, but window-close is the primary exit
-    threading.Thread(target=server.watchdog, daemon=True).start()
+    # NO WATCHDOG in the desktop app. Closing the window is the exit route
+    # (main_win.events.closed -> os._exit), so the heartbeat has nothing to
+    # tell us that the window itself does not. It only ever added risk: the
+    # WebView throttles background timers, so an app left open but untouched
+    # during a race night stopped pinging often enough and the watchdog
+    # killed it mid-event. Browser mode still runs it - see server.main() -
+    # because there a closed tab is genuinely undetectable otherwise.
     print(f"Server on port {server.PORT}; data file: {server.DATA_FILE}")
     stamp("server up, creating window")
 
