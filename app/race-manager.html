@@ -532,7 +532,7 @@ table.pts-table tr:hover td{background:var(--surface2)}
     <div class="topbar-logo">🏁 <span>Tamiya</span> Race Manager <span id="appVersionLabel" style="font-size:11px;color:var(--muted);font-weight:400;margin-left:6px"></span></div>
     <div class="topbar-sep"></div>
     <div class="topbar-right">
-      <button class="icon-btn" onclick="openDisplay()" title="Open the audience display - set the projector up before racing starts">📺 Display</button>
+      <button class="icon-btn js-display-btn" onclick="openDisplay()" title="Open the audience display - set the projector up before racing starts">📺 Display</button>
       <button class="icon-btn" onclick="toggleFullScreen()" title="Full screen (F11)">⛶ Full Screen</button>
       <button class="icon-btn" onclick="exportData()">⬆ Export Data</button>
       <label class="icon-btn" style="cursor:pointer">⬇ Import Data<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
@@ -582,7 +582,7 @@ table.pts-table tr:hover td{background:var(--surface2)}
       <button class="icon-btn" id="swapHint" onclick="toggleSwapMode()" style="display:none">🔄 Swap Race</button>
       <button class="icon-btn" onclick="editLastResult()" id="editLastBtn" style="display:none">✏️ Edit Last</button>
       <button class="icon-btn" onclick="toggleFullScreen()" title="Full screen (F11)">⛶ Full Screen</button>
-      <button class="icon-btn" onclick="openDisplay()">📺 Display</button>
+      <button class="icon-btn js-display-btn" onclick="openDisplay()">📺 Display</button>
       <button class="icon-btn" onclick="openEditNames()">✏️ Names</button>
       <button class="icon-btn" id="showResultsBtn" onclick="showPodiumModal()" style="display:none">🏆 Show Results</button>
       <button class="icon-btn btn-danger" onclick="confirmAbortRace()">✕ End Race</button>
@@ -3042,19 +3042,40 @@ function pushDisplayContent(force){
   fetch('/display-content',{method:'POST',headers:{'Content-Type':'text/html'},body:h}).catch(()=>{});
 }
 
+// The display opens as a second window with no Dock or Cmd-Tab entry of its
+// own, so once it slips behind the main window there is no way to reach it -
+// and no way to tell it is even open. Both Display buttons therefore change
+// to "Display (bring to front)" once opened. Re-opening destroys and recreates
+// the window, which reliably raises it.
+let _displayOpened=false;
+function markDisplayOpen(){
+  _displayOpened=true;
+  document.querySelectorAll('.js-display-btn').forEach(b=>{
+    b.textContent='📺 Display ↗';
+    b.title='Display is open. Click to bring it back to the front.';
+  });
+}
+
 function openDisplay(){
+  const wasOpen=_displayOpened;
   // Native app (installed exe): ask Python for a real window — fullscreen on
   // the second monitor when one is present.
   if(window.pywebview && window.pywebview.api && window.pywebview.api.open_display){
     pushDisplayContent(true);
     window.pywebview.api.open_display();
+    markDisplayOpen();
+    toast(wasOpen ? 'Display brought to the front'
+                  : 'Display opened — drag it to the second screen. Click Display again if it goes behind this window.',
+          'success', wasOpen ? 2000 : 6000);
     return;
   }
   // Browser + server: popup onto the server-fed display page
   if(serverMode){
     pushDisplayContent(true);
     dispWin=window.open('/display','RaceDisplay','width=1280,height=720,resizable=yes');
-    if(!dispWin) alert('Please allow pop-ups for this page.');
+    if(!dispWin){ alert('Please allow pop-ups for this page.'); return; }
+    try{ dispWin.focus(); }catch(e){}
+    markDisplayOpen();
     return;
   }
   // No server (browser-storage mode): legacy self-polling popup
