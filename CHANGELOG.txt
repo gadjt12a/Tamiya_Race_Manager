@@ -56,6 +56,10 @@ Tamiya Race Manager — Change Log
   - The Display button now shows when the display window is
     already open, and brings it back to the front if it has
     slipped behind the main window.
+  - FIXED: the x2 / x3 buttons on the home screen were cut off
+    at the bottom on some machines.
+  - The Full Screen button showed an empty box instead of its
+    icon on some machines; the icon has been removed.
   - Mac: the app now works on older Macs (macOS 10.13). A
     number of things the app used are too new for the web
     engine on those machines and were quietly breaking the

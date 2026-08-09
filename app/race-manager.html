@@ -533,7 +533,7 @@ table.pts-table tr:hover td{background:var(--surface2)}
     <div class="topbar-sep"></div>
     <div class="topbar-right">
       <button class="icon-btn js-display-btn" onclick="openDisplay()" title="Open the audience display - set the projector up before racing starts">📺 Display</button>
-      <button class="icon-btn" onclick="toggleFullScreen()" title="Full screen (F11)">⛶ Full Screen</button>
+      <button class="icon-btn" onclick="toggleFullScreen()" title="Full screen (F11)">Full Screen</button>
       <button class="icon-btn" onclick="exportData()">⬆ Export Data</button>
       <label class="icon-btn" style="cursor:pointer">⬇ Import Data<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
     </div>
@@ -581,7 +581,7 @@ table.pts-table tr:hover td{background:var(--surface2)}
     <div class="topbar-right">
       <button class="icon-btn" id="swapHint" onclick="toggleSwapMode()" style="display:none">🔄 Swap Race</button>
       <button class="icon-btn" onclick="editLastResult()" id="editLastBtn" style="display:none">✏️ Edit Last</button>
-      <button class="icon-btn" onclick="toggleFullScreen()" title="Full screen (F11)">⛶ Full Screen</button>
+      <button class="icon-btn" onclick="toggleFullScreen()" title="Full screen (F11)">Full Screen</button>
       <button class="icon-btn js-display-btn" onclick="openDisplay()">📺 Display</button>
       <button class="icon-btn" onclick="openEditNames()">✏️ Names</button>
       <button class="icon-btn" id="showResultsBtn" onclick="showPodiumModal()" style="display:none">🏆 Show Results</button>
@@ -1293,7 +1293,7 @@ function renderHome(){
     <div class="panel" style="grid-column:1/-1;margin-bottom:0">
       <div class="panel-hdr" style="font-size:11px;letter-spacing:.1em">Tonight's Points Multiplier</div>
       <div style="display:flex;gap:10px;padding:14px 16px">
-        <button onclick="toggleNightMultiplier('double')" style="flex:1;padding:18px 12px;border-radius:8px;cursor:pointer;
+        <button onclick="toggleNightMultiplier('double')" style="flex:1;min-height:82px;padding:18px 12px;border-radius:8px;cursor:pointer;
           font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:.06em;
           background:${nightDoublePoints?'var(--accent)':'var(--surface2)'};
           color:${nightDoublePoints?'#080b0f':'var(--muted)'};
@@ -1302,7 +1302,7 @@ function renderHome(){
           transition:all .2s">
           ×2<br><span style="font-size:13px;font-weight:700;letter-spacing:.08em">${nightDoublePoints?'DOUBLE POINTS — ON':'Double Points'}</span>
         </button>
-        <button onclick="toggleNightMultiplier('triple')" style="flex:1;padding:18px 12px;border-radius:8px;cursor:pointer;
+        <button onclick="toggleNightMultiplier('triple')" style="flex:1;min-height:82px;padding:18px 12px;border-radius:8px;cursor:pointer;
           font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:.06em;
           background:${nightTriplePoints?'var(--accent2)':'var(--surface2)'};
           color:${nightTriplePoints?'#080b0f':'var(--muted)'};
@@ -3057,7 +3057,10 @@ let _displayOpened=false;
 function markDisplayOpen(){
   _displayOpened=true;
   document.querySelectorAll('.js-display-btn').forEach(b=>{
-    b.textContent='📺 Display ↗';
+    // Plain text, not a symbol: the fullscreen button shipped with a glyph
+    // (U+26F6) that renders as an empty box on macOS 10.13, so anything
+    // outside the common emoji set is a risk here.
+    b.textContent='📺 Display (open)';
     b.title='Display is open. Click to bring it back to the front.';
   });
 }
