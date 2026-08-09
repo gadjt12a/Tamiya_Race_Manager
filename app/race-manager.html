@@ -216,7 +216,7 @@ select option{background:var(--surface2)}
   flex:1;overflow-y:auto;padding:20px;
   /* minmax(0,...) stops long names/tables from blowing the columns out and
      shoving the cards out of line with each other */
-  display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:16px;align-content:start;
+  display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);grid-gap:16px;gap:16px;align-content:start;
 }
 /* Narrow window: stack into one column rather than squash both */
 @media (max-width:900px){
@@ -247,7 +247,7 @@ select option{background:var(--surface2)}
 ═══════════════════════════════════════════════════════ */
 #setupScreen .content{
   flex:1;overflow-y:auto;padding:16px;
-  display:grid;grid-template-columns:300px 1fr;gap:14px;align-content:start;
+  display:grid;grid-template-columns:300px 1fr;grid-gap:14px;gap:14px;align-content:start;
 }
 .class-tabs{display:flex;gap:6px;padding:14px 16px 0;flex-shrink:0}
 .class-tab{
@@ -387,7 +387,7 @@ select option{background:var(--surface2)}
 ═══════════════════════════════════════════════════════ */
 #pointsScreen .content{flex:1;overflow-y:auto;padding:16px}
 .points-grid{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));grid-gap:14px;gap:14px;
 }
 .points-table-wrap{overflow-x:auto}
 table.pts-table{width:100%;border-collapse:collapse;font-size:13px}
@@ -1223,7 +1223,7 @@ function renderHome(){
     <div>
       <div class="sec-title" style="margin-bottom:12px">Race Tonight</div>
       ${season ? `
-      <div style="display:grid;gap:8px">
+      <div style="display:grid;grid-gap:8px;gap:8px">
         ${['box','evo','pro'].map(cls=>{
           const icon={box:'📦',evo:'⚡',pro:'🏆'}[cls];
           const label={box:'Box Class',evo:'EVO Class',pro:'Pro Class'}[cls];
@@ -2786,7 +2786,7 @@ function _buildSeasonHTML(data, inline=false){
     body{font-family:Arial,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;color:#1a1a2e}
     h1{color:#c47a00;border-bottom:3px solid #c47a00;padding-bottom:8px}
     h2{color:#333;margin-top:28px;border-bottom:1px solid #ddd;padding-bottom:6px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:16px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;grid-gap:24px;gap:24px;margin-top:16px}
     table{width:100%;border-collapse:collapse;font-size:14px}
     th{background:#1a1a2e;color:#fff;padding:8px 10px;text-align:left}
     td{padding:7px 10px;border-bottom:1px solid #eee}
@@ -2922,7 +2922,7 @@ function _printHTML(bodyContent, title){
       th{background:#1a1a2e;color:#fff;padding:7px 10px;text-align:left}
       td{padding:6px 10px;border-bottom:1px solid #eee}
       tr:nth-child(even) td{background:#f8f8f8}
-      .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+      .grid{display:grid;grid-template-columns:1fr 1fr;grid-gap:24px;gap:24px}
       @media print{
         .no-print{display:none}
         body{margin:10px}
@@ -3057,7 +3057,7 @@ function openDisplay(){
   const shell=`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Race Display</title>
-    <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#04060a;color:#fff;font-family:'Arial Narrow','Impact',system-ui,sans-serif;height:100vh;display:grid;grid-template-columns:1fr 1fr;gap:0;overflow:hidden}.pane{padding:3.5vw 3vw;padding:clamp(24px,3.5vw,60px) clamp(20px,3vw,52px);height:100vh;overflow:hidden}.left{border-right:2px solid #0d1520}.right{opacity:.82}</style>
+    <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#04060a;color:#fff;font-family:'Arial Narrow','Impact',system-ui,sans-serif;height:100vh;display:grid;grid-template-columns:1fr 1fr;grid-gap:0;gap:0;overflow:hidden}.pane{padding:3.5vw 3vw;padding:clamp(24px,3.5vw,60px) clamp(20px,3vw,52px);height:100vh;overflow:hidden}.left{border-right:2px solid #0d1520}.right{opacity:.82}</style>
     </head><body>
     <script>
       var last='';
@@ -3106,7 +3106,7 @@ function getDisplayHTML(){
       <div style="font-size:1.8vw;font-size:clamp(13px,1.8vw,30px);font-weight:800;letter-spacing:.18em;color:#4090e0;margin-bottom:1.5vh;margin-bottom:clamp(8px,1.5vh,18px)">NOW RACING</div>
       <div style="margin-bottom:2.5vh;margin-bottom:clamp(14px,2.5vh,28px)">${badge(cr.bracket,isFinal)}</div>
       ${cr.racers.map((id,i)=>`
-        <div style="font-size:${cr.racers.length>2?'clamp(60px,9.5vw,182px)':'clamp(72px,11.5vw,220px)'};font-weight:900;color:#fff;margin-bottom:1vh;margin-bottom:clamp(4px,1vh,14px);line-height:1.0;letter-spacing:-.01em">${esc(getName(id))}</div>
+        <div style="font-size:${cr.racers.length>2?'9.5vw':'11.5vw'};font-size:${cr.racers.length>2?'clamp(60px,9.5vw,182px)':'clamp(72px,11.5vw,220px)'};font-weight:900;color:#fff;margin-bottom:1vh;margin-bottom:clamp(4px,1vh,14px);line-height:1.0;letter-spacing:-.01em">${esc(getName(id))}</div>
         ${i<cr.racers.length-1?`<div style="font-size:2vw;font-size:clamp(14px,2vw,32px);color:#2a3a50;margin-bottom:1vh;margin-bottom:clamp(4px,1vh,14px);font-weight:700">VS</div>`:''}`).join('')}`;
   } else {
     curHTML=`<div style="color:#1a2030;font-size:3.5vw;font-size:clamp(20px,3.5vw,56px);padding:12vh 0;padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">Preparing next race...</div>`;
