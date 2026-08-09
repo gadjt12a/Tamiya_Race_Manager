@@ -48,6 +48,18 @@ Tamiya Race Manager — Change Log
     native second-screen display.
   - Housekeeping: removed the unused splash image left behind
     when the splash screen was dropped.
+  - FIXED: after finishing and saving a race, closing and
+    reopening the app wrongly offered "Race In Progress -
+    Resume?" for a race that was already saved. Nothing was
+    lost or duplicated, but you had to resume and save again
+    to clear it.
+  - The Display button now shows when the display window is
+    already open, and brings it back to the front if it has
+    slipped behind the main window.
+  - Mac: the app now works on older Macs (macOS 10.13). A
+    number of things the app used are too new for the web
+    engine on those machines and were quietly breaking the
+    layout, the race screen and the popups.
   - NEW: the "📺 Display" button is now on the HOME screen too,
     so you can get the audience screen up on the projector
     before racing starts. It shows "Waiting for racing to

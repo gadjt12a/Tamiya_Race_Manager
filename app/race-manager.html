@@ -2002,8 +2002,14 @@ function confirmResult(){
     R.currentRace=null;
     computeJuniorPodium();
     renderRace();
-    showPodiumModal();
+    // Checkpoint BEFORE showing the podium. showPodiumModal() starts
+    // autoSaveResults(), which deletes DB.activeRace once the results are
+    // stored - but it is async, so it yields at its first await and the
+    // caller runs next. Checkpointing after the podium therefore wrote the
+    // checkpoint straight back over the deletion, and a fully saved race
+    // still offered "Race In Progress - Resume?" on the next launch.
     saveActiveRace();
+    showPodiumModal();
     return;
   }
 
@@ -2491,8 +2497,8 @@ function saveEditResult(){
     computeJuniorPodium();
     renderRace();
     toast('Result updated','success');
+    saveActiveRace();   // before the podium - see the note in confirmResult()
     showPodiumModal();
-    saveActiveRace();
     return;
   }
 
