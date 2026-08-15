@@ -8,11 +8,21 @@ This re-implements the bracket rules rather than importing them, so it
 can drift from the app. If a rule changes in app/race-manager.html,
 change it here too.
 
-The generated data is written to  data/racedata.json  BESIDE THIS SCRIPT
-purely as scratch output for inspection. That is NOT where the app keeps
-its data - the app uses %LOCALAPPDATA%\TamiyaRaceManager\ (Windows) and
-never reads this file, so running this cannot touch real club data. The
-data/ folder is gitignored.
+The generated data is written to  data/stress-test-output.json  BESIDE
+THIS SCRIPT, purely as scratch output for inspection. That is NOT where
+the app keeps its data - the app uses %LOCALAPPDATA%\TamiyaRaceManager\
+(Windows) and never reads this file. The data/ folder is gitignored.
+
+It used to write to data/racedata.json, which was a genuinely bad idea
+and duly went wrong on 2026-08-15: that is the exact filename the v10
+migration leaves behind in a pre-v10 folder as the untouched backup copy
+of the club's old data ("DATA-HAS-MOVED.txt" sits beside it saying so).
+Running the stress test silently replaced that backup with 30 nights of
+fabricated races. Nothing live was harmed - the app reads
+%LOCALAPPDATA% and had long since migrated - but a file called
+racedata.json full of invented results is exactly the sort of thing
+someone later mistakes for real data. Do not point scratch output at a
+real data filename.
 
 Covers:
   - Bracket engine correctness (all racer counts 3-21)
@@ -30,7 +40,7 @@ import json, os, random, sys
 from datetime import date, timedelta
 from pathlib import Path
 
-DATA_FILE = Path(__file__).parent / "data" / "racedata.json"
+DATA_FILE = Path(__file__).parent / "data" / "stress-test-output.json"
 NIGHTS    = 30
 RUNS      = int(sys.argv[1]) if len(sys.argv) > 1 else 3
 
@@ -680,7 +690,8 @@ if __name__ == "__main__":
         total_errors += len(errs)
         last_db = db
 
-    # Save last run to data/racedata.json for inspection in the app
+    # Save last run to scratch output for inspection - never to a real
+    # data filename; see the note in the module docstring.
     print(f"\n{'='*60}")
     print(f"  Saving last run data -> {DATA_FILE}")
     DATA_FILE.parent.mkdir(exist_ok=True)

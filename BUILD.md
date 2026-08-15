@@ -304,6 +304,35 @@ Notes:
 `~/Library/Application Support/TamiyaRaceManager/` (`racedata.json` +
 `backups/`), outside the app folder, same guarantee as Windows.
 
+## Checking the race logic — `stress-test.py`
+
+A developer tool in the repo root, worth running after any change to the
+bracket engine, points schemes or roster handling. It simulates 30 race
+nights (Box + EVO + Pro each) and validates the results:
+
+```
+python stress-test.py [runs]     # default 3 runs
+```
+
+It checks bracket correctness for every racer count 3–21, junior points
+ranking, double/triple-night multipliers, auto-save upsert (re-saving an
+event must not duplicate it), roster active/inactive flags, multi-season
+roster continuity, and that the points schemes match `race-manager.html`
+exactly. It prints `ALL TESTS PASSED` and an error count.
+
+*Last run 2026-08-15: 90 events, 0 errors.*
+
+**It re-implements the bracket rules rather than importing them**, so it
+can drift from the app — change a rule in `app/race-manager.html` and you
+must change it here too, or this will keep passing while the app is wrong.
+
+Scratch output goes to `data/stress-test-output.json` (gitignored), which
+the app never reads. It used to be written to `data/racedata.json` — the
+same name the v10 migration leaves behind as the backup of a club's
+pre-v10 data — and on 2026-08-15 a stress-test run duly overwrote one.
+Nothing live was affected, but don't point scratch output at a real data
+filename.
+
 ## Smoke test before publishing
 
 1. Run `dist\TamiyaRaceManager\TamiyaRaceManager.exe` — app opens in its own
