@@ -108,8 +108,12 @@ It builds, in order:
 | Output | What it is |
 |---|---|
 | `dist\TamiyaRaceManager\` | the app itself — exe + `_internal\` (intermediate) |
-| `dist\installer\TamiyaRaceManager-Setup-<ver>.exe` | the Windows installer |
-| `dist\TamiyaRaceManager-WindowsPortable-<ver>.zip` | portable zip (app folder + README) |
+| `dist\installer\TamiyaRaceManager-Setup-<ver>.<build>.exe` | the Windows installer |
+| `dist\TamiyaRaceManager-WindowsPortable-<ver>.<build>.zip` | portable zip (app folder + README) |
+
+Every output carries `<version>.<build>`, not the bare version — the `.iss`
+builds its `FullVer` from `app/VERSION` plus the commit count, and uses it
+for the filename, `AppVersion` and the exe's Properties alike.
 
 `windows\BUILD EXE (developer use only).bat` builds just the app folder when
 you're iterating and don't need the installer.
@@ -416,6 +420,11 @@ filename.
   handles it), the executable bit (`git update-index --chmod=+x`), and
   forward-slash paths inside any zip (build with `tar`/`ditto`, not
   `Compress-Archive`). All three have broken the Mac package before.
+
+  The **Windows portable zip still uses `Compress-Archive`**, and that is
+  fine — it is unzipped by Windows, which accepts the backslash separators
+  it writes. Don't "fix" it on the strength of the Mac lesson, but equally
+  don't reuse that zip for anything a Mac has to open.
 - **There is no loading screen, and adding one is harder than it looks.**
   The full reasoning and the measured start-up breakdown are in the module
   docstring at the top of `app/app.py` — read that before attempting a

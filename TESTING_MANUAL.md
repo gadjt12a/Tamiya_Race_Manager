@@ -140,9 +140,10 @@ a USB stick may not carry that mark and may not warn at all** — so if the USB
 route produces no dialog, that is expected, and the exe needs downloading via
 a browser on the target machine instead.
 
-Get the current `TamiyaRaceManager-Setup-<version>.<build>.exe` onto another
-Windows PC (a club member's laptop is perfect) — the newest build; the number
-goes up with every change. **Prefer downloading it there in a browser** over
+Get the current `TamiyaRaceManager-Setup-<version>.<build>.exe` — it is
+written to `dist\installer\` by the build bat — onto another Windows PC (a
+club member's laptop is perfect). Take the newest build; the number goes up
+with every change. **Prefer downloading it there in a browser** over
 copying it from a USB stick, for the mark-of-the-web reason above: the
 download is what makes SmartScreen fire, and it's also what a club will
 actually do. If there's no way to download it, a USB copy is worth trying —
