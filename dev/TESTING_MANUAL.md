@@ -260,5 +260,6 @@ the `.app` in one sitting, and no other Mac has been tried at all.
 | T6 Garbage import | | |
 | T7 Fresh machine + SmartScreen | | |
 | T8 Upgrade over existing install | PASS — Kris, every v9.3x build installed over the top, incl. onefile→onedir; data intact and install folder checked afterwards | 2026-08-09 |
+| T8b Upgrade v9.38 → v10.1, onefile → onedir, measured | PASS — install folder listed before and after: v9.38's single 19 MB exe + `unins000.*` replaced by the 6 MB exe + `_internal\` + `unins000.*`, **no stray files left behind**. Silent install (`/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /TASKS="desktopicon"`), exit code 0, no admin. Desktop icon and Start Menu entry both created; note the desktop is OneDrive-redirected (`OneDrive - Mr Apple\Desktop`), so check there. App launched, reported 10.1, loaded the live 34-event season | 2026-09-07 |
 | T9 Reopen a closed season | PASS — Kris, on a season with recorded events; standings correct after reopening | 2026-08-09 |
 | T10 The Mac app (state macOS version + chip) | | |

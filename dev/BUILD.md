@@ -105,6 +105,13 @@ and the exe's Properties → Details.
 Run **`windows\BUILD INSTALLER (developer use only).bat`** (double-click).
 It builds, in order:
 
+> **Scripting the build?** The bat ends with `pause`, so a non-interactive
+> caller hangs *after the build has already succeeded* — the packages are
+> sitting in `dist\` while the call appears stuck. Redirect stdin:
+> `cmd /c "windows\BUILD INSTALLER (developer use only).bat" < NUL`
+> (`< /dev/null` from Git Bash). Cost a ten-minute timeout on a build that had
+> worked fine.
+
 | Output | What it is |
 |---|---|
 | `dist\TamiyaRaceManager\` | the app itself — exe + `_internal\` (intermediate) |
