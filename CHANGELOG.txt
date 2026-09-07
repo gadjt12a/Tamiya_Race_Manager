@@ -2,6 +2,33 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v10.0  (2026-09-07)  FIRST PUBLIC RELEASE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  - First release published on GitHub. Everything in the
+    v9.28-v9.39 series was developer-only: the last tag
+    was v9.27 and there had never been a release, so a
+    club had no way to download the app the README
+    described. Downloads now live on the release page.
+  - No code change from v9.39 - this is the v9.3x work
+    packaged and published. See RELEASE_NOTES_v10.md for
+    the club-facing notes and the upgrade steps.
+  - Windows only at first. The Mac .app has to be built on
+    a Mac and PyInstaller cannot cross-compile, so it will
+    be added to the same release page when one is free.
+  - Shipped without the SmartScreen screenshots the plan
+    had been holding out for. The written steps cover the
+    prompt, and waiting on a fresh machine had held the
+    release since August.
+  - Known and documented, not fixed: if another program is
+    already holding port 8765 and shares it the way some
+    developer tools do, the app opens and looks normal
+    while nothing loads. Never seen outside one developer
+    machine; listed in the release notes so a club that
+    hits it can find the answer.
+  - Developer material moved to dev/ so the repo root
+    reads as a product. No effect on the app.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v9.39  (2026-08-07)  [merged to main 2026-08-08]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   - FIXED: on some PCs the app refused to start and

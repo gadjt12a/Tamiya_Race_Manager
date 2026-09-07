@@ -1,7 +1,9 @@
 # Tamiya Race Manager — v10 Packaging & Deployment Plan
 
-*Created: 2026-07-16 · **Merged to `main` 2026-08-08** · Status: MERGED —
-not yet released (see Phase 6 for what's still open)*
+*Created: 2026-07-16 · **Merged to `main` 2026-08-08** ·
+**Released as v10.0 on 2026-09-07** (Windows; Mac to follow) · Status: DONE
+for the items this plan set out. See "Shipped anyway" below for what was
+knowingly left open, and Phase 5 for the Mac gaps that remain.*
 
 ---
 
@@ -310,10 +312,13 @@ Mac available for testing. Verified by him on that machine unless noted.*
       machine), zip→installer import step, browser-storage-mode caveat,
       what's-new, downgrade policy, and the Mac section (native `.app`,
       the false "is damaged" Gatekeeper message, Intel-only caveat).
-- [ ] Fill in SmartScreen screenshots (needs a machine that hasn't seen the
-      exe).
+- [x] ~~Fill in SmartScreen screenshots~~ — **dropped 2026-09-07, Kris's
+      call.** They need a machine that has never run the app, and waiting for
+      one had held the release since August. The written steps describe the
+      prompt well enough. Add them later if a fresh machine turns up; it does
+      not need a new release.
 - [ ] Kris's manual test matrix items pass — step-by-step guide in
-      `TESTING_MANUAL.md`. Icon licence: resolved in v9.37. **Partial:**
+      `TESTING_MANUAL.md`. **Still open at release.** See "Shipped anyway". Icon licence: resolved in v9.37. **Partial:**
       fresh clone → build → install → run confirmed on a second PC
       2026-08-07; T3, T8 and T9 recorded PASS on 2026-08-09. T1, T2, T4–T7
       and T10 have no result recorded yet — several have effectively been
@@ -351,9 +356,26 @@ Mac available for testing. Verified by him on that machine unless noted.*
 - [x] Merge `v10-packaging` → `main` — done 2026-08-08 (`bf56cb3`), at
       v9.39. `BUILD.md`'s "Getting the source" section rewritten for `main`
       at the same time.
-- [ ] Retitle release notes to final, remove the DRAFT banner, bump
-      `app/VERSION` to `10.0`, tag `v10.0`, publish the GitHub release with
-      all three packages attached. **Blocked on one thing only, as of
+
+### Shipped anyway — what v10.0 went out with, knowingly
+
+Recorded so nobody has to reconstruct it later, and so the gaps stay visible
+rather than being quietly forgotten now the release is out.
+
+| Left open | Why it did not block | What would close it |
+|---|---|---|
+| **Test matrix T1, T2, T4–T7, T10 unrecorded** | Every one has been exercised repeatedly during development and through a season of real race nights on the club laptop; what is missing is the written result, not the testing. T3, T8, T9 are recorded PASS. | Work through `TESTING_MANUAL.md` and write the results down. Worth doing before the next release, not before this one. |
+| **SmartScreen screenshots** | Need a Windows machine that has never run the app. Waiting for one held the release from 2026-08-09 to 2026-09-07. The written steps describe the prompt adequately. | Any fresh machine. Drop them into the release notes; no new release needed. |
+| **Mac `.app` not attached** | PyInstaller cannot cross-compile and no Mac was free. Listing a download that does not exist would be worse than saying so. | Build on the Mac, attach to the existing v10.0 release. |
+| **Port 8765 clash undetected** (Phase 6 risk table) | Seen once, on a developer machine running an unrelated tool on the same port. Never on a club machine. The fix has a real trade-off — dropping `allow_reuse_address` reintroduces `TIME_WAIT` bind failures on a quick restart mid race night — and rushing it for the release was the worse risk. | Probe with a throwaway non-`SO_REUSEADDR` bind first, show the existing friendly error, then bind as now. |
+
+- [x] Retitle release notes to final, remove the DRAFT banner, bump
+      `app/VERSION` to `10.0`, tag `v10.0`, publish the GitHub release —
+      **done 2026-09-07 with the two Windows packages.** The Mac `.app` is
+      not attached: PyInstaller cannot cross-compile and no Mac was free.
+      The release notes say so plainly rather than listing a download that
+      is not there; it can be added to the same release later.
+      *Superseded, kept for the reasoning:* **Blocked on one thing only, as of
       2026-08-09: the SmartScreen screenshots.** They need a Windows machine
       that has never run the app — the warning appears once per machine and
       the chance is spent on first launch, so don't launch it there casually.
