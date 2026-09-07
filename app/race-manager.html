@@ -440,6 +440,29 @@ table.pts-table tr:hover td{background:var(--surface2)}
   padding:24px;width:480px;max-width:95vw;max-height:85vh;overflow-y:auto;
   position:relative;
 }
+/* Past-race report: needs room for the results and heat tables. */
+.modal.modal-wide{width:720px}
+/* The report is the same HTML the export and print paths produce, which is
+   styled for white paper - so it gets a light card of its own rather than
+   inheriting the dark app theme and coming out unreadable. */
+.night-report{
+  background:#fff;color:#1a1a2e;border-radius:10px;padding:18px 22px;
+  margin-top:14px;max-height:60vh;overflow-y:auto;
+}
+.night-report h1{font-size:19px;color:#c47a00;border-bottom:3px solid #c47a00;padding-bottom:8px;margin:0 0 4px}
+.night-report h2{font-size:15px;color:#333;margin:22px 0 0;border-bottom:1px solid #ddd;padding-bottom:6px}
+.night-report table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+.night-report th{background:#1a1a2e;color:#fff;padding:7px 9px;text-align:left}
+.night-report td{padding:6px 9px;border-bottom:1px solid #eee}
+.night-report tr:nth-child(even) td{background:#f8f8f8}
+.night-report .meta{color:#666;font-size:12px;margin:6px 0 0}
+.night-report .note{
+  background:#fff5e0;border-left:3px solid #c47a00;padding:9px 12px;
+  margin-top:14px;font-size:12.5px;color:#5a4a20;border-radius:0 4px 4px 0;
+}
+/* Clickable rows in the Recent Events list */
+.event-row{cursor:pointer;transition:border-color .12s,background .12s}
+.event-row:hover{border-color:var(--accent);background:rgba(232,160,32,.06)}
 .modal h2{font-family:'Arial Narrow','Impact','Barlow Condensed',sans-serif;font-size:20px;font-weight:700;margin-bottom:4px}
 .modal-sub{color:var(--muted2);font-size:13px;margin-bottom:18px}
 .modal-actions{display:flex;gap:8px;margin-top:18px}
@@ -815,6 +838,18 @@ table.pts-table tr:hover td{background:var(--surface2)}
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
       <button class="btn btn-danger" id="confirmOkBtn">Confirm</button>
+    </div>
+  </div>
+
+  <!-- Past Race Result — opened by clicking an event in Recent Events -->
+  <div class="modal modal-wide" id="eventReportModal" style="display:none">
+    <h2 id="eventReportTitle">Race Result</h2>
+    <p class="modal-sub" id="eventReportSub"></p>
+    <div class="night-report" id="eventReportBody"></div>
+    <div class="modal-actions" style="flex-wrap:wrap;gap:6px">
+      <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+      <button class="btn btn-secondary" onclick="printEventReport()">🖨 Print</button>
+      <button class="btn btn-secondary" onclick="exportEventReportHTML()">⬇ Save as HTML</button>
     </div>
   </div>
 
@@ -1280,18 +1315,26 @@ function renderHome(){
   let pastHTML = `<div>
     <div class="sec-title" style="margin-bottom:12px">Recent Events</div>`;
   if(season && season.events.length>0){
-    const recent = [...season.events].reverse().slice(0,8);
-    pastHTML += recent.map(ev=>{
+    const all = [...season.events].reverse();
+    const shown = _showAllEvents ? all : all.slice(0, 8);
+    pastHTML += shown.map(ev=>{
       const typeLabel = ev.type==='test'?'Test':ev.type==='special'?(ev.specialName||'Special'):ev.classLabel||ev.classKey||'';
-      return `<div class="panel" style="margin-bottom:6px">
+      return `<div class="panel event-row" style="margin-bottom:6px"
+           onclick="openEventReport('${season.id}','${ev.id}')"
+           title="See this race's results">
         <div style="padding:10px 14px;display:flex;align-items:center;gap:10px">
           ${classPill(ev.type==='special'?'special':ev.type==='test'?'test':ev.classKey||'box')}
           <span style="flex:1;font-size:13px;font-weight:500">${esc(ev.specialName||ev.classLabel||typeLabel)}${ev.pointsScheme==='triple'?' <span class="chip" style="background:rgba(240,192,96,.15);color:var(--accent2);font-size:10px">×3</span>':ev.doublePoints||ev.pointsScheme==='double'?' <span class="chip" style="background:rgba(232,160,32,.15);color:var(--accent);font-size:10px">×2</span>':''}</span>
           <span style="color:var(--muted);font-size:12px">${esc(ev.date||'')}</span>
           <span style="color:var(--green);font-size:12px">✓ Complete</span>
+          <span style="color:var(--muted2);font-size:15px" aria-hidden="true">›</span>
         </div>
       </div>`;
     }).join('');
+    if(all.length > 8){
+      pastHTML += `<div style="margin-top:8px"><button class="btn btn-secondary" onclick="toggleAllEvents()">${
+        _showAllEvents ? '▲ Show recent only' : `▼ Show all ${all.length} events`}</button></div>`;
+    }
   } else {
     pastHTML += `<div class="empty"><div class="empty-icon">📋</div>No events yet this season</div>`;
   }
@@ -1350,6 +1393,12 @@ let setupState = {
 let nightDoublePoints = false;
 let nightTriplePoints = false;
 let _pendingSetupClass = null, _pendingSetupMode = null;
+
+// Recent Events shows the last 8 by default. A full season runs to 40-odd
+// events across the three classes, and every one of them is now worth opening,
+// so there has to be a way to reach the rest.
+let _showAllEvents = false;
+function toggleAllEvents(){ _showAllEvents = !_showAllEvents; renderHome(); }
 
 function toggleNightMultiplier(type){
   if(type==='double'){
@@ -2733,6 +2782,74 @@ function _getSeasonStandings(seasonId){
            pro:sorted(standings.pro), juniorEvo:sorted(juniorEvo) };
 }
 
+// ── Viewing a race night that has already finished ────────────
+// Everything needed is stored on the event; what was missing was a way back
+// to it. `_getNightData()` above builds the same shape from the race in
+// progress, so a saved event only needs mapping onto it.
+function _eventNightData(ev){
+  const results = ev.results || [];
+  const label = ev.classLabel
+    || {box:'Box Class', evo:'EVO Class', pro:'Pro Class'}[ev.classKey]
+    || ev.classKey || 'Race';
+  return {
+    standings: results,
+    podium: ev.podium || null,
+    juniorPodium: ev.juniorPodium || null,
+    classLabel: ev.type==='special' ? (ev.specialName || label) : label,
+    classKey: ev.classKey,
+    date: ev.date || '',
+    specialName: ev.type==='special' ? '' : (ev.specialName || ''),
+    // raceBreakdown is stored newest-first; _buildNightHTML reverses what it
+    // is given, so hand it back the other way up to display as it did on the
+    // night rather than in reverse.
+    history: [...(ev.raceBreakdown || [])].reverse().map(h=>({
+      num: h.raceNum, bracket: h.bracket, places: h.places || [],
+    })),
+    // The podium holds racer ids; results carry the names to resolve them.
+    racers: results.map(r=>({id: r.racerId || r.rosterId, name: r.name})),
+    noHistoryNote: (ev.raceBreakdown && ev.raceBreakdown.length) ? '' :
+      (ev.importedFrom
+        ? 'Race-by-race detail is not available for this night — the results were imported from the club’s points spreadsheet, which recorded final points only.'
+        : 'No race-by-race detail was recorded for this night.'),
+  };
+}
+
+let _viewingEvent = null;   // {d, ev} for the print / save buttons
+
+function openEventReport(seasonId, eventId){
+  const season = DB.seasons.find(s=>s.id===seasonId);
+  const ev = season && (season.events||[]).find(e=>e.id===eventId);
+  if(!ev){ toast('That race could not be found','error'); return; }
+  const d = _eventNightData(ev);
+  _viewingEvent = {d, ev};
+  document.getElementById('eventReportTitle').textContent =
+    d.classLabel + (d.specialName ? ' — ' + d.specialName : '');
+  const n = (ev.results||[]).length;
+  document.getElementById('eventReportSub').textContent =
+    `${d.date} · ${n} racer${n===1?'':'s'}` +
+    (ev.pointsScheme==='triple' ? ' · triple points'
+      : (ev.doublePoints||ev.pointsScheme==='double') ? ' · double points' : '');
+  document.getElementById('eventReportBody').innerHTML = _buildNightHTML(d, true);
+  showModal('eventReportModal');
+}
+
+function printEventReport(){
+  if(!_viewingEvent) return;
+  const d = _viewingEvent.d;
+  _printHTML(_buildNightHTML(d), `${d.classLabel} — ${d.date}`);
+}
+
+function exportEventReportHTML(){
+  if(!_viewingEvent) return;
+  const d = _viewingEvent.d;
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+    <title>${esc(d.classLabel)} — ${d.date}</title></head><body>
+    ${_buildNightHTML(d)}</body></html>`;
+  _downloadFile(html,
+    `${d.classLabel.replace(/\s/g,'_')}_${String(d.date).replace(/\//g,'-')}.html`,
+    'text/html');
+}
+
 // ── Shared HTML report builder ────────────────────────────────
 function _buildNightHTML(d, inline=false){
   const podNames = (id) => id ? esc((d.racers.find(r=>r.id===id)||{}).name||'?') : '—';
@@ -2758,12 +2875,23 @@ function _buildNightHTML(d, inline=false){
       <td>${s.wins}</td><td>${s.losses}</td><td><strong>${s.points}</strong></td>
     </tr>`).join('');
 
-  const histRows = [...d.history].reverse().map(h=>`
+  // Heat-by-heat is only there for nights the app actually ran. Results
+  // imported from the club's old spreadsheets have final points and nothing
+  // else, so the section is dropped rather than shown as an empty table.
+  const history = d.history || [];
+  const histRows = [...history].reverse().map(h=>`
     <tr>
       <td>#${h.num}</td>
       <td>${h.bracket==='final'?'Final':h.bracket==='main'?'Main':'2nd Chance'}</td>
-      <td>${h.places.map(esc).join(' · ')}</td>
+      <td>${(h.places||[]).map(esc).join(' · ')}</td>
     </tr>`).join('');
+  const historySection = history.length ? `
+    <h2>Race History</h2>
+    <table>
+      <tr><th>Race</th><th>Bracket</th><th>Result</th></tr>
+      ${histRows}
+    </table>` : (d.noHistoryNote ? `
+    <p class="note">${esc(d.noHistoryNote)}</p>` : '');
 
   const styles = inline ? '' : `<style>
     body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1a1a2e}
@@ -2789,11 +2917,7 @@ function _buildNightHTML(d, inline=false){
       <tr><th>#</th><th>Racer</th><th>Wins</th><th>Losses</th><th>Points</th></tr>
       ${standingsRows}
     </table>
-    <h2>Race History</h2>
-    <table>
-      <tr><th>Race</th><th>Bracket</th><th>Result</th></tr>
-      ${histRows}
-    </table>`;
+    ${historySection}`;
 }
 
 function _buildSeasonHTML(data, inline=false){

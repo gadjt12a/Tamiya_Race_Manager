@@ -2,6 +2,26 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v10.1  (2026-09-07)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  - Past races are now clickable. Click any race in
+    Recent Events to see that night again: podium, junior
+    podium, full results and points, and every heat with
+    who was in it and how they finished.
+  - The app had been keeping all of that from the start -
+    there was simply no way back to it once the night was
+    over. Nothing new is recorded; an existing data file
+    shows its full history straight away.
+  - Print or save any past race from the same window, the
+    same as on the night itself.
+  - Recent Events shows the last 8 as before, with a
+    "Show all" button - a full season runs to 40-odd races
+    and every one is now worth opening.
+  - Races imported from a spreadsheet say so, instead of
+    showing an empty race-by-race table. Those only ever
+    had final points recorded.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v10.0  (2026-09-07)  FIRST PUBLIC RELEASE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   - First release published on GitHub. Everything in the
