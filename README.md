@@ -58,6 +58,8 @@ app/       the application: race-manager.html (UI + race engine),
            server.py (data server), app.py (desktop window), VERSION, icon
 windows/   Windows packaging: installer script, build bats, Windows README
 mac/       Mac packaging: launcher, package build bat, Mac README
+dev/       developer material - build guide, release plan, test matrix,
+           design notes, stress test. Not needed to use the app.
 ```
 
 ## Building the packages (developers)
@@ -71,13 +73,13 @@ Requirements: Python 3, `pip install pyinstaller pywebview`, and
   (and only for the architecture of the machine that builds it).
 - **Mac Python-zip (legacy fallback):** `mac\BUILD MAC PACKAGE (developer use only).bat`
   builds the older launcher-plus-source package on Windows for Macs where the
-  `.app` won't run. Both write to the same filename — see `BUILD.md`.
+  `.app` won't run. Both write to the same filename — see `dev/BUILD.md`.
 
 Outputs land in `dist\` and are named `<version>.<build>` — the version from
 `app/VERSION` (bumped by hand) and the build number from
 `git rev-list --count HEAD`, so it identifies the commit rather than the
-machine that built it. See [`BUILD.md`](BUILD.md).
+machine that built it. See [`dev/BUILD.md`](dev/BUILD.md).
 
-See [`DEPLOYMENT_PLAN.md`](DEPLOYMENT_PLAN.md) for the v10 release plan, test
+See [`dev/DEPLOYMENT_PLAN.md`](dev/DEPLOYMENT_PLAN.md) for the v10 release plan, test
 matrix and data-safety design, and [`HOW TO USE.txt`](HOW%20TO%20USE.txt) for
 the race-night manual.

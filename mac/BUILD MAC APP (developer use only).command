@@ -4,7 +4,7 @@
 #
 # RUN THIS ON A MAC. PyInstaller cannot cross-compile: a macOS .app can
 # only be built on macOS. (The Windows packages, and the older Python-zip
-# Mac package, are built on Windows - see BUILD.md.)
+# Mac package, are built on Windows - see dev/BUILD.md.)
 #
 # Output:  dist/TamiyaRaceManager.app
 #          dist/TamiyaRaceManager-Mac-<ver>.<build>.zip
@@ -122,7 +122,7 @@ set -- --noconfirm --clean --windowed \
     --collect-all webview
 
 # macOS needs .icns; app/icon.ico is Windows-only. If icon.icns isn't
-# there we build without one rather than failing - see BUILD.md for how
+# there we build without one rather than failing - see dev/BUILD.md for how
 # to generate it from a PNG with sips + iconutil.
 if [ -f "app/icon.icns" ]; then
     set -- "$@" --icon "app/icon.icns"

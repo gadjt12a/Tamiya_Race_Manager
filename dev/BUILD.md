@@ -310,12 +310,12 @@ Notes:
 
 ## Checking the race logic — `stress-test.py`
 
-A developer tool in the repo root, worth running after any change to the
-bracket engine, points schemes or roster handling. It simulates 30 race
-nights (Box + EVO + Pro each) and validates the results:
+A developer tool in `dev/`, worth running after any change to the bracket
+engine, points schemes or roster handling. It simulates 30 race nights
+(Box + EVO + Pro each) and validates the results:
 
 ```
-python stress-test.py [runs]     # default 3 runs
+python dev/stress-test.py [runs]     # from the repo root; default 3 runs
 ```
 
 It checks bracket correctness for every racer count 3–21, junior points

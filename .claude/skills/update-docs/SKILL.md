@@ -18,12 +18,12 @@ that need nothing.
 | `RELEASE_NOTES_v10.md` | a club downloading it | why they should care, plain English, no internals |
 | `HOW TO USE.txt` | a club on race night | how to operate it — and the version header must match |
 | `README.md` | someone choosing a platform package | the platform picker; only if the packages changed |
-| `BUILD.md` | whoever cuts the next build | build steps, tool requirements, gotchas, version scheme |
-| `DEPLOYMENT_PLAN.md` | the v10 release effort | phase status, test matrix rows, risks |
-| `TESTING_MANUAL.md` | Kris, testing by hand | the steps to run and the results table |
+| `dev/BUILD.md` | whoever cuts the next build | build steps, tool requirements, gotchas, version scheme |
+| `dev/DEPLOYMENT_PLAN.md` | the v10 release effort | phase status, test matrix rows, risks |
+| `dev/TESTING_MANUAL.md` | Kris, testing by hand | the steps to run and the results table |
 | `windows/README.txt`, `mac/README.txt` | whoever unzips the package | what to run, what not to move, first-run warnings |
 | `windows/installer-info.txt` | someone mid-install | the data-safety page shown before installing |
-| `tamiya-race-manager-project-memory.md` | orientation | project overview — check its "Last updated" line |
+| `dev/PROJECT_MEMORY.md` | orientation | project overview — check its "Last updated" line |
 
 ## How to do it
 
@@ -113,7 +113,7 @@ Memory lives outside the repo and is never part of the commit.
 - **Withdraw superseded decisions explicitly**, with the reason they
   existed, or they get reinstated by the next person. The splash has been
   attempted three times; `app/app.py` records why there is no longer one.
-- **Keep `DEPLOYMENT_PLAN.md` honest.** A `[ ]` becomes `[x]` when it has
+- **Keep `dev/DEPLOYMENT_PLAN.md` honest.** A `[ ]` becomes `[x]` when it has
   actually been done, by whom, and how it was verified — not when it looks
   finished.
 - **`RELEASE_NOTES_v10.md` is a DRAFT** with `[SCREENSHOT]` placeholders.
