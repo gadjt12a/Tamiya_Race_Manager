@@ -1,7 +1,8 @@
 # Tamiya Race Manager v10.0 — Release Notes
 
-> **STATUS: DRAFT** — will accompany the GitHub release when the v10 test
-> matrix is signed off. Screenshot placeholders marked `[SCREENSHOT]`.
+> **Windows only for now.** The Mac build has to be made on a Mac, and one
+> wasn't available when this went out. It will be added to this same release
+> page when it is — nothing else about the release changes when it appears.
 
 Race Manager is now a proper desktop application with a one-click installer.
 This is the biggest update since the app was built — but your race data is
@@ -25,7 +26,7 @@ export is belt-and-braces, and good practice after every race night anyway.
 1. Download **`TamiyaRaceManager-Setup-10.0.exe`** from this release.
 2. Run it. Windows SmartScreen will likely show **"Windows protected your
    PC"** — this is normal for a small club app that isn't code-signed:
-   click **More info**, then **Run anyway**. `[SCREENSHOT]`
+   click **More info**, then **Run anyway**.
 3. The installer shows a data-safety page (worth reading once), then installs
    in seconds. No admin rights needed.
 4. Launch from the **desktop icon**. The app opens in its own window — no
@@ -54,6 +55,10 @@ storage mode"): open the OLD version first, click **Export Data**, and import
 that file instead — there is no data file on disk in that mode.
 
 ## Installing (Mac / OSX)
+
+> **Not in this release yet** — the Mac app has to be built on a Mac. It will
+> be added to this release page when one is available. The instructions below
+> apply once it is; in the meantime the v9.x Mac package still works.
 
 **`TamiyaRaceManager-Mac-10.0.zip`** — unzip it and drag
 **TamiyaRaceManager** to your Applications folder (or anywhere you like).
@@ -189,6 +194,13 @@ to us.
   it for a free club app; if that ever changes, the warnings go away.
 - **Mac: Apple Silicon and newer macOS are untested.** Tested on macOS 10.13
   Intel. See the Mac install section above.
+- **Port 8765 clash with another program.** Race Manager serves itself on
+  port 8765. If another program is already holding that port *and* shares it
+  in the particular way some developer tools do, Race Manager will open and
+  look completely normal while nothing loads. Rare, and no club has hit it —
+  it was found on a developer machine running an unrelated tool on the same
+  port. If the window opens but stays blank, close the other program and
+  restart Race Manager.
 
 ## Files in this release
 
@@ -196,7 +208,7 @@ to us.
 |---|---|
 | `TamiyaRaceManager-Setup-10.0.exe` | Windows installer (recommended) |
 | `TamiyaRaceManager-WindowsPortable-10.0.zip` | Windows portable |
-| `TamiyaRaceManager-Mac-10.0.zip` | Mac / OSX |
+| `TamiyaRaceManager-Mac-10.0.zip` | Mac / OSX — *to follow, see above* |
 
 Downloads carry a build number after the version, e.g.
 `TamiyaRaceManager-Setup-10.0.25.exe`. It goes up every time the app
