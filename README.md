@@ -12,6 +12,9 @@ monitor. Runs entirely offline on one laptop.
 
 ## Downloads — pick your platform
 
+**➡ [Get the latest release](https://github.com/gadjt12a/Tamiya_Race_Manager/releases/latest)**
+— everything below is on that page.
+
 ### 🪟 Windows (recommended)
 | Package | What it is |
 |---|---|
@@ -25,6 +28,10 @@ The app runs in its own window (no console, no browser tab). Full details:
 | Package | What it is |
 |---|---|
 | `TamiyaRaceManager-Mac-<ver>.zip` | `TamiyaRaceManager.app` — a real Mac app. No Python to install; runs in its own window like the Windows version. |
+
+> **Not on the v10.0 release page yet.** The Mac app has to be built on a Mac,
+> and one wasn't free when v10.0 went out. It will be added to that same
+> release when it is.
 
 Run successfully on **one** Mac (macOS 10.13 High Sierra, Intel) by the
 developer on 2026-08-08, never yet at a real race night. Newer macOS versions
