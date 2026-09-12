@@ -1013,12 +1013,11 @@ async function discardActiveRace(){
 }
 
 function exportData(){
-  const blob = new Blob([JSON.stringify(DB, null, 2)], {type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'racedata_backup_'+new Date().toISOString().slice(0,10)+'.json';
-  a.click();
-  toast('Data exported!','success');
+  // This is the club's backup. It must never claim to have saved something it
+  // has not - see _saveFile.
+  return _saveFile(JSON.stringify(DB, null, 2),
+                   'racedata_backup_'+new Date().toISOString().slice(0,10)+'.json',
+                   'application/json');
 }
 
 function importData(event){
@@ -3039,14 +3038,50 @@ function exportSeasonPrint(){
 }
 
 // ── Download helpers ──────────────────────────────────────────
+// Saving a file has to work two different ways.
+//
+// In the desktop app the browser download mechanism does nothing at all -
+// WebView2 here has no download handler, so clicking a hidden <a download> is
+// silently swallowed while the script carries on. Every export in the app was
+// quietly failing while reporting success, Export Data included. So when the
+// Python bridge is there, saving goes through it: a real Save dialog, a real
+// write, and a real path back. In a plain browser tab there is no bridge and
+// the normal download is correct.
+//
+// Nothing here reports success it has not been told about.
+async function _saveFile(content, filename, mime){
+  const api = window.pywebview && window.pywebview.api;
+  if(api && api.save_file){
+    let res;
+    try{ res = await api.save_file(filename, content); }
+    catch(err){ toast('Could not save: '+err, 'error', 6000); return false; }
+    if(res === null || res === undefined || res === false) return false; // cancelled
+    if(typeof res === 'string' && res.startsWith('!')){
+      toast('NOT saved — '+res.slice(1), 'error', 8000); return false;
+    }
+    toast('Saved to '+res, 'success', 5000);
+    return true;
+  }
+  // browser tab: the ordinary download path
+  try{
+    const blob = new Blob([content], {type: mime+';charset=utf-8;'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 10000);
+    toast(`Saved: ${filename}`, 'success');
+    return true;
+  }catch(err){
+    toast('Could not save: '+err, 'error', 6000);
+    return false;
+  }
+}
+
 function _downloadFile(content, filename, mime){
-  const blob = new Blob([content], {type: mime+';charset=utf-8;'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(a.href);
-  toast(`Saved: ${filename}`, 'success');
+  return _saveFile(content, filename, mime);
 }
 
 function _toCSV(rows){

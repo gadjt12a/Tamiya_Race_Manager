@@ -254,7 +254,7 @@ the `.app` in one sitting, and no other Mac has been tried at all.
 |---|---|---|
 | T1 Full race night | | |
 | T2 Display / second screen | | |
-| T3 Exports & import in window | PASS — Kris, incl. print / PDF from inside the WebView2 window (matrix #13) | 2026-08-09 |
+| T3 Exports & import in window | **PARTLY WRONG — corrected 2026-09-07.** Print / PDF genuinely work. The *export* half did not: in the app window the download was silently dropped while the app reported success, so the toast was the only evidence and it was lying. Fixed in v10.2; re-test by checking a file actually appears | 2026-08-09, corrected 2026-09-07 |
 | T4 Sleep mid-event | | |
 | T5 Crash recovery | | |
 | T6 Garbage import | | |

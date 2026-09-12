@@ -2,6 +2,29 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v10.2  (2026-09-07)  IMPORTANT - EXPORTS WERE NOT SAVING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  - FIXED: Export Data, and every other export, did
+    nothing in the app window while reporting success.
+    The file was never written. Reported by Luke,
+    2026-09-07, and reproduced.
+  - Affected Export Data, race night reports (HTML) and
+    season standings (HTML and CSV). The app window has
+    no download handler, so the save was silently dropped
+    while the success message appeared anyway.
+  - Exports now go through a proper Save dialog and write
+    the file for real. The message names the folder it
+    was written to, and says so plainly if it failed.
+    Cancelling no longer claims to have saved anything.
+  - Running in a browser tab was never affected.
+  - If you have been relying on Export Data as your backup
+    in the app window, you did not have one. Your race
+    data itself was never at risk - it lives in
+    %LOCALAPPDATA%\TamiyaRaceManager\ with 14 days of
+    automatic backups beside it - but please take a fresh
+    export now that the button works.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v10.1  (2026-09-07)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   - Past races are now clickable. Click any race in

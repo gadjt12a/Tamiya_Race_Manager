@@ -34,6 +34,7 @@ If start-up ever feels slow again, read the stamps in app.log first rather
 than guessing which stage is at fault; guessing got it wrong twice here.
 """
 import os
+import pathlib
 import sys
 import threading
 import time
@@ -96,6 +97,48 @@ class Api:
 
     def __init__(self):
         self.display_window = None
+
+    def save_file(self, filename, content):
+        """Write a file the user asked to save, via a native Save dialog.
+
+        The page used to do this the web way: build a Blob and click a hidden
+        <a download>. That works in a browser tab and does NOTHING in the app
+        window - WebView2 here has no download handler, so the click is
+        swallowed silently while the JavaScript carries on and reports success.
+        Every export in the app was affected, including Export Data, which the
+        README and the release notes both tell clubs to rely on as their backup.
+        Reported by Luke, 2026-09-07, and reproduced.
+
+        Returns the path written, or a string starting with "!" on failure, or
+        None if the user cancelled. The caller must not claim success unless a
+        path comes back.
+        """
+        try:
+            import webview
+            if main_window is None:
+                return "!no window"
+            dest = main_window.create_file_dialog(
+                webview.SAVE_DIALOG,
+                directory=str(pathlib.Path.home() / "Downloads"),
+                save_filename=filename,
+            )
+            if not dest:
+                return None                      # user cancelled
+            if isinstance(dest, (list, tuple)):  # some backends return a list
+                dest = dest[0]
+            path = pathlib.Path(dest)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            # utf-8-sig: Excel opens our CSV exports by double-click, and
+            # without the BOM it mangles any name with an accent in it.
+            enc = "utf-8-sig" if path.suffix.lower() == ".csv" else "utf-8"
+            path.write_text(content, encoding=enc)
+            if not path.exists() or path.stat().st_size == 0:
+                return "!nothing was written to %s" % path
+            print(f"saved {path} ({path.stat().st_size} bytes)")
+            return str(path)
+        except Exception as e:
+            print(f"save_file failed: {e}")
+            return "!%s" % e
 
     def toggle_fullscreen(self):
         """Full-screen the main app window (Full Screen button / F11)."""
