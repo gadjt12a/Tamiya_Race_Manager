@@ -1,8 +1,9 @@
 # Tamiya Race Manager — v10 Packaging & Deployment Plan
 
 *Created: 2026-07-16 · **Merged to `main` 2026-08-08** ·
-**Released as v10.0 on 2026-09-07**, and **v10.1 the same day** (past races
-made clickable). Windows only; Mac to follow · Status: DONE
+**Released as v10.0 on 2026-09-07**, **v10.1 the same day** (past races made
+clickable), and **v10.2 on 2026-09-12** (exports were silently writing nothing
+in the app window — see the CHANGELOG). Windows only; Mac to follow · Status: DONE
 for the items this plan set out. See "Shipped anyway" below for what was
 knowingly left open, and Phase 5 for the Mac gaps that remain.*
 

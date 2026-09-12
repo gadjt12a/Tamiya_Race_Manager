@@ -70,6 +70,17 @@ prize-giving.
 **Purpose:** WebView2 (the app window's engine) handles downloads, printing
 and file pickers differently from Chrome — every export path needs checking.
 
+> ⚠ **Go and look for the file. Do not accept the app's own success message.**
+> This test was recorded PASS on 2026-08-09 while every export in the app window
+> was writing nothing at all. WebView2 has no download handler, so the click was
+> swallowed, no error was raised, and the "Data exported!" toast fired anyway.
+> It stayed broken through v10.0 and v10.1 and was only caught when a club
+> member noticed his backups were not appearing. Fixed in v10.2.
+>
+> For any "did it save / send / write" step here: **open the folder and confirm
+> the file exists, then open it.** A UI that reports its own success is not
+> evidence, and in this app it was actively wrong.
+
 1. Finish a class → podium modal → **💾 Export HTML**. Where does the file
    go? Does a save dialog appear? Open the file — complete and correct?
 2. **📊 Export CSV** — same checks; opens in Excel?
