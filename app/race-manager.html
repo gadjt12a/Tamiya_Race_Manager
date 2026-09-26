@@ -1473,6 +1473,17 @@ function confirmSpecialEvent(){
 
 function renderSetupContent(){
   const el = document.getElementById('setupContent');
+
+  // This function rebuilds the whole panel, which throws away two things the
+  // user is in the middle of: how far they had scrolled the roster, and the
+  // caret in the search box. Ticking a racer near the bottom of a 77-name
+  // roster sent the list back to the top every time, and typing a search
+  // lost focus after the first letter. Remember both, restore both below.
+  const _scroller = document.getElementById('rosterScroll');
+  const _scrollTop = _scroller ? _scroller.scrollTop : 0;
+  const _search = document.getElementById('rosterSearch');
+  const _searchFocused = !!_search && document.activeElement === _search;
+  const _caret = _search ? _search.selectionStart : null;
   const isEvo = setupState.classKey==='evo' && setupState.mode!=='test';
 
   // Build roster list for left panel
@@ -1489,10 +1500,10 @@ function renderSetupContent(){
   const rosterHTML = setupState.mode==='test'
     ? `<div class="empty"><div class="empty-icon">🔬</div>Test mode — no roster tracking</div>`
     : `<div style="margin-bottom:8px">
-        <input type="text" placeholder="Search roster..." value="${esc(setupState.rosterFilter)}"
+        <input type="text" id="rosterSearch" placeholder="Search roster..." value="${esc(setupState.rosterFilter)}"
           oninput="setupState.rosterFilter=this.value;renderSetupContent()" style="margin-bottom:6px">
       </div>
-      <div style="max-height:calc(100vh - 280px);overflow-y:auto">
+      <div id="rosterScroll" style="max-height:calc(100vh - 280px);overflow-y:auto">
       ${rosterRacers.length===0
         ? `<div class="empty" style="padding:16px">No racers in database yet</div>`
         : rosterRacers.map(r=>{
@@ -1578,6 +1589,19 @@ function renderSetupContent(){
       names.forEach(n=>addRacerEntry(n, false));
       renderSetupContent();
     });
+  }
+
+  // Put the user back where they were - see the top of this function.
+  const _newScroller = document.getElementById('rosterScroll');
+  if(_newScroller && _scrollTop) _newScroller.scrollTop = _scrollTop;
+  if(_searchFocused){
+    const _newSearch = document.getElementById('rosterSearch');
+    if(_newSearch){
+      _newSearch.focus();
+      if(_caret !== null){
+        try{ _newSearch.setSelectionRange(_caret, _caret); }catch(e){}
+      }
+    }
   }
 }
 

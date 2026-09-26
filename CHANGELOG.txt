@@ -2,6 +2,19 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v10.3  (2026-09-26)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  - FIXED: picking a racer from the roster list sent the
+    list back to the top. On a long roster that meant
+    scrolling down again for every single racer. It now
+    stays where you left it.
+  - FIXED: the roster search box lost focus after one
+    letter, so you could not type a name into it.
+  - Both had the same cause: choosing a racer rebuilds
+    the panel, which threw away the scroll position and
+    the cursor. They are now put back.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v10.2  (2026-09-07)  IMPORTANT - EXPORTS WERE NOT SAVING
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   - FIXED: Export Data, and every other export, did
