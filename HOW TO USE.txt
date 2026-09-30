@@ -1,5 +1,22 @@
-Tamiya Race Manager v9.39
-HOW TO USE
+Tamiya Race Manager
+HOW TO USE  -  full reference
+==========================================
+
+NEW TO THE APP? START WITH THE GUIDES INSTEAD.
+
+Two short PDFs are installed alongside the app, in the "Guides"
+folder, and on the Start Menu:
+
+   Race Manager - Getting Started
+     Install it, set up a season, run a race night. Three pages.
+
+   Race Manager - Backing Up Your Results
+     The one click that keeps your season safe, and how to go
+     back to an earlier night. Two pages.
+
+This file is the FULL reference - every screen, every option, and
+the troubleshooting detail. Come here when the guides do not cover
+what you need.
 ==========================================
 
 
