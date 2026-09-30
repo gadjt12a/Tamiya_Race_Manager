@@ -1,11 +1,22 @@
 # Tamiya Race Manager — v10 Packaging & Deployment Plan
 
-*Created: 2026-07-16 · **Merged to `main` 2026-08-08** ·
-**Released as v10.0 on 2026-09-07**, **v10.1 the same day** (past races made
-clickable), and **v10.2 on 2026-09-12** (exports were silently writing nothing
-in the app window — see the CHANGELOG). Windows only; Mac to follow · Status: DONE
-for the items this plan set out. See "Shipped anyway" below for what was
-knowingly left open, and Phase 5 for the Mac gaps that remain.*
+*Created: 2026-07-16 · **Merged to `main` 2026-08-08** · Windows only; Mac to
+follow · Status: **DONE** for the items this plan set out. See "Shipped anyway"
+below for what was knowingly left open, and Phase 5 for the Mac gaps.*
+
+**Releases since — all Windows-only. See `CHANGELOG.txt` for detail.**
+
+| | | |
+|---|---|---|
+| v10.0 | 2026-09-07 | first public release |
+| v10.1 | 2026-09-07 | past races made clickable |
+| v10.2 | 2026-09-12 | exports were silently writing nothing in the app window |
+| v10.3 | 2026-09-26 | roster list stays put when picking a racer |
+| v10.4 | 2026-09-30 | archive-on-close to `C:\Tamiya\Backup_DB` + Backup to USB |
+| v10.5 | 2026-09-30 | the two club guides ship with the app |
+
+**The Mac `.app` is outstanding for every one of them.** It needs a Mac; build
+from the tag so the build number matches, then `gh release upload <tag> <zip>`.
 
 ---
 
