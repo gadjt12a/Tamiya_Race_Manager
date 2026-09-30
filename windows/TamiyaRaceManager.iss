@@ -44,6 +44,9 @@ WizardStyle=modern
 ; recursesubdirs+createallsubdirs are required - without them _internal\
 ; is skipped and the installed exe won't start.
 Source: "..\dist\TamiyaRaceManager\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; The two club-facing guides, installed beside the app. A guide nobody can
+; find is a guide nobody reads, so they also get Start Menu entries below.
+Source: "..\docs\*.pdf"; DestDir: "{app}\Guides"; Flags: ignoreversion
 
 [Tasks]
 Name: desktopicon; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"; Flags: checkedonce
@@ -51,6 +54,8 @@ Name: desktopicon; Description: "Create a &desktop icon"; GroupDescription: "Add
 [Icons]
 Name: "{autodesktop}\Tamiya Race Manager"; Filename: "{app}\TamiyaRaceManager.exe"; Tasks: desktopicon
 Name: "{autoprograms}\Tamiya Race Manager"; Filename: "{app}\TamiyaRaceManager.exe"
+Name: "{autoprograms}\Race Manager - Getting Started"; Filename: "{app}\Guides\Race Manager - Getting Started.pdf"
+Name: "{autoprograms}\Race Manager - Backing Up Your Results"; Filename: "{app}\Guides\Race Manager - Backing Up Your Results.pdf"
 
 [Run]
 Filename: "{app}\TamiyaRaceManager.exe"; Description: "Launch Tamiya Race Manager"; Flags: nowait postinstall skipifsilent

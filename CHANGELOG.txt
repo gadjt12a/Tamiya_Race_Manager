@@ -2,6 +2,25 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v10.5  (2026-09-30)  THE GUIDES NOW COME WITH THE APP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  - NEW: two short PDF guides are installed with the app
+    and added to the Start Menu:
+      "Race Manager - Getting Started" (3 pages)
+        install it, set up a season, run a race night.
+      "Race Manager - Backing Up Your Results" (2 pages)
+        the one click that keeps a season safe, and how
+        to go back to an earlier night.
+  - They sit in a "Guides" folder beside the app, and in
+    the portable zip as well.
+  - "HOW TO USE.txt" is still there and still complete.
+    It is now the full reference; the guides are the way
+    in for somebody who has never opened the app.
+  - No change to the app itself. If you are on v10.4 you
+    are not missing a fix - update only if you want the
+    guides on the machine.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v10.4  (2026-09-30)  TWO NEW BACKUP SAFETY NETS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   - NEW: every time the app closes it saves a dated copy

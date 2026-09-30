@@ -68,7 +68,9 @@ echo  [3/3] Building portable zip ...
 REM  Zips the WHOLE TamiyaRaceManager folder - the exe needs _internal\
 REM  beside it. Users must extract the zip before running (not run it
 REM  from inside the zip viewer).
-powershell -Command "Compress-Archive -Force -Path 'dist\TamiyaRaceManager','windows\README.txt' -DestinationPath 'dist\TamiyaRaceManager-WindowsPortable-%APPVERSION%.%BUILDNO%.zip'"
+REM  'docs' carries the two club-facing guide PDFs, so the portable zip
+REM  arrives with them the same way the installer does.
+powershell -Command "Compress-Archive -Force -Path 'dist\TamiyaRaceManager','windows\README.txt','docs' -DestinationPath 'dist\TamiyaRaceManager-WindowsPortable-%APPVERSION%.%BUILDNO%.zip'"
 
 echo.
 echo  ==========================================
