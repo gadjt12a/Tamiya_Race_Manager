@@ -140,6 +140,43 @@ class Api:
             print(f"save_file failed: {e}")
             return "!%s" % e
 
+    def list_usb_drives(self):
+        """Drives the Backup to USB button can offer - see server.removable_drives."""
+        try:
+            return server.removable_drives()
+        except Exception as e:
+            print(f"list_usb_drives failed: {e}")
+            return []
+
+    def backup_to_usb(self, root=None):
+        """Back the live data file up to a USB stick.
+
+        With no root, picks the drive automatically when there is exactly one
+        candidate and otherwise hands the choice back for the page to ask
+        about. Returns a dict the page renders directly; like save_file it
+        never reports success it was not told about.
+        """
+        try:
+            drives = server.removable_drives()
+            if root is None:
+                if not drives:
+                    return {"ok": False, "reason": "none",
+                            "message": "No USB drive found. Plug one in and try again."}
+                if len(drives) > 1:
+                    return {"ok": False, "reason": "choose", "drives": drives}
+                root = drives[0]["root"]
+            res = server.backup_to_usb(root)
+            if isinstance(res, str) and res.startswith("!"):
+                return {"ok": False, "reason": "error", "message": res[1:]}
+            if isinstance(res, str) and res.startswith("="):
+                return {"ok": True, "unchanged": True, "path": res[1:],
+                        "message": "Already up to date - nothing has changed since "
+                                   "the last backup on this drive."}
+            return {"ok": True, "path": res}
+        except Exception as e:
+            print(f"backup_to_usb failed: {e}")
+            return {"ok": False, "reason": "error", "message": str(e)}
+
     def toggle_fullscreen(self):
         """Full-screen the main app window (Full Screen button / F11)."""
         try:
@@ -239,6 +276,15 @@ def run():
     # killed it mid-event. Browser mode still runs it - see server.main() -
     # because there a closed tab is genuinely undetectable otherwise.
     print(f"Server on port {server.PORT}; data file: {server.DATA_FILE}")
+
+    # Archive on the way IN as well as on the way out. If the app is killed
+    # rather than closed - flat battery, crash, Windows update reboot - the
+    # close handler never runs, and without this the last race night would
+    # never reach the archive. Identical content is skipped, so on an ordinary
+    # launch this does nothing at all. Runs on a thread: a slow or missing USB
+    # stick must not delay the window appearing.
+    threading.Thread(target=lambda: server.archive_all(reason="app start"),
+                     daemon=True).start()
     stamp("server up, creating window")
 
     api = Api()
@@ -251,8 +297,26 @@ def run():
         stamp("window created")
         global main_window
         main_window = main_win
-        # Coordinator closes the main window -> the whole app closes
-        main_win.events.closed += lambda: os._exit(0)
+        # Coordinator closes the main window -> the whole app closes.
+        #
+        # The archive has to happen HERE, inside the close handler, because
+        # os._exit(0) is immediate: it runs no atexit hooks, no finally blocks
+        # and no daemon-thread cleanup. Anything registered to run "on exit"
+        # the normal way would simply never run.
+        #
+        # Wrapped so a backup problem can never trap someone in the app - a
+        # club member closing up at 9pm must always be able to close the
+        # window, even if the archive folder is read-only or a USB stick was
+        # yanked mid-write. Worst case we lose a snapshot, which the next
+        # close or the next app start picks up anyway.
+        def _on_closed():
+            try:
+                server.archive_all(reason="app close")
+            except Exception as e:
+                print(f"archive on close failed: {e}")
+            os._exit(0)
+
+        main_win.events.closed += _on_closed
         webview.start()
     except Exception as e:
         # WebView2 runtime missing or GUI failed - browser fallback keeps
