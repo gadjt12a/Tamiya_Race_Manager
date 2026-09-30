@@ -2,6 +2,38 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v10.4  (2026-09-30)  TWO NEW BACKUP SAFETY NETS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  - NEW: every time the app closes it saves a dated copy
+    of the whole database to C:\Tamiya\Backup_DB, and
+    these are never deleted. One file per race night, so
+    you can go back to any night and see what changed
+    between one and the next.
+  - A new file only appears when something actually
+    changed, so opening and closing the app without
+    racing does not add clutter. Every file in that
+    folder is a real change.
+  - It also saves on app START, so a flat battery, a
+    crash or a Windows reboot cannot lose the last night.
+  - NEW: a "Backup to USB" button next to Export Data.
+    One click, no Save dialog to drive. It finds the
+    stick itself and will never write to the system
+    drive.
+  - Once you have backed up to a stick, the app keeps
+    that stick up to date automatically whenever it is
+    plugged in at closing time. Only sticks you have used
+    before are written to, so plugging in a phone or a
+    camera card is safe.
+  - The backup folder gets a README explaining what the
+    files are and how to restore one.
+  - Why: club records now live on a machine with soldered
+    storage, so a failed disk cannot be recovered.
+    C:\Tamiya\Backup_DB protects against bad imports and
+    mistakes; the USB copy is the only thing that
+    survives the device itself dying. Keep a stick, and
+    keep it somewhere else.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v10.3  (2026-09-26)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   - FIXED: picking a racer from the roster list sent the

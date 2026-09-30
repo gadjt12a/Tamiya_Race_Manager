@@ -78,6 +78,36 @@ DATA_FILE = DATA_DIR / "racedata.json"
 BACKUP_DIR = DATA_DIR / "backups"
 BACKUP_KEEP = 14  # daily backups retained
 
+
+def resolve_archive_dir():
+    """Where the permanent, never-pruned archive of race nights goes.
+
+    Deliberately NOT under DATA_DIR. The backups/ folder beside the data is a
+    14-day rolling window that prunes itself; this is the opposite - one dated
+    file per change, kept forever, somewhere a person can find in Explorer
+    without knowing what %LOCALAPPDATA% means.
+
+    Note for whoever reads this after a dead laptop: on a machine with soldered
+    storage this folder dies WITH the device. It protects against bad imports,
+    corruption and human error - not hardware failure. The USB copy is the only
+    off-device protection."""
+    override = os.environ.get("TAMIYA_ARCHIVE_DIR")
+    if override:
+        return Path(override)
+    if os.name == "nt":
+        return Path("C:/Tamiya/Backup_DB")
+    return Path.home() / "Tamiya" / "Backup_DB"
+
+
+ARCHIVE_DIR = resolve_archive_dir()
+
+# A removable drive is only written to automatically if it already holds a
+# folder of this name. Creating it is what the "Backup to USB" button does, so
+# a stick is opted in once by hand and is automatic from then on. Without a
+# marker, auto-backup would write club data onto whatever happened to be
+# plugged in - a member's phone, someone's camera card.
+USB_MARKER = "TamiyaRaceManager_Backups"
+
 # Where pre-v10 zip installs kept their data (next to the app)
 LEGACY_DATA_FILE = BASE_DIR / "data" / "racedata.json"
 LEGACY_BACKUP_DIR = BASE_DIR / "data" / "backups"
@@ -127,6 +157,234 @@ def backup_data_file():
     except Exception as e:
         # A backup problem must never block saving the live data
         print(f"  Warning: daily backup failed: {e}")
+
+
+# ── Permanent archive + USB backup ────────────────────────────────────────────
+# Two safety nets on top of the rolling backups/ folder, added when the club
+# moved onto a Surface with soldered storage and the club's records became the
+# only copy that mattered:
+#
+#   1. every time the app closes, a dated snapshot into ARCHIVE_DIR, kept
+#      forever, skipped when nothing changed - so the folder is a readable
+#      history of race nights rather than a pile of identical files;
+#   2. the same snapshot onto any USB stick that has been opted in.
+#
+# Everything here is best-effort. A backup must never stop the app closing,
+# and must never be able to damage the live data file - all of it is copy-out,
+# nothing writes back to DATA_FILE.
+
+def _file_digest(path):
+    """sha256 of a file, or None if it can't be read."""
+    try:
+        import hashlib
+        h = hashlib.sha256()
+        with open(path, "rb") as fh:
+            for chunk in iter(lambda: fh.read(65536), b""):
+                h.update(chunk)
+        return h.hexdigest()
+    except Exception:
+        return None
+
+
+def _newest_archive(folder):
+    """Most recently written archive file, or None.
+
+    By mtime, NOT by name. The names sort wrong: a same-minute second snapshot
+    is "...-2030-2.json", and "-" (0x2D) sorts before "." (0x2E), so by name it
+    lands BEFORE "...-2030.json" and the newest file is not the last one. That
+    would make the unchanged-check compare against stale content and write a
+    duplicate every time."""
+    try:
+        files = list(Path(folder).glob("racedata-*.json"))
+        return max(files, key=lambda f: f.stat().st_mtime) if files else None
+    except Exception:
+        return None
+
+
+ARCHIVE_README = """TAMIYA RACE MANAGER - RACE NIGHT ARCHIVE
+========================================
+
+Every file here is a complete copy of the club's race database, saved
+automatically when the app was closed. The name is the date and time:
+
+    racedata-2026-09-26-2118.json   ->  26 Sept 2026, 9:18pm
+
+A new file appears ONLY when something changed. Opening and closing the app
+without racing adds nothing, so every file here is a real race night or a real
+edit, and comparing one with the one before it shows exactly what changed.
+
+Nothing here is ever deleted automatically. They are small (about half a
+megabyte each), so a whole season is a few megabytes.
+
+TO GO BACK TO AN EARLIER STATE
+------------------------------
+1. Open Race Manager.
+2. Click "Export Data" first, so you can undo the undo.
+3. Click "Import Data" and choose the file from here you want.
+4. Confirm. The app is now exactly as it was at that date and time.
+
+IMPORTANT - THIS FOLDER IS NOT PROTECTION AGAINST THE LAPTOP DYING
+------------------------------------------------------------------
+These files are on the same disk as the app. If the machine fails, they go
+with it. Use the "Backup to USB" button in the app to keep a copy on a stick,
+and keep that stick somewhere else. Once you have backed up to a stick once,
+the app keeps it up to date automatically whenever it is plugged in.
+"""
+
+
+def _write_archive_readme(folder):
+    """Leave a plain-English note beside the archive. Written once, and never
+    overwritten - if someone has annotated it, that is theirs to keep."""
+    try:
+        note = Path(folder) / "README-what-these-files-are.txt"
+        if not note.exists():
+            note.write_text(ARCHIVE_README, encoding="utf-8")
+    except Exception:
+        pass  # a courtesy note must never break a backup
+
+
+def archive_snapshot(folder=None, reason=""):
+    """Copy the live data file into `folder` (default ARCHIVE_DIR) as
+    racedata-YYYY-MM-DD-HHMM.json.
+
+    Returns the path written, None if there was nothing to do (no data file,
+    or the newest archive is already byte-identical), or a string starting
+    with "!" describing a failure. Never raises.
+
+    Skipping identical content is the point, not an optimisation: opening and
+    closing the app without racing should not add a file, so every file in the
+    folder marks a real change and diffing neighbours is meaningful."""
+    try:
+        if not DATA_FILE.exists():
+            return None
+        folder = Path(folder) if folder else ARCHIVE_DIR
+        folder.mkdir(parents=True, exist_ok=True)
+        _write_archive_readme(folder)
+        newest = _newest_archive(folder)
+        if newest is not None:
+            live = _file_digest(DATA_FILE)
+            if live is not None and live == _file_digest(newest):
+                return None                      # nothing changed since last time
+        dest = folder / f"racedata-{time.strftime('%Y-%m-%d-%H%M')}.json"
+        n = 2
+        while dest.exists():                     # two saves inside one minute
+            dest = folder / f"racedata-{time.strftime('%Y-%m-%d-%H%M')}-{n}.json"
+            n += 1
+        shutil.copy2(DATA_FILE, dest)
+        if not dest.exists() or dest.stat().st_size == 0:
+            return "!nothing was written to %s" % dest
+        print(f"  archived ({reason or 'manual'}): {dest} ({dest.stat().st_size} bytes)")
+        return str(dest)
+    except Exception as e:
+        print(f"  Warning: archive to {folder} failed: {e}")
+        # A backup that silently stops is worse than no backup, because nobody
+        # finds out until they need it. If the configured folder is unusable -
+        # no permission on C:\, a path someone renamed, a full disk - fall back
+        # to one beside the data file, which we already know is writable, and
+        # say so in the log. Only for the default folder: a failed USB write
+        # must not quietly land on the hard disk and look like it succeeded.
+        if folder == ARCHIVE_DIR:
+            try:
+                alt = DATA_DIR / "Backup_DB"
+                alt.mkdir(parents=True, exist_ok=True)
+                print(f"  falling back to {alt}")
+                return archive_snapshot(alt, reason=reason + " (fallback)")
+            except Exception as e2:
+                print(f"  Warning: fallback archive failed too: {e2}")
+        return "!%s" % e
+
+
+def _volume_label(root):
+    try:
+        import ctypes
+        buf = ctypes.create_unicode_buffer(261)
+        ctypes.windll.kernel32.GetVolumeInformationW(
+            ctypes.c_wchar_p(root), buf, 261, None, None, None, None, 0)
+        return buf.value or ""
+    except Exception:
+        return ""
+
+
+def removable_drives():
+    """Drive roots that look like something a person plugged in.
+
+    Windows only - returns [] elsewhere. Includes DRIVE_REMOVABLE (2) and also
+    DRIVE_FIXED (3) for any drive that is not the system drive, because USB
+    SSDs and many modern sticks report themselves as fixed. The system drive is
+    always excluded: backing the data up onto the disk it already lives on is
+    not a backup."""
+    out = []
+    if os.name != "nt":
+        return out
+    try:
+        import ctypes
+        import string
+        k32 = ctypes.windll.kernel32
+        system_drive = (os.environ.get("SystemDrive") or "C:").upper().rstrip("\\")
+        mask = k32.GetLogicalDrives()
+        for i, letter in enumerate(string.ascii_uppercase):
+            if not mask & (1 << i):
+                continue
+            root = f"{letter}:\\"
+            if f"{letter}:".upper() == system_drive:
+                continue
+            kind = k32.GetDriveTypeW(ctypes.c_wchar_p(root))
+            if kind in (2, 3):                   # REMOVABLE, FIXED
+                out.append({"root": root, "letter": f"{letter}:",
+                            "label": _volume_label(root),
+                            "removable": kind == 2,
+                            "optedIn": (Path(root) / USB_MARKER).is_dir()})
+    except Exception as e:
+        print(f"  Warning: could not list drives: {e}")
+    return out
+
+
+def backup_to_usb(root):
+    """Write a dated snapshot into <root>\\TamiyaRaceManager_Backups\\,
+    creating that folder - which also opts the stick in to automatic backup
+    when the app closes. Returns the path written, or "!..." on failure."""
+    try:
+        target = Path(root) / USB_MARKER
+        target.mkdir(parents=True, exist_ok=True)
+        res = archive_snapshot(target, reason=f"usb {root}")
+        if res is None:
+            # Nothing changed since the last backup on this stick. That is a
+            # success from the user's point of view - the stick is current -
+            # but say so rather than implying a new file appeared.
+            newest = _newest_archive(target)
+            return "=%s" % (newest or target)
+        return res
+    except Exception as e:
+        print(f"  Warning: USB backup to {root} failed: {e}")
+        return "!%s" % e
+
+
+def archive_to_opted_in_usb(reason=""):
+    """Snapshot onto every plugged-in drive that has been opted in. Returns a
+    list of paths actually written."""
+    written = []
+    for d in removable_drives():
+        if not d["optedIn"]:
+            continue
+        res = archive_snapshot(Path(d["root"]) / USB_MARKER, reason=reason)
+        if isinstance(res, str) and not res.startswith("!"):
+            written.append(res)
+    return written
+
+
+def archive_all(reason=""):
+    """Both safety nets in one call: local archive, then any opted-in USB.
+    Used on app start and on app close. Never raises."""
+    results = {"archive": None, "usb": []}
+    try:
+        results["archive"] = archive_snapshot(reason=reason)
+    except Exception as e:
+        print(f"  Warning: archive failed: {e}")
+    try:
+        results["usb"] = archive_to_opted_in_usb(reason=reason)
+    except Exception as e:
+        print(f"  Warning: USB archive failed: {e}")
+    return results
 
 # ── Heartbeat watchdog ─────────────────────────────────────────────────────────
 # The browser page sends a /ping every 5 seconds while open.

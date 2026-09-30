@@ -566,6 +566,7 @@ table.pts-table tr:hover td{background:var(--surface2)}
     <div class="topbar-right">
       <button class="icon-btn js-display-btn" onclick="openDisplay()" title="Open the audience display - set the projector up before racing starts">📺 Display</button>
       <button class="icon-btn" onclick="toggleFullScreen()" title="Full screen (F11)">🖥️ Full Screen</button>
+      <button class="icon-btn js-usb-btn" onclick="backupToUsb()" title="Copy tonight's results onto a USB stick - do this before closing the app">💾 Backup to USB</button>
       <button class="icon-btn" onclick="exportData()">⬆ Export Data</button>
       <label class="icon-btn" style="cursor:pointer">⬇ Import Data<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
     </div>
@@ -3108,6 +3109,60 @@ function _downloadFile(content, filename, mime){
   return _saveFile(content, filename, mime);
 }
 
+// ── BACKUP TO USB ───────────────────────────────────────
+// The club records live on a machine with soldered storage, so the only copy
+// that survives the device dying is the one on a stick. Export Data can do
+// this via the Save dialog, but a dialog you have to drive at 9pm while
+// packing up is a step that gets skipped - and a backup that gets skipped is
+// not a backup. This is one click.
+//
+// Python picks the drive: only a drive that is NOT the system drive, and for
+// automatic backups only one that has been opted in by being backed up to at
+// least once. See server.removable_drives / backup_to_usb.
+//
+// Needs the Python bridge - a browser tab cannot see drives at all - so the
+// button hides itself in browser mode rather than failing when pressed.
+async function backupToUsb(root){
+  const api = window.pywebview && window.pywebview.api;
+  if(!(api && api.backup_to_usb)){
+    toast('Backup to USB only works in the installed app. Use Export Data here.', 'error', 6000);
+    return false;
+  }
+  const btn = document.querySelector('.js-usb-btn');
+  const label = btn ? btn.textContent : null;
+  if(btn){ btn.disabled = true; btn.textContent = '💾 Backing up…'; }
+  try{
+    let res;
+    try{ res = await api.backup_to_usb(root || null); }
+    catch(err){ toast('Backup failed: '+err, 'error', 7000); return false; }
+
+    if(!res || !res.ok){
+      const reason = res && res.reason;
+      if(reason === 'choose'){
+        // More than one candidate. Ask rather than guess - writing the club's
+        // data onto the wrong drive is not something to do silently.
+        const list = res.drives.map((d,i) =>
+          `${i+1}. ${d.letter} ${d.label || '(no label)'}${d.optedIn ? ' - used before' : ''}`
+        ).join('\n');
+        const pick = prompt('Which drive should the backup go to?\n\n'+list+
+                            '\n\nType a number, or Cancel.');
+        if(!pick) return false;
+        const chosen = res.drives[parseInt(pick,10)-1];
+        if(!chosen){ toast('That was not one of the drives listed.', 'error', 5000); return false; }
+        return backupToUsb(chosen.root);
+      }
+      toast((res && res.message) || 'Backup failed.', 'error', 7000);
+      return false;
+    }
+
+    if(res.unchanged){ toast(res.message, 'success', 5000); return true; }
+    toast('Backed up to '+res.path, 'success', 6000);
+    return true;
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = label; }
+  }
+}
+
 function _toCSV(rows){
   return rows.map(row=>
     row.map(cell=>{
@@ -3444,6 +3499,18 @@ async function init(){
       }
     }, 3000);
   }
+
+  // Backup to USB needs the Python bridge to see drives at all, so in a plain
+  // browser tab the button is hidden rather than left there to fail on click.
+  // pywebview injects window.pywebview asynchronously and fires pywebviewready
+  // when it is there, so check both: the event may have fired before init ran.
+  (function(){
+    const show = () => document.querySelectorAll('.js-usb-btn')
+                          .forEach(b => b.style.display = '');
+    document.querySelectorAll('.js-usb-btn').forEach(b => b.style.display = 'none');
+    if(window.pywebview && window.pywebview.api) show();
+    else window.addEventListener('pywebviewready', show);
+  })();
 
   // Offer to resume a race that was interrupted by a crash or unexpected shutdown
   if(DB.activeRace){
