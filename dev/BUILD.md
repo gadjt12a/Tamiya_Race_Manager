@@ -105,18 +105,46 @@ and the exe's Properties → Details.
 Run **`windows\BUILD INSTALLER (developer use only).bat`** (double-click).
 It builds, in order:
 
-> **Scripting the build?** The bat ends with `pause`, so a non-interactive
-> caller hangs *after the build has already succeeded* — the packages are
-> sitting in `dist\` while the call appears stuck. Redirect stdin:
-> `cmd /c "windows\BUILD INSTALLER (developer use only).bat" < NUL`
-> (`< /dev/null` from Git Bash). Cost a ten-minute timeout on a build that had
-> worked fine.
+> **Scripting the build?** Two separate traps, both of which have cost time.
+>
+> **1. The bat ends with `pause`**, so a non-interactive caller hangs *after the
+> build has already succeeded* — the packages are sitting in `dist\` while the
+> call appears stuck. Redirect stdin: `< NUL` from cmd, `< /dev/null` from Git
+> Bash.
+>
+> **2. `cmd /c` cannot run this file by name.** The parentheses in
+> `BUILD INSTALLER (developer use only).bat` break cmd's parser, whatever you do
+> with quotes — it reports *"is not recognized as an internal or external
+> command"* and exits without building. It also does **not** inherit
+> PowerShell's `Set-Location`, so a relative path fails a second way. Copy it to
+> a plain name and use an absolute path:
+>
+> ```powershell
+> Copy-Item "C:\...\windows\BUILD INSTALLER (developer use only).bat" `
+>           "C:\...\windows\_build_tmp.bat" -Force
+> cmd.exe /c "C:\...\windows\_build_tmp.bat < NUL"
+> Remove-Item "C:\...\windows\_build_tmp.bat" -Force
+> ```
+>
+> Double-clicking the bat is unaffected — this only bites automation.
 
 | Output | What it is |
 |---|---|
 | `dist\TamiyaRaceManager\` | the app itself — exe + `_internal\` (intermediate) |
 | `dist\installer\TamiyaRaceManager-Setup-<ver>.<build>.exe` | the Windows installer |
-| `dist\TamiyaRaceManager-WindowsPortable-<ver>.<build>.zip` | portable zip (app folder + README) |
+| `dist\TamiyaRaceManager-WindowsPortable-<ver>.<build>.zip` | portable zip (app folder + README + `docs\`) |
+
+Since **v10.5** both packages also carry `docs\*.pdf`, the two club guides: the
+installer puts them in `{app}\Guides\` with Start Menu entries, and the zip
+includes the `docs` folder. They are exports of the Claude docs that are their
+source — if a guide changes, re-export the PDF into `docs\` before building, or
+the shipped copy silently drifts.
+
+> Verifying the installer really packaged them: **do not grep the .exe.** Inno
+> compresses its payload, so a string search reports "not found" for files that
+> are definitely in there. Install it to a throwaway directory instead —
+> `/VERYSILENT /NOICONS /DIR=<temp>` — list the folder, then run its
+> `unins000.exe /VERYSILENT`.
 
 Every output carries `<version>.<build>`, not the bare version — the `.iss`
 builds its `FullVer` from `app/VERSION` plus the commit count, and uses it
