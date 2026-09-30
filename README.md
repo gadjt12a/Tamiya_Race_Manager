@@ -29,9 +29,9 @@ The app runs in its own window (no console, no browser tab). Full details:
 |---|---|
 | `TamiyaRaceManager-Mac-<ver>.zip` | `TamiyaRaceManager.app` — a real Mac app. No Python to install; runs in its own window like the Windows version. |
 
-> **Not on the v10.0 release page yet.** The Mac app has to be built on a Mac,
-> and one wasn't free when v10.0 went out. It will be added to that same
-> release when it is.
+> **Not on any release page yet.** The Mac app has to be built on a Mac, and one
+> has not been free for any release so far (v10.0–v10.5). It will be added when
+> one is. The Windows packages are unaffected.
 
 Run successfully on **one** Mac (macOS 10.13 High Sierra, Intel) by the
 developer on 2026-08-08, never yet at a real race night. Newer macOS versions
@@ -63,6 +63,8 @@ Upgrading from an old zip-style v9.x? Your data stays in the old folder — use
 ```
 app/       the application: race-manager.html (UI + race engine),
            server.py (data server), app.py (desktop window), VERSION, icon
+docs/      the two club guides as PDFs - shipped in the installer and the
+           portable zip since v10.5
 windows/   Windows packaging: installer script, build bats, Windows README
 mac/       Mac packaging: launcher, package build bat, Mac README
 dev/       developer material - build guide, release plan, test matrix,
@@ -87,6 +89,19 @@ Outputs land in `dist\` and are named `<version>.<build>` — the version from
 `git rev-list --count HEAD`, so it identifies the commit rather than the
 machine that built it. See [`dev/BUILD.md`](dev/BUILD.md).
 
-See [`dev/DEPLOYMENT_PLAN.md`](dev/DEPLOYMENT_PLAN.md) for the v10 release plan, test
-matrix and data-safety design, and [`HOW TO USE.txt`](HOW%20TO%20USE.txt) for
-the race-night manual.
+## Documentation
+
+**New to the app?** Two short guides ship with it, in the `Guides` folder beside
+the installed app and on the Start Menu, and are in
+[`docs/`](docs) here:
+
+- **Race Manager — Getting Started** (3 pages) — install it, set up a season,
+  run a race night.
+- **Race Manager — Backing Up Your Results** (2 pages) — the one click that
+  keeps a season safe, and how to go back to an earlier night.
+
+[`HOW TO USE.txt`](HOW%20TO%20USE.txt) is the full race-night reference: every
+screen, every option, all the troubleshooting detail.
+
+See [`dev/DEPLOYMENT_PLAN.md`](dev/DEPLOYMENT_PLAN.md) for the v10 release plan,
+test matrix and data-safety design.
