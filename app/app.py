@@ -310,10 +310,31 @@ def run():
         # yanked mid-write. Worst case we lose a snapshot, which the next
         # close or the next app start picks up anyway.
         def _on_closed():
-            try:
-                server.archive_all(reason="app close")
-            except Exception as e:
-                print(f"archive on close failed: {e}")
+            # The archive runs on a worker with a hard deadline, not inline.
+            #
+            # try/except is not enough protection here: a USB stick pulled out
+            # mid-write does not raise, it BLOCKS - Windows can sit in that I/O
+            # for the best part of a minute. Inline, that is an app which will
+            # not close when someone clicks the X at the end of a race night,
+            # and the only visible difference between that and a crash is how
+            # long you are willing to wait before killing it.
+            #
+            # So: give it five seconds, then leave regardless. A missed
+            # snapshot costs nothing - the next launch archives on start, and
+            # the data file itself was already saved long before this point.
+            done = threading.Event()
+
+            def _archive():
+                try:
+                    server.archive_all(reason="app close")
+                except Exception as e:
+                    print(f"archive on close failed: {e}")
+                finally:
+                    done.set()
+
+            threading.Thread(target=_archive, daemon=True).start()
+            if not done.wait(5.0):
+                print("archive on close did not finish in 5s - closing anyway")
             os._exit(0)
 
         main_win.events.closed += _on_closed

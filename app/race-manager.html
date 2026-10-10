@@ -565,7 +565,7 @@ table.pts-table tr:hover td{background:var(--surface2)}
     <div class="topbar-sep"></div>
     <div class="topbar-right">
       <button class="icon-btn js-display-btn" onclick="openDisplay()" title="Open the audience display - set the projector up before racing starts">📺 Display</button>
-      <button class="icon-btn" onclick="toggleFullScreen()" title="Full screen (F11)">🖥️ Full Screen</button>
+      <button class="icon-btn js-fullscreen-btn" onclick="toggleFullScreen()" title="Full screen (F11)">🖥️ Full Screen</button>
       <button class="icon-btn js-usb-btn" onclick="backupToUsb()" title="Copy tonight's results onto a USB stick - do this before closing the app">💾 Backup to USB</button>
       <button class="icon-btn" onclick="exportData()">⬆ Export Data</button>
       <label class="icon-btn" style="cursor:pointer">⬇ Import Data<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
@@ -614,7 +614,7 @@ table.pts-table tr:hover td{background:var(--surface2)}
     <div class="topbar-right">
       <button class="icon-btn" id="swapHint" onclick="toggleSwapMode()" style="display:none">🔄 Swap Race</button>
       <button class="icon-btn" onclick="editLastResult()" id="editLastBtn" style="display:none">✏️ Edit Last</button>
-      <button class="icon-btn" onclick="toggleFullScreen()" title="Full screen (F11)">🖥️ Full Screen</button>
+      <button class="icon-btn js-fullscreen-btn" onclick="toggleFullScreen()" title="Full screen (F11)">🖥️ Full Screen</button>
       <button class="icon-btn js-display-btn" onclick="openDisplay()">📺 Display</button>
       <button class="icon-btn" onclick="openEditNames()">✏️ Names</button>
       <button class="icon-btn" id="showResultsBtn" onclick="showPodiumModal()" style="display:none">🏆 Show Results</button>
@@ -1073,18 +1073,49 @@ function goHome(){ showScreen('homeScreen'); renderHome(); }
 // ── FULL SCREEN ─────────────────────────────────────────
 // Native app window (pywebview) where available, browser Fullscreen API
 // otherwise, so it works in the installed app AND in browser mode.
+// The button has to say what pressing it will DO, not what it did last time.
+// It read "Full Screen" even while already full screen, which is no help at
+// all when the window has no title bar to tell you which state you are in.
+//
+// The native window gives us nothing to read back - pywebview's
+// toggle_fullscreen() returns no state - so we track it here. In a browser the
+// real source of truth is document.fullscreenElement, and `fullscreenchange`
+// below keeps us honest when the user leaves full screen by pressing Escape
+// rather than the button.
+let _isFullScreen = false;
+
+function syncFullScreenButtons(){
+  document.querySelectorAll('.js-fullscreen-btn').forEach(b=>{
+    // Emoji only from the common set - a glyph outside it (U+26F6 shipped once)
+    // renders as an empty box on macOS 10.13.
+    b.textContent = _isFullScreen ? '🖥️ Exit Full Screen' : '🖥️ Full Screen';
+    b.title = _isFullScreen ? 'Leave full screen (F11)' : 'Full screen (F11)';
+  });
+}
+
 function toggleFullScreen(){
   try{
     if(window.pywebview && window.pywebview.api && window.pywebview.api.toggle_fullscreen){
       window.pywebview.api.toggle_fullscreen();
+      _isFullScreen = !_isFullScreen;
+      syncFullScreenButtons();
       return;
     }
   }catch(e){}
   try{
     if(!document.fullscreenElement){ document.documentElement.requestFullscreen(); }
     else { document.exitFullscreen(); }
+    // No state set here on purpose - fullscreenchange below is authoritative,
+    // and requestFullscreen can be refused.
   }catch(e){ toast('Full screen not available','warn'); }
 }
+
+// Browser path: trust the browser, not our own guess.
+document.addEventListener('fullscreenchange', ()=>{
+  _isFullScreen = !!document.fullscreenElement;
+  syncFullScreenButtons();
+});
+
 // F11 anywhere in the app
 document.addEventListener('keydown', e=>{
   if(e.key === 'F11'){ e.preventDefault(); toggleFullScreen(); }

@@ -2,6 +2,51 @@ Tamiya Race Manager — Change Log
 =================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ v10.6  (2026-10-10)  IMPORTANT - THE DISPLAY GOING
+                      BLANK MID-RACE-NIGHT IS FIXED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  - FIXED: after a couple of races the audience
+    display went black and stayed black. Unplugging
+    the screen and plugging it back in brought it
+    back for another race or two, then it happened
+    again. Reported by Kris, 2026-10-10.
+  - FIXED, SAME CAUSE: the race results / podium
+    screen sometimes never appeared at the end of a
+    race, leaving no way to save and exit. The only
+    escape was killing the app.
+  - The cause was the app's internal server handling
+    only ONE request at a time, with no time limit.
+    Closing or reopening the display window could
+    leave a connection half-open, and from then on
+    the server waited on it forever - serving nobody.
+    The display went black because its page loaded
+    but never received any content, and the main
+    window froze for the same reason. Unplugging the
+    screen helped only because it finally killed the
+    stuck connection.
+  - The server now handles requests in parallel and
+    drops any client that stops responding, so one
+    bad connection can no longer stop everything.
+  - The display also looks after itself now: if it
+    cannot reach the app it keeps the last race on
+    screen instead of going blank, gives up on a
+    stuck request after four seconds, and recovers
+    on its own once the app answers again. Before
+    the first race it shows "Waiting for racing to
+    start..." rather than a black screen.
+  - FIXED: the Full Screen button still said "Full
+    Screen" when you were already in full screen. It
+    now says "Exit Full Screen", on both the home and
+    race screens.
+  - The app no longer waits on its closing backup if
+    a USB stick has been pulled out - it gives it
+    five seconds and then closes. Your results are
+    saved long before that point.
+  - Housekeeping: a display window closing mid-update
+    no longer writes a page of error text into the
+    log file.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  v10.5  (2026-09-30)  THE GUIDES NOW COME WITH THE APP
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   - NEW: two short PDF guides are installed with the app
