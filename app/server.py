@@ -7,6 +7,7 @@ import http.server
 import json
 import os
 import shutil
+import socket
 import socketserver
 import sys
 import threading
@@ -412,18 +413,81 @@ display_html = ('<div class="pane left"><div style="color:#1a2030;font-size:3.5v
                 'padding:12vh 0;padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">'
                 'Waiting for racing to start...</div></div><div class="pane right"></div>')
 
+# The audience display. Three things here are deliberate and were all learned
+# the hard way from a blank screen at a race night (2026-10-10):
+#
+#   1. Content goes into #stage, NOT into document.body. The old version did
+#      `document.body.innerHTML = h`, which DESTROYED this very <script>
+#      element on the first update. The interval kept running (a registered
+#      timer outlives its element), so it worked by luck - but nothing else in
+#      the page could survive, and the state was impossible to reason about.
+#
+#   2. #stage is pre-filled with "Waiting for racing to start...". If the first
+#      poll fails, the screen shows that instead of NOTHING. An empty body over
+#      a dark background is a black screen in front of a room full of people,
+#      and it is indistinguishable from a dead projector.
+#
+#   3. Every poll has a hard timeout and only one is ever in flight. Without the
+#      timeout a single stalled request hangs forever and the display freezes
+#      with no way back; without the in-flight guard, stalled polls pile up one
+#      per second.
+#
+# A failed poll keeps whatever is already on screen. An audience display must
+# never show an error - the last known race is always better than a message.
 DISPLAY_PAGE = """<!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Race Display</title>
-<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#04060a;color:#fff;font-family:'Arial Narrow','Impact',system-ui,sans-serif;height:100vh;display:grid;grid-template-columns:1fr 1fr;grid-gap:0;gap:0;overflow:hidden;cursor:none}.pane{padding:3.5vw 3vw;padding:clamp(24px,3.5vw,60px) clamp(20px,3vw,52px);height:100vh;overflow:hidden}.left{border-right:2px solid #0d1520}.right{opacity:.82}</style>
+<style>*{margin:0;padding:0;box-sizing:border-box}html,body{height:100%}body{background:#04060a;color:#fff;font-family:'Arial Narrow','Impact',system-ui,sans-serif;overflow:hidden;cursor:none}#stage{height:100vh;display:grid;grid-template-columns:1fr 1fr;grid-gap:0;gap:0}.pane{padding:3.5vw 3vw;padding:clamp(24px,3.5vw,60px) clamp(20px,3vw,52px);height:100vh;overflow:hidden}.left{border-right:2px solid #0d1520}.right{opacity:.82}</style>
 </head><body>
+<div id="stage"><div class="pane left"><div style="color:#1a2030;font-size:3.5vw;font-size:clamp(20px,3.5vw,56px);padding:12vh 0;padding:clamp(40px,12vh,120px) 0;text-align:center;font-weight:700">Waiting for racing to start...</div></div><div class="pane right"></div></div>
 <script>
-var last='';
-setInterval(function(){
-  fetch('/display-content?t='+Date.now()).then(function(r){return r.text();}).then(function(h){
-    if(h!==last){ last=h; document.body.innerHTML=h; }
-  }).catch(function(){});
-}, 1000);
+(function(){
+  var stage = document.getElementById('stage');
+  var last = '';
+  var inflight = 0;          // sequence number of the request we still want
+  var busy = false;
+
+  function poll(){
+    if (busy) return;                       // never stack requests
+    busy = true;
+    var mine = ++inflight;
+
+    var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+
+    // The watchdog clears `busy` ITSELF rather than relying on the fetch
+    // settling. AbortController is missing on Safari 11 (macOS 10.13, which
+    // this app supports), so there a hung request can never be cancelled - and
+    // if only the promise cleared the flag, one hung poll would leave busy
+    // true for the rest of the night and the display would never update again.
+    // Freezing permanently is precisely the bug this rewrite exists to kill.
+    var killer = setTimeout(function(){
+      try { if (ctl) ctl.abort(); } catch(e){}
+      if (mine === inflight) busy = false;   // let the next tick try afresh
+    }, 4000);
+
+    var opts = { cache: 'no-store' };
+    if (ctl) opts.signal = ctl.signal;
+
+    fetch('/display-content?t=' + Date.now(), opts)
+      .then(function(r){ return r.ok ? r.text() : null; })
+      .then(function(h){
+        // Only the newest request may paint: a slow one that finally lands
+        // after we gave up on it would otherwise put stale racers back up.
+        if (mine !== inflight) return;
+        // null = bad status. '' = empty, which we refuse to paint, because an
+        // empty body over a dark page IS the blank screen we are fixing.
+        if (h && h !== last) { last = h; stage.innerHTML = h; }
+      })
+      .catch(function(){ /* keep whatever is on screen */ })
+      .then(function(){
+        clearTimeout(killer);
+        if (mine === inflight) busy = false;
+      });
+  }
+
+  poll();
+  setInterval(poll, 1000);
+})();
 </script>
 </body></html>"""
 
@@ -456,7 +520,24 @@ def watchdog():
             os._exit(0)
 
 
+# Serialises everything that touches the data file. REQUIRED now the server is
+# threaded (see RaceServer): two /save requests arriving together would both
+# write the same temp file and both rename it over racedata.json, and the loser
+# could leave a half-written file as the club's only database. The lock makes
+# backup -> write temp -> rename one indivisible step.
+#
+# Only the data file needs this. The display feed is a single string assignment,
+# which is atomic, and a poller that reads a slightly stale one is harmless.
+_write_lock = threading.Lock()
+
+
 class RaceHandler(http.server.SimpleHTTPRequestHandler):
+    # A stalled client must never be able to hold a worker thread forever.
+    # StreamRequestHandler.setup() applies this to the socket, so a peer that
+    # opens a connection and then goes quiet - exactly what a display window
+    # being destroyed mid-request does - is dropped instead of waiting on a
+    # read that will never complete.
+    timeout = 20
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(RESOURCE_DIR), **kwargs)
 
@@ -527,9 +608,10 @@ class RaceHandler(http.server.SimpleHTTPRequestHandler):
             try:
                 tag = json.loads(self.rfile.read(length)).get("tag", "manual")
                 tag = "".join(c for c in str(tag) if c.isalnum() or c in "-_")[:40] or "manual"
-                if DATA_FILE.exists():
-                    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
-                    shutil.copy2(DATA_FILE, BACKUP_DIR / f"{tag}-{time.strftime('%Y-%m-%d-%H%M%S')}.json")
+                with _write_lock:
+                    if DATA_FILE.exists():
+                        BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(DATA_FILE, BACKUP_DIR / f"{tag}-{time.strftime('%Y-%m-%d-%H%M%S')}.json")
                 self._send_json({"ok": True})
             except Exception as e:
                 self._send_json({"error": str(e)}, 500)
@@ -540,12 +622,26 @@ class RaceHandler(http.server.SimpleHTTPRequestHandler):
             body = self.rfile.read(length)
             try:
                 data = json.loads(body)
-                DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
-                backup_data_file()
-                tmp_file = DATA_FILE.with_suffix('.tmp')
-                with open(tmp_file, "w", encoding="utf-8") as f:
-                    json.dump(data, f, indent=2, ensure_ascii=False)
-                os.replace(tmp_file, DATA_FILE)
+                # Parse OUTSIDE the lock (it is the slow part and touches no
+                # shared state); hold it only for the file work.
+                with _write_lock:
+                    DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+                    backup_data_file()
+                    # Thread-unique temp name as well as the lock - belt and
+                    # braces, so even a future caller that forgets the lock
+                    # cannot have its partial write renamed over the live file.
+                    tmp_file = DATA_FILE.with_suffix(".tmp%d" % threading.get_ident())
+                    try:
+                        with open(tmp_file, "w", encoding="utf-8") as f:
+                            json.dump(data, f, indent=2, ensure_ascii=False)
+                        os.replace(tmp_file, DATA_FILE)
+                    finally:
+                        # A failed write must not leave litter beside the data
+                        try:
+                            if tmp_file.exists():
+                                tmp_file.unlink()
+                        except Exception:
+                            pass
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
@@ -614,12 +710,57 @@ def prepare():
             json.dump({"version": 1, "seasons": [], "racers": [], "currentSeason": None}, f, indent=2)
 
 
+class RaceServer(socketserver.ThreadingTCPServer):
+    """One thread per request.
+
+    This was a plain single-threaded TCPServer from v9.36 until 2026-10-10, and
+    it caused a blank audience display mid-race-night. A single-threaded server
+    handles exactly one request at a time, so ANY request that does not finish
+    blocks every other client until it does - and there was no socket timeout,
+    so "does not finish" meant forever.
+
+    Destroying the display window mid-poll is enough to trigger it: the socket
+    is left open with no one on the other end, the server sits in a read that
+    will never return, and from that moment nothing is served to anyone. The
+    display goes black (its page loads, its poll never answers), and - worse -
+    the MAIN window hangs too, so the podium screen never arrives and the race
+    cannot be saved. The only way out was killing the app. Unplugging the
+    monitor appeared to fix it because that finally killed the dead socket.
+
+    Threaded + RaceHandler.timeout means one bad connection costs one thread
+    for at most 20 seconds and nothing else notices. `_write_lock` keeps the
+    data file safe now that saves can overlap.
+
+    daemon_threads: a hung request thread must not keep the process alive on
+    exit. The app closes by os._exit() anyway, but console mode relies on this.
+    """
+    daemon_threads = True
+    allow_reuse_address = True
+    # Short backlog is fine for one or two local clients, but not zero: the
+    # display reconnects in bursts when a monitor is replugged.
+    request_queue_size = 32
+
+    def handle_error(self, request, client_address):
+        """A client that vanishes mid-request is NORMAL here, not an error.
+
+        Closing the display window, unplugging the projector or reopening the
+        display all abandon an in-flight poll, and the default handler prints a
+        full traceback for each one. At one poll per second that buries app.log
+        in noise and makes a real fault impossible to spot - so these specific
+        disconnect errors are dropped and everything else still reports.
+        """
+        exc = sys.exc_info()[1]
+        if isinstance(exc, (ConnectionResetError, ConnectionAbortedError,
+                            BrokenPipeError, TimeoutError, socket.timeout)):
+            return
+        super().handle_error(request, client_address)
+
+
 def create_server():
     """Bind and return the HTTP server (raises OSError if the port is taken).
     127.0.0.1 (not all interfaces): keeps the app private to this machine and
     avoids the Windows Firewall prompt on first run."""
-    socketserver.TCPServer.allow_reuse_address = True
-    return socketserver.TCPServer(("127.0.0.1", PORT), RaceHandler)
+    return RaceServer(("127.0.0.1", PORT), RaceHandler)
 
 
 def main():
