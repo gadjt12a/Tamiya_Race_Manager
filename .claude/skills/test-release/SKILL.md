@@ -141,9 +141,20 @@ State these as **untested** rather than implying otherwise:
   does not exist in a browser - so **Export Data's Save dialog and the second
   display window are not covered**. Export failing silently in the app window
   while working perfectly in a browser is exactly the v10.1 bug.
-- A **real second monitor**, including unplugging it mid-race.
-- **SmartScreen** on a machine that has never seen the app.
-- **macOS** anything.
+- A **real second monitor**, including unplugging it mid-race. Still the one
+  genuinely open gap (row T2b), and low risk: the socket fault behind the blank
+  display was verified directly on the club PC instead (row N3).
+
+**Do not report these two as gaps — they were closed by Kris on 2026-10-15:**
+
+- **SmartScreen on a fresh machine** (T7). Hawke's Bay is the only club running
+  this; the repo is public but is not promoted to anyone.
+- **macOS** (T10). The app is Windows-only.
+
+The native-window checks above have now been done by hand on 10.6.72 (Export
+Data, the display across a full race, the Full Screen label, the podium screen
+and sleep mid-event). They still are not automated, so **re-do them by hand for
+any build that changes `app/`** — see the row IDs in `dev/TESTING_MANUAL.md`.
 
 ---
 

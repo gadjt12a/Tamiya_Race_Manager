@@ -61,15 +61,20 @@ Live data no longer sits beside the app — see the data layer below.
 
 ### Packaging
 PyInstaller **onedir** (`TamiyaRaceManager.exe` + `_internal\`), wrapped by
-an Inno Setup per-user installer. On macOS, a PyInstaller `--windowed`
-`.app` built **on the Mac** (no cross-compilation), ad-hoc signed, not
-notarized, Intel-only. Packages are numbered `<VERSION>.<build>` where
-build is the git commit count. See `BUILD.md`.
+an Inno Setup per-user installer. Packages are numbered `<VERSION>.<build>`
+where build is the git commit count. See `BUILD.md`.
 
-The Mac target is macOS 10.13 (the club's test machine), whose WebView is
-ES2019 and pre-`inset` — `race-manager.html` is written to that floor
-deliberately. `BUILD.md`'s gotchas list is the authority; the short
-version is that one unsupported token blanks the entire app.
+**Windows-only as of 2026-10-15 (Kris's call).** There is no Mac release and
+there will not be one; the scripts in `mac/` are unsupported and part of no
+release. See `DEPLOYMENT_PLAN.md`.
+
+**`race-manager.html` is still written to an ES2019 / pre-`inset` floor, and
+should stay that way unless someone deliberately decides otherwise.** That
+floor originally existed for macOS 10.13's WebView, so Windows-only removes
+its *original* justification — but nothing needs the newer syntax, and
+`BUILD.md`'s gotchas list is the authority on why it matters: one unsupported
+token blanks the entire app. Relaxing it is a decision with downside and no
+upside, not a tidy-up.
 
 ---
 
