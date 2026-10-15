@@ -14,6 +14,15 @@ below for what was knowingly left open, and Phase 5 for the Mac gaps.*
 | v10.3 | 2026-09-26 | roster list stays put when picking a racer |
 | v10.4 | 2026-09-30 | archive-on-close to `C:\Tamiya\Backup_DB` + Backup to USB |
 | v10.5 | 2026-09-30 | the two club guides ship with the app |
+| **v10.6** | **2026-10-10** | **a single stalled connection no longer freezes the display and the podium** |
+
+**v10.6 is installed on the club PC (10.6.72, deployed 2026-10-15)** and is
+the first release whose fix was verified on the club's own hardware: five
+half-open sockets, which hung 10.4.68 indefinitely, are answered in under
+0.04s. All four checks that only a human can do have passed in the native
+window - results/podium screen, display across a full race, the Full Screen
+label and Export Data actually writing a file. A real second monitor is the
+one remaining gap and is low risk; see `dev/TESTING_MANUAL.md`.
 
 **The Mac `.app` is outstanding for every one of them.** It needs a Mac; build
 from the tag so the build number matches, then `gh release upload <tag> <zip>`.
