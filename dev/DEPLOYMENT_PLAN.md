@@ -24,8 +24,13 @@ window - results/podium screen, display across a full race, the Full Screen
 label and Export Data actually writing a file. A real second monitor is the
 one remaining gap and is low risk; see `dev/TESTING_MANUAL.md`.
 
-**The Mac `.app` is outstanding for every one of them.** It needs a Mac; build
-from the tag so the build number matches, then `gh release upload <tag> <zip>`.
+**Windows-only, decided 2026-10-15 (Kris).** There is no Mac release and there
+will not be one: the club runs Windows, and only an old Intel Mac is available.
+A Mac `.app` was built and ran a full race once on 2026-08-08 (macOS 10.13), but
+it was never attached to a release or used at a race night. `README.md`,
+`HOW TO USE.txt` and `mac/README.txt` now say Windows-only rather than implying a
+Mac version exists, and test row T10 is closed as not applicable. The Mac items
+left in Phase 5 and the risk tables below are kept as history, not as a backlog.
 
 ---
 
@@ -318,10 +323,10 @@ Mac available for testing. Verified by him on that machine unless noted.*
       app no longer runs a watchdog at all (window close is the exit route);
       browser mode keeps it, at 180 s. *Verified on Windows: still serving
       after 60 s idle.*
-- [ ] **Anything newer than macOS 10.13.** No modern Mac is available. Apple
+- [x] ~~**Anything newer than macOS 10.13.**~~ **Closed 2026-10-15 — Windows-only.** No modern Mac is available. Apple
       Silicon and macOS 10.15+ Gatekeeper behaviour are both untested and
       both carry accepted risks — see the risk table.
-- [ ] **A real race night on the Mac.**
+- [x] ~~**A real race night on the Mac.**~~ **Closed 2026-10-15 — Windows-only.**
 
 ### Phase 6 — Release & merge
 - [x] Tag `v9.27` on `main` (last zip-style release, kept downloadable) —

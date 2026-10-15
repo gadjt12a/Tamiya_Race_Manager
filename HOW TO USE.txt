@@ -25,7 +25,9 @@ what you need.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Nothing to install alongside it — no Python, no internet, no
-admin rights. The app runs in its own window on both platforms.
+admin rights. The app runs in its own window.
+
+This is a Windows app. There is no Mac version.
 
 WINDOWS (first time):
   Run "TamiyaRaceManager-Setup-<version>.exe".
@@ -41,17 +43,6 @@ WINDOWS (first time):
 
 WINDOWS (every event):
   Double-click the desktop icon.
-
-MAC (first time):
-  Unzip the download, drag TamiyaRaceManager.app to your
-  Applications folder, then RIGHT-CLICK it → Open → Open.
-  macOS refuses the first plain double-click, and may claim
-  the app "is damaged" — it isn't; the app just isn't
-  registered with Apple. Right-click → Open gets past it, and
-  you only do this once.
-
-MAC (every event):
-  Double-click TamiyaRaceManager.
 
 MOVING TO A DIFFERENT COMPUTER:
   Install the app on the new machine, then "Export Data" on
@@ -331,9 +322,7 @@ FULL SCREEN
 All data is stored OUTSIDE the app, so installing, updating
 or uninstalling can never touch it:
 
-  Windows:  %LOCALAPPDATA%\TamiyaRaceManager\racedata.json
-  Mac:      ~/Library/Application Support/TamiyaRaceManager/
-                                              racedata.json
+  %LOCALAPPDATA%\TamiyaRaceManager\racedata.json
 
 Automatic daily backups (last 14 days) are kept in the
 "backups" folder beside it.
@@ -356,7 +345,7 @@ To move to a new computer:
   new one, and import the file there.
 
 The JSON file is plain text and can be opened in any
-text editor (Notepad on Windows, TextEdit on Mac) if
+text editor (Notepad) if
 manual corrections are ever needed.
 
 
@@ -376,18 +365,6 @@ App won't start (Windows):
 Windows warns "Windows protected your PC" on first run:
   Expected — the app is not code-signed. Click "More info"
   then "Run anyway". This only happens the first time.
-
-App won't start (Mac):
-  Make sure you right-clicked and selected Open → Open the
-  first time, rather than double-clicking. If macOS says the
-  app "is damaged and can't be opened", that message is wrong
-  — it means the app isn't registered with Apple. Right-click
-  → Open, or System Settings → Privacy & Security → "Open
-  Anyway".
-  NOTE: the Mac app has been run successfully on one Mac
-  (macOS 10.13, Intel) by the developer, and never yet at a
-  real race night. Newer macOS versions and Apple Silicon
-  Macs are untested.
 
 Nothing appears to happen for a moment after double-clicking:
   Normal — it takes about a second to appear. There is no

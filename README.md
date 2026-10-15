@@ -24,29 +24,19 @@ monitor. Runs entirely offline on one laptop.
 The app runs in its own window (no console, no browser tab). Full details:
 [`windows/README.txt`](windows/README.txt)
 
-### 🍎 Mac / OSX (**lightly tested** — we develop on Windows)
-| Package | What it is |
-|---|---|
-| `TamiyaRaceManager-Mac-<ver>.zip` | `TamiyaRaceManager.app` — a real Mac app. No Python to install; runs in its own window like the Windows version. |
+### 🍎 Mac
 
-> **Not on any release page yet.** The Mac app has to be built on a Mac, and one
-> has not been free for any release so far (v10.0–v10.5). It will be added when
-> one is. The Windows packages are unaffected.
+**There is no Mac version. This is a Windows app.**
 
-Run successfully on **one** Mac (macOS 10.13 High Sierra, Intel) by the
-developer on 2026-08-08, never yet at a real race night. Newer macOS versions
-and Apple Silicon are untested; the app is Intel-only and runs under Rosetta 2
-on M-series Macs. It is **not notarized**, so macOS blocks the first launch and
-may falsely claim it "is damaged" — right-click → **Open** → **Open**.
-
-Please report problems. Details: [`mac/README.txt`](mac/README.txt)
+A Mac `.app` was built and run once on an old Intel Mac in August 2026, but it
+was never attached to a release, never used at a race night, and is not
+supported. The `mac/` folder keeps those build scripts for reference only.
 
 ---
 
 ## Your data is safe — by construction
 
-Race data lives **outside the app** (`%LOCALAPPDATA%\TamiyaRaceManager\` on
-Windows, `~/Library/Application Support/TamiyaRaceManager/` on Mac), so
+Race data lives **outside the app** (`%LOCALAPPDATA%\TamiyaRaceManager\`), so
 installing, updating or uninstalling the app can never touch it. The server
 keeps automatic daily backups (14 days). If saving ever fails mid-event, a red
 banner appears with recovery instructions. **Export Data to a USB stick after
@@ -66,7 +56,7 @@ app/       the application: race-manager.html (UI + race engine),
 docs/      the two club guides as PDFs - shipped in the installer and the
            portable zip since v10.5
 windows/   Windows packaging: installer script, build bats, Windows README
-mac/       Mac packaging: launcher, package build bat, Mac README
+mac/       old Mac packaging scripts - unsupported, kept for reference
 dev/       developer material - build guide, release plan, test matrix,
            design notes, stress test. Not needed to use the app.
 ```
@@ -77,12 +67,9 @@ Requirements: Python 3, `pip install pyinstaller pywebview`, and
 [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`winget install JRSoftware.InnoSetup`).
 
 - **Windows (installer + portable zip):** run `windows\BUILD INSTALLER (developer use only).bat`
-- **Mac app:** run `mac/BUILD MAC APP (developer use only).command` **on a Mac**
-  — PyInstaller cannot cross-compile, so the `.app` can only be built on macOS
-  (and only for the architecture of the machine that builds it).
-- **Mac Python-zip (legacy fallback):** `mac\BUILD MAC PACKAGE (developer use only).bat`
-  builds the older launcher-plus-source package on Windows for Macs where the
-  `.app` won't run. Both write to the same filename — see `dev/BUILD.md`.
+- **Mac:** unsupported. The scripts in `mac/` built an Intel `.app` once in
+  August 2026; PyInstaller cannot cross-compile, so one can only be built on a
+  Mac. Nothing in `mac/` is part of a release.
 
 Outputs land in `dist\` and are named `<version>.<build>` — the version from
 `app/VERSION` (bumped by hand) and the build number from

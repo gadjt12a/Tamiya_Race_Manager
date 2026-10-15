@@ -1,3 +1,17 @@
+UNSUPPORTED - THERE IS NO MAC RELEASE.
+=======================================
+
+Tamiya Race Manager is a Windows app. Nothing in this folder is part of
+any release, and no Mac build has ever been published.
+
+The scripts here built an Intel .app once, on 2026-08-08, which ran a full
+race on one old Mac (macOS 10.13 High Sierra). It was never used at a race
+night and is not maintained. Kept for reference only.
+
+Decision recorded 2026-10-15: the club runs Windows, the app is Windows-only.
+
+-------------------------------------------------------------------------
+
 TAMIYA RACE MANAGER - MAC (OSX)
 ===============================
 
