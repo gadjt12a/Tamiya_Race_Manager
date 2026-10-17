@@ -5,6 +5,15 @@ description: Prove a Tamiya Race Manager build is safe to put in front of a club
 
 # Test a build before a club runs a race night on it
 
+> **This skill is Windows-only.** It stops the packaged
+> `TamiyaRaceManager` process and exercises the `.exe` installer upgrade
+> path, which only exist on the club laptop. The PowerShell below is
+> correct for that machine and is deliberately NOT ported — on Fedora
+> (as of 2026-10-17) these steps cannot run, and the release they prove
+> is a Windows artifact. Build and test a release on Windows.
+>
+> `dev/tests/test_upgrade.ps1` is likewise PowerShell on purpose.
+
 The club has one laptop, one database and often nobody present who can fix
 anything. A bug here is not an inconvenience, it is a race night lost and
 results that cannot be reconstructed. Three releases in a row shipped a defect
